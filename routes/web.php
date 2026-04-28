@@ -6,21 +6,32 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
 */
 
+// Halaman Landing Page
 Route::get('/', function () {
     return view('welcome');
 });
 
+// Rute Autentikasi Bawaan Laravel UI (Login, Register, Forgot Password)
 Auth::routes();
 
+// Rute Dashboard Utama setelah Login
 Route::get('/home', 'HomeController@index')->name('home');
 
-Auth::routes();
+// ==========================================
+// RUTE UJIAN PSIKOTES & PROCTORING
+// ==========================================
+// Dibungkus middleware 'auth' agar wajib login
+Route::middleware(['auth'])->group(function () {
 
-Route::get('/home', 'HomeController@index')->name('home');
+    // Menampilkan halaman ujian (Timer & Soal)
+    Route::get('/exam/{exam_id}', 'ExamController@show')->name('exam.show');
+
+    // Endpoint AJAX untuk auto-save jawaban JSON
+    Route::post('/exam/answer', 'ExamController@storeAnswer')->name('exam.answer');
+
+    // Endpoint AJAX rahasia untuk menerima foto dari webcam
+    Route::post('/proctoring/snap', 'ProctoringController@storeSnapshot')->name('proctoring.snap');
+
+});

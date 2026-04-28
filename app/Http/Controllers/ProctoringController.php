@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\ProctoringLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class ProctoringController extends Controller
 {
@@ -32,7 +33,11 @@ class ProctoringController extends Controller
         // 2. Tentukan penamaan file yang rapi
         // Format: proctoring/user_{name}_session_{id}_{timestamp}.jpg
         $folderPath = 'proctoring';
-        $fileName = 'user_' . auth()->user()->name . '_session_' . $request->exam_session_id . '_' . time() . '.jpg';
+
+        // Jangan lupa tambahkan di paling atas: use Illuminate\Support\Str;
+        $safeName = Str::slug(auth()->user()->name, '_');
+        $fileName = 'user_' . $safeName . '_session_' . $request->exam_session_id . '_' . time() . '.jpg';
+
         $fullPath = $folderPath . '/' . $fileName;
 
         // 3. Pastikan folder 'proctoring' ada di direktori public
