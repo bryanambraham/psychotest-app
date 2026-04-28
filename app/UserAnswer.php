@@ -16,6 +16,6 @@ class UserAnswer extends Model
 
     public function examSession()
     {
-        return $this->belongsTo(ExamSession::class);
+        return $this->belongsTo(ExamSession::class, 'exam_session_id');
     }
 }
