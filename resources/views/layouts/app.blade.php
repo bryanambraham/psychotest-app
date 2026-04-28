@@ -35,16 +35,21 @@
                     <ul class="navbar-nav mr-auto"></ul>
                         @auth
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('manage-exams.index') }}">⚙️ Kelola Ujian</a>
+                                <a class="nav-link" href="{{ route('home') }}">Home</a>
                             </li>
                         @endauth
                         @auth
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('manage-exams.index') }}">⚙️ Kelola Ujian</a>
+                            </li>
+                        @endauth
+                        {{-- @auth
                             <li class="nav-item">
                                 <a class="nav-link font-weight-bold text-primary" href="{{ route('exam.show', ['exam_id' => 1]) }}">
                                     📝 Mulai Ujian (Demo)
                                 </a>
                             </li>
-                        @endauth
+                        @endauth --}}
                     <ul class="navbar-nav ml-auto">
                         @guest
                             <li class="nav-item">

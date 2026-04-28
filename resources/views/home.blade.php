@@ -3,30 +3,69 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white font-weight-bold">{{ __('Dashboard Peserta') }}</div>
+        <div class="col-md-10">
+            <h3 class="mb-4">Daftar Ujian Anda</h3>
 
-                <div class="card-body text-center">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
+            @if(session('error'))
+                <div class="alert alert-danger">{{ session('error') }}</div>
+            @endif
+
+            <div class="row">
+                @forelse($assignedExams as $exam)
+                    @php
+                        // Cek apakah user sudah punya session untuk ujian ini
+                        $session = $exam->sessions->first();
+                        $status = $session ? $session->status : 'belum_mulai';
+                    @endphp
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="font-weight-bold mb-1">{{ $exam->name }}</h5>
+                                        <span class="badge badge-pill badge-info">{{ strtoupper($exam->type) }}</span>
+                                    </div>
+                                    <div class="text-muted small text-right">
+                                        <i class="far fa-clock"></i> {{ $exam->duration_minutes }} Menit
+                                    </div>
+                                </div>
+
+                                <p class="text-muted mt-3 small">
+                                    {{ $exam->description ?? 'Tidak ada deskripsi untuk ujian ini.' }}
+                                </p>
+
+                                <hr>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        @if($status == 'completed')
+                                            <span class="text-success small font-weight-bold">✅ Selesai</span>
+                                        @elseif($status == 'in_progress')
+                                            <span class="text-warning small font-weight-bold">⏳ Sedang Berlangsung</span>
+                                        @else
+                                            <span class="text-muted small">Belum dikerjakan</span>
+                                        @endif
+                                    </div>
+
+                                    @if($status == 'completed')
+                                        <button class="btn btn-secondary btn-sm" disabled>Sudah Selesai</button>
+                                    @else
+                                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-primary btn-sm px-4">
+                                            {{ $status == 'in_progress' ? 'Lanjutkan' : 'Mulai Ujian' }}
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                    @endif
-
-                    @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
+                    </div>
+                @empty
+                    <div class="col-12 text-center">
+                        <div class="alert alert-light border">
+                            Belum ada ujian yang ditugaskan untuk Anda saat ini.
                         </div>
-                    @endif
-
-                    <h5 class="mb-4">Selamat datang, {{ Auth::user()->name }}!</h5>
-                    <p class="text-muted mb-4">Silakan klik tombol di bawah ini untuk memulai sesi ujian psikotes Anda. Pastikan kamera Anda siap.</p>
-
-                    <a href="{{ route('exam.show', ['exam_id' => 1]) }}" class="btn btn-primary btn-lg px-5">
-                        Mulai Ujian Sekarang
-                    </a>
-                </div>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>

@@ -13,12 +13,21 @@ class ExamController extends Controller
 {
     public function show($exam_id)
     {
+        $user = auth()->user();
+
+        // CEK AKSES: Apakah ID ujian ini ada di daftar penugasan user?
+        $hasAccess = $user->exams()->where('exam_id', $exam_id)->exists();
+
+        if (!$hasAccess) {
+            return redirect('/home')->with('error', 'Maaf, Anda tidak memiliki akses untuk ujian ini.');
+        }
+
         // Mencari data ujian, jika tidak ada akan error 404
         $exam = Exam::findOrFail($exam_id);
 
         $session = ExamSession::firstOrCreate(
             [
-                'user_id' => Auth::id(),
+                'user_id' => $user->id,
                 'exam_id' => $exam->id,
                 'status'  => 'in_progress'
             ],

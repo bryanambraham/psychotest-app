@@ -11,24 +11,26 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <div class="card">
-        <table class="table mb-0">
-            <thead>
+    <div class="card shadow-sm border-0">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
                 <tr>
                     <th>Nama Ujian</th>
                     <th>Tipe</th>
                     <th>Durasi</th>
-                    <th>Aksi</th>
+                    <th class="text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($exams as $exam)
                 <tr>
-                    <td>{{ $exam->name }}</td>
-                    <td><span class="badge badge-info">{{ strtoupper($exam->type) }}</span></td>
-                    <td>{{ $exam->duration_minutes }} Menit</td>
-                    <td>
-                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-sm btn-outline-success">Lihat Preview</a>
+                    <td class="align-middle font-weight-bold">{{ $exam->name }}</td>
+                    <td class="align-middle"><span class="badge badge-info">{{ strtoupper($exam->type) }}</span></td>
+                    <td class="align-middle">{{ $exam->duration_minutes }} Menit</td>
+                    <td class="text-center">
+                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-sm btn-outline-success">Preview</a>
+
+                        <a href="{{ route('manage-exams.edit', $exam->id) }}" class="btn btn-sm btn-primary">Kelola</a>
                     </td>
                 </tr>
                 @endforeach

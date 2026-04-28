@@ -14,5 +14,8 @@ class User extends Authenticatable
         return $this->hasMany(ExamSession::class, 'user_id');
     }
 
-
+    public function exams()
+    {
+        return $this->belongsToMany(Exam::class, 'exam_user', 'user_id', 'exam_id')->withTimestamps();
+    }
 }
