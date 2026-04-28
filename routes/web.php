@@ -25,6 +25,11 @@ Route::get('/home', 'HomeController@index')->name('home');
 // Dibungkus middleware 'auth' agar wajib login
 Route::middleware(['auth'])->group(function () {
 
+// Rute Manajemen Ujian (Admin)
+    Route::get('/manage-exams', 'ExamManagementController@index')->name('manage-exams.index');
+    Route::get('/manage-exams/create', 'ExamManagementController@create')->name('manage-exams.create');
+    Route::post('/manage-exams', 'ExamManagementController@store')->name('manage-exams.store');
+
     // Menampilkan halaman ujian (Timer & Soal)
     Route::get('/exam/{exam_id}', 'ExamController@show')->name('exam.show');
 
