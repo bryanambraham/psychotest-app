@@ -39,9 +39,15 @@
                             </li>
                         @endauth
                         @auth
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('manage-exams.index') }}">⚙️ Kelola Ujian</a>
-                            </li>
+                            {{-- Hanya muncul jika role user adalah admin --}}
+                            @if(auth()->user()->role == 'admin')
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('manage-exams.index') }}">⚙️ Kelola Ujian</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('users.index') }}">👥 Kelola User</a>
+                                </li>
+                            @endif
                         @endauth
                         {{-- @auth
                             <li class="nav-item">
@@ -58,7 +64,7 @@
                         @else
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                    {{ Auth::user()->name }} <span class="caret"></span>
+                                    {{ Str::before(Auth::user()->name, ' ') }} <span class="caret"></span>
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-right">

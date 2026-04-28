@@ -13,9 +13,23 @@
             <div class="row">
                 @forelse($assignedExams as $exam)
                     @php
-                        // Cek apakah user sudah punya session untuk ujian ini
                         $session = $exam->sessions->first();
                         $status = $session ? $session->status : 'belum_mulai';
+                        $remainingText = null;
+
+                        // Logika hitung sisa waktu jika sedang berlangsung
+                        if ($status == 'in_progress' && $session) {
+                            $endTime = \Carbon\Carbon::parse($session->start_time)->addMinutes($exam->duration_minutes);
+                            $diffInSeconds = \Carbon\Carbon::now()->diffInSeconds($endTime, false);
+
+                            if ($diffInSeconds > 0) {
+                                $mins = floor($diffInSeconds / 60);
+                                $secs = $diffInSeconds % 60;
+                                $remainingText = "($mins Menit lagi)";
+                            } else {
+                                $status = 'timeout'; // Secara visual dianggap habis
+                            }
+                        }
                     @endphp
 
                     <div class="col-md-6 mb-4">
@@ -42,16 +56,22 @@
                                         @if($status == 'completed')
                                             <span class="text-success small font-weight-bold">✅ Selesai</span>
                                         @elseif($status == 'in_progress')
-                                            <span class="text-warning small font-weight-bold">⏳ Sedang Berlangsung</span>
+                                            <div>
+                                                <span class="text-warning small font-weight-bold">⏳ Sedang Berlangsung</span>
+                                                <br>
+                                                <small class="text-danger font-weight-bold">{{ $remainingText }}</small>
+                                            </div>
+                                        @elseif($status == 'timeout')
+                                            <span class="text-danger small font-weight-bold">⏰ Waktu Habis</span>
                                         @else
                                             <span class="text-muted small">Belum dikerjakan</span>
                                         @endif
                                     </div>
 
-                                    @if($status == 'completed')
+                                    @if($status == 'completed' || $status == 'timeout')
                                         <button class="btn btn-secondary btn-sm" disabled>Sudah Selesai</button>
                                     @else
-                                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-primary btn-sm px-4">
+                                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-primary btn-sm px-4 shadow-sm">
                                             {{ $status == 'in_progress' ? 'Lanjutkan' : 'Mulai Ujian' }}
                                         </a>
                                     @endif
@@ -61,7 +81,7 @@
                     </div>
                 @empty
                     <div class="col-12 text-center">
-                        <div class="alert alert-light border">
+                        <div class="alert alert-light border shadow-sm">
                             Belum ada ujian yang ditugaskan untuk Anda saat ini.
                         </div>
                     </div>

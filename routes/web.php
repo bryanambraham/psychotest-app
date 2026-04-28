@@ -44,18 +44,20 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     // Daftar semua materi ujian
-    Route::get('/manage-exams', 'ExamManagementController@index')->name('manage-exams.index');
+    Route::get('/manage-exams', 'ExamManagementController@index')->name('manage-exams.index')->middleware('role:admin');
 
     // Form tambah materi baru
-    Route::get('/manage-exams/create', 'ExamManagementController@create')->name('manage-exams.create');
+    Route::get('/manage-exams/create', 'ExamManagementController@create')->name('manage-exams.create')->middleware('role:admin');
 
     // Simpan materi baru (logic pengiriman ke Python bisa ditaruh di sini)
-    Route::post('/manage-exams', 'ExamManagementController@store')->name('manage-exams.store');
+    Route::post('/manage-exams', 'ExamManagementController@store')->name('manage-exams.store')->middleware('role:admin');
 
     // Form edit ujian & Atur Penugasan Peserta (Assignment)
-    Route::get('/manage-exams/{id}/peserta', 'ExamManagementController@edit')->name('manage-exams.edit');
+    Route::get('/manage-exams/{id}/peserta', 'ExamManagementController@edit')->name('manage-exams.edit')->middleware('role:admin');
 
     // Update data ujian & Sinkronisasi Peserta (Sync many-to-many)
-    Route::put('/manage-exams/{id}', 'ExamManagementController@update')->name('manage-exams.update');
+    Route::put('/manage-exams/{id}', 'ExamManagementController@update')->name('manage-exams.update')->middleware('role:admin');
 
+    // Resource route untuk User (index, create, store, edit, update, destroy)
+    Route::resource('users', 'UserController')->middleware('role:admin');
 });
