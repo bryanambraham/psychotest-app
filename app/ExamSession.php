@@ -3,9 +3,6 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\User;
-use App\Exam;
-use App\UserAnswer;
 
 
 class ExamSession extends Model
@@ -31,4 +28,6 @@ class ExamSession extends Model
     {
         return $this->hasMany(ProctoringLog::class, 'exam_session_id');
     }
+
+
 }

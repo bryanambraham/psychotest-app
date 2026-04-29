@@ -38,6 +38,8 @@ Route::middleware(['auth'])->group(function () {
     // Simpan foto proctoring diam-diam
     Route::post('/proctoring/snap', 'ProctoringController@storeSnapshot')->name('proctoring.snap');
 
+    // Rute untuk menyelesaikan ujian (mengubah status session menjadi completed)
+    Route::get('/exam/finish/{session_id}', 'ExamController@finish')->name('exam.finish');
 
     /* |--------------------------------------------------------------------------
     | Sisi Admin (Manajemen Ujian & Peserta)
@@ -60,4 +62,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Resource route untuk User (index, create, store, edit, update, destroy)
     Route::resource('users', 'UserController')->middleware('role:admin');
+
+    Route::get('/exam-results', 'ExamManagementController@resultsIndex')->name('manage-exams.results')->middleware('role:admin');
+    Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')->name('manage-exams.results.show')->middleware('role:admin');
 });

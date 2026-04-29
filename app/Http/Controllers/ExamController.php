@@ -23,7 +23,9 @@ class ExamController extends Controller
         }
 
         // Mencari data ujian, jika tidak ada akan error 404
-        $exam = Exam::findOrFail($exam_id);
+        // Ambil ujian beserta soal-soalnya
+        $exam = Exam::with('questions')->findOrFail($exam_id);
+
 
         $session = ExamSession::firstOrCreate(
             [
@@ -66,5 +68,23 @@ class ExamController extends Controller
         );
 
         return response()->json(['status' => 'success']);
+    }
+
+    public function finish($session_id)
+    {
+        $session = ExamSession::findOrFail($session_id);
+
+        // Pastikan hanya pemilik sesi yang bisa mengakhiri
+        if ($session->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Update status dan catat waktu selesai
+        $session->update([
+            'status' => 'completed',
+            'end_time' => now()
+        ]);
+
+        return redirect()->route('home')->with('success', 'Ujian telah berhasil dikumpulkan. Terima kasih!');
     }
 }

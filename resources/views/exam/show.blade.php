@@ -17,22 +17,11 @@
                 </div>
             </div>
 
-            @php
-                $dummyDisc = [
-                    1 => ['a' => 'Berpusat pada detail, teliti', 'b' => 'Penuh keyakinan, berani', 'c' => 'Lembut, menyenangkan', 'd' => 'Menawan, supel'],
-                    2 => ['a' => 'Suka mengambil risiko', 'b' => 'Sangat berhati-hati', 'c' => 'Menginspirasi', 'd' => 'Pendengar yang baik']
-                ];
-                $dummyStandard = [
-                    1 => ['a' => 'Sangat Setuju', 'b' => 'Setuju', 'c' => 'Tidak Setuju', 'd' => 'Sangat Tidak Setuju'],
-                    2 => ['a' => 'Suka keramaian', 'b' => 'Suka ketenangan', 'c' => 'Tergantung situasi', 'd' => 'Tidak tahu']
-                ];
-            @endphp
-
             <div class="card shadow-sm border-0">
                 <div class="card-body p-0">
-
+                    
                     {{-- ========================================== --}}
-                    {{-- UI KHUSUS UNTUK UJIAN DISC                 --}}
+                    {{-- UI KHUSUS UNTUK UJIAN DISC (DARI DB)       --}}
                     {{-- ========================================== --}}
                     @if($exam->type == 'disc')
                         <div class="alert alert-warning m-3 rounded">
@@ -48,18 +37,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($dummyDisc as $qNum => $options)
-                                    <tr class="question-block bg-dark text-white">
-                                        <td colspan="3" class="font-weight-bold">Soal No. {{ $qNum }}</td>
+                                @foreach($exam->questions as $q)
+                                    <tr class="bg-dark text-white">
+                                        <td colspan="3" class="font-weight-bold small">Soal No. {{ $q->number }}</td>
                                     </tr>
-                                    @foreach($options as $key => $text)
-                                        <tr class="question-block" data-qnum="{{ $qNum }}">
+                                    {{-- Looping options dari JSON database --}}
+                                    @foreach($q->options as $key => $text)
+                                        <tr class="question-block" data-qnum="{{ $q->number }}">
                                             <td>{{ strtoupper($key) }}. {{ $text }}</td>
                                             <td class="text-center align-middle">
-                                                <input type="radio" name="most_{{ $qNum }}" value="{{ strtoupper($key) }}" class="disc-radio" data-type="most" style="transform: scale(1.5);">
+                                                <input type="radio" name="most_{{ $q->number }}" value="{{ strtoupper($key) }}" class="disc-radio" data-type="most" style="transform: scale(1.5);">
                                             </td>
                                             <td class="text-center align-middle">
-                                                <input type="radio" name="least_{{ $qNum }}" value="{{ strtoupper($key) }}" class="disc-radio" data-type="least" style="transform: scale(1.5);">
+                                                <input type="radio" name="least_{{ $q->number }}" value="{{ strtoupper($key) }}" class="disc-radio" data-type="least" style="transform: scale(1.5);">
                                             </td>
                                         </tr>
                                     @endforeach
@@ -68,18 +58,18 @@
                         </table>
 
                     {{-- ========================================== --}}
-                    {{-- UI STANDAR UNTUK MBTI, EPPS, BIG FIVE, DLL --}}
+                    {{-- UI STANDAR UNTUK MBTI, EPPS, DLL (DARI DB) --}}
                     {{-- ========================================== --}}
                     @else
                         <div class="p-4">
-                            @foreach($dummyStandard as $qNum => $options)
-                                <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $qNum }}">
-                                    <h5 class="font-weight-bold mb-3">Soal No. {{ $qNum }}</h5>
-                                    <p>Bagaimana Anda menanggapi situasi berikut?</p>
-
-                                    @foreach($options as $key => $text)
+                            @foreach($exam->questions as $q)
+                                <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $q->number }}">
+                                    <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
+                                    <p>{{ $q->question_text }}</p>
+                                    
+                                    @foreach($q->options as $key => $text)
                                         <div class="form-check mb-2">
-                                            <input class="form-check-input std-radio" type="radio" name="answer_{{ $qNum }}" value="{{ strtoupper($key) }}">
+                                            <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ strtoupper($key) }}">
                                             <label class="form-check-label" style="cursor: pointer;">
                                                 {{ strtoupper($key) }}. {{ $text }}
                                             </label>
@@ -89,7 +79,11 @@
                             @endforeach
                         </div>
                     @endif
-
+                    <div class="card-footer bg-white border-top pb-4 pt-4 text-center">
+                        <button type="button" id="btn-submit-exam" class="btn btn-success btn-lg px-5 shadow-sm">
+                            Selesaikan & Kumpulkan Ujian
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -103,7 +97,6 @@
 
 <video id="webcam-video" autoplay playsinline style="display: none;"></video>
 <canvas id="snapshot-canvas" style="display: none;"></canvas>
-
 @endsection
 
 @section('scripts')
@@ -127,59 +120,48 @@
                 body: JSON.stringify({
                     exam_session_id: examSessionId,
                     question_number: qNum,
-                    answers: jsonAnswer // Bentuk JSON bebas sesuai tipe ujian
+                    answers: jsonAnswer
                 })
             }).catch(err => console.error("Gagal menyimpan", err));
         }
 
         // ==========================================
-        // 2. LOGIKA UI & VALIDASI: UJIAN DISC
+        // 2. LOGIKA UI & VALIDASI: UJIAN DISC & STANDAR
         // ==========================================
+        // (Logika DISC & Standar tetap sama seperti kode kamu sebelumnya)
         const discRadios = document.querySelectorAll('.disc-radio');
         discRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 let block = this.closest('.question-block');
                 let qNum = block.dataset.qnum;
-                let type = this.dataset.type; // 'most' atau 'least'
-                let val = this.value; // 'A', 'B', dll
-
+                let type = this.dataset.type;
+                let val = this.value;
                 let oppositeType = (type === 'most') ? 'least' : 'most';
                 let oppositeRadios = document.querySelectorAll(`input[name="${oppositeType}_${qNum}"]`);
-
-                // Logika Kunci Silang (Mutual Exclusive)
                 oppositeRadios.forEach(el => {
-                    el.disabled = false; // Buka semua gembok dulu
+                    el.disabled = false;
                     if (el.value === val) {
-                        el.disabled = true; // Kunci yang valuenya sama dengan yang baru diklik
-                        if (el.checked) el.checked = false; // Jika sebelumnya tercentang, hilangkan centangnya
+                        el.disabled = true;
+                        if (el.checked) el.checked = false;
                     }
                 });
-
-                // Ambil nilai terkini untuk dikirim ke DB
                 let mostVal = document.querySelector(`input[name="most_${qNum}"]:checked`)?.value || null;
                 let leastVal = document.querySelector(`input[name="least_${qNum}"]:checked`)?.value || null;
-
-                // Kirim format JSON ke Laravel: { most: "A", least: "D" }
                 saveAnswerAjax(qNum, { most: mostVal, least: leastVal });
             });
         });
 
-        // ==========================================
-        // 3. LOGIKA UI: UJIAN STANDAR (MBTI/EPPS)
-        // ==========================================
         const stdRadios = document.querySelectorAll('.std-radio');
         stdRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 let qNum = this.closest('.question-block').dataset.qnum;
                 let val = this.value;
-
-                // Kirim format JSON ke Laravel: { selected: "A" }
                 saveAnswerAjax(qNum, { selected: val });
             });
         });
 
         // ==========================================
-        // 4. LOGIKA TIMER MUNDUR
+        // 3. LOGIKA TIMER MUNDUR
         // ==========================================
         let remainingSeconds = {{ $remainingSeconds }};
         const timerDisplay = document.getElementById('timer-display');
@@ -187,7 +169,8 @@
         function updateTimer() {
             if (remainingSeconds <= 0) {
                 timerDisplay.innerHTML = "WAKTU HABIS!";
-                window.location.href = "/home";
+                // Otomatis submit jika waktu habis
+                finishExam(); 
                 return;
             }
             let m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
@@ -199,7 +182,7 @@
         updateTimer();
 
         // ==========================================
-        // 5. KAMERA PROCTORING RAHASIA
+        // 4. KAMERA PROCTORING
         // ==========================================
         const video = document.getElementById('webcam-video');
         const canvas = document.getElementById('snapshot-canvas');
@@ -210,12 +193,18 @@
                 video.srcObject = stream;
                 cameraStatus.innerHTML = "🟢 Kamera aktif (Ujian diawasi)";
                 cameraStatus.classList.replace('badge-secondary', 'badge-success');
+                
+                // JEPRETAN PERTAMA: Langsung ambil foto saat masuk (Detik ke-0)
+                // Memberi delay 1 detik agar kamera sudah benar-benar terbuka
+                setTimeout(takeSnapshotAndSend, 1000);
+                
+                // Mulai siklus acak setelah jepretan pertama
                 scheduleNextSnapshot();
             })
             .catch(function(err) {
                 cameraStatus.innerHTML = "❌ Akses Kamera Ditolak!";
                 cameraStatus.classList.replace('badge-secondary', 'badge-danger');
-                alert("Anda WAJIB mengizinkan akses kamera!");
+                Swal.fire('Kamera Wajib!', 'Ujian ini memerlukan kamera untuk pengawasan.', 'error');
             });
 
         function takeSnapshotAndSend() {
@@ -234,8 +223,44 @@
         }
 
         function scheduleNextSnapshot() {
-            let timeout = Math.floor(Math.random() * (300000 - 120000 + 1)) + 120000;
-            setTimeout(() => { takeSnapshotAndSend(); scheduleNextSnapshot(); }, timeout);
+            // INTERVAL DIPERPENDEK: Antara 1 menit (60rb) sampai 3 menit (180rb)
+            // Agar ujian durasi pendek tetap ter-capture beberapa kali
+            let timeout = Math.floor(Math.random() * (180000 - 60000 + 1)) + 60000;
+            setTimeout(() => { 
+                takeSnapshotAndSend(); 
+                scheduleNextSnapshot(); 
+            }, timeout);
+        }
+
+        // ==========================================
+        // 5. LOGIKA SUBMIT (KONFIRMASI & JEPRETAN AKHIR)
+        // ==========================================
+        const btnSubmit = document.getElementById('btn-submit-exam');
+        
+        btnSubmit.addEventListener('click', function() {
+            Swal.fire({
+                title: 'Kumpulkan Ujian?',
+                text: "Anda yakin telah menyelesaikan semua soal?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Kumpulkan Sekarang!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    finishExam();
+                }
+            });
+        });
+
+        function finishExam() {
+            // FOTO AKHIR: Ambil foto tepat saat tombol diklik (bukti pengumpulan)
+            takeSnapshotAndSend();
+
+            // Redirect ke halaman finish (Anda perlu buat rute ini di web.php)
+            // Misal: Route::get('/exam/finish/{id}', 'ExamController@finish')->name('exam.finish');
+            window.location.href = "/exam/finish/" + examSessionId;
         }
 
     });

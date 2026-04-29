@@ -47,6 +47,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('users.index') }}">👥 Kelola User</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('manage-exams.results') }}">📊 Kelola Hasil Ujian</a>
+                                </li>
                             @endif
                         @endauth
                         {{-- @auth
@@ -88,6 +91,7 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('scripts')
 </body>
 </html>
