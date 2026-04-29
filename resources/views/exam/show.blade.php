@@ -166,19 +166,35 @@
         let remainingSeconds = {{ $remainingSeconds }};
         const timerDisplay = document.getElementById('timer-display');
 
+        // Simpan interval ke dalam variabel agar bisa dihentikan (clear)
+        const timerInterval = setInterval(updateTimer, 1000);
+
         function updateTimer() {
             if (remainingSeconds <= 0) {
+                // 1. Hentikan Timer
+                clearInterval(timerInterval);
                 timerDisplay.innerHTML = "WAKTU HABIS!";
-                // Otomatis submit jika waktu habis
-                finishExam(); 
+
+                // 2. Notifikasi Ke Peserta (Pakai SweetAlert2)
+                Swal.fire({
+                    title: 'Waktu Habis!',
+                    text: 'Sistem akan mengumpulkan jawaban Anda secara otomatis.',
+                    icon: 'warning',
+                    timer: 2500, // Tampil 2.5 detik
+                    showConfirmButton: false,
+                    willClose: () => {
+                        // 3. Jalankan fungsi finish
+                        finishExam(); 
+                    }
+                });
                 return;
             }
+            
             let m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
             let s = (remainingSeconds % 60).toString().padStart(2, '0');
             timerDisplay.innerHTML = m + ":" + s;
             remainingSeconds--;
         }
-        setInterval(updateTimer, 1000);
         updateTimer();
 
         // ==========================================
@@ -255,12 +271,13 @@
         });
 
         function finishExam() {
-            // FOTO AKHIR: Ambil foto tepat saat tombol diklik (bukti pengumpulan)
+            // Ambil foto terakhir sebagai bukti pengerjaan selesai/waktu habis
             takeSnapshotAndSend();
 
-            // Redirect ke halaman finish (Anda perlu buat rute ini di web.php)
-            // Misal: Route::get('/exam/finish/{id}', 'ExamController@finish')->name('exam.finish');
-            window.location.href = "/exam/finish/" + examSessionId;
+            // Beri jeda sebentar (500ms) supaya proses upload foto selesai sebelum pindah halaman
+            setTimeout(() => {
+                window.location.href = "/exam/finish/" + examSessionId;
+            }, 500);
         }
 
     });

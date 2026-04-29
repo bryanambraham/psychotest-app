@@ -83,16 +83,17 @@
                                                     </td>
                                                     <td>
                                                         @if($data)
+                                                            {{-- Tampilkan jawaban yang ada --}}
                                                             @if($session->exam->type == 'disc')
-                                                                {{-- Tampilan Khusus DISC --}}
                                                                 <span class="badge badge-success">Most: {{ $data['most'] ?? '-' }}</span>
                                                                 <span class="badge badge-danger">Least: {{ $data['least'] ?? '-' }}</span>
                                                             @else
-                                                                {{-- Tampilan Standar (MBTI, dll) --}}
                                                                 <span class="badge badge-primary">Pilihan: {{ $data['selected'] ?? '-' }}</span>
                                                             @endif
                                                         @else
-                                                            <span class="text-muted small italic">Tidak Dijawab</span>
+                                                            {{-- Jika waktu habis dan tidak terisi, tampilkan label ini --}}
+                                                            <span class="badge badge-secondary">Kosong atau Tidak terisi.</span>
+                                                            <!-- <div class="small text-muted italic">Peserta kehabisan waktu pada soal ini.</div> -->
                                                         @endif
                                                     </td>
                                                 </tr>
