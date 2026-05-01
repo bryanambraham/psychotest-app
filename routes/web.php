@@ -10,11 +10,16 @@ use Illuminate\Support\Facades\Route;
 
 // Halaman Landing Page
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/login');
 });
 
 // Rute Autentikasi Bawaan Laravel UI (Login, Register, Forgot Password)
 Auth::routes();
+
+Route::get('/register', function () {
+    return redirect('/login');
+});
+
 
 // Rute Dashboard Utama setelah Login
 Route::get('/home', 'HomeController@index')->name('home');

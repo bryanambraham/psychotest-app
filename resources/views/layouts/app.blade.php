@@ -32,49 +32,60 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav mr-auto"></ul>
+                    <!-- Left Side Of Navbar -->
+                    <ul class="navbar-nav mr-auto">
                         @auth
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('home') }}">Home</a>
+                            <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('home') }}">
+                                    <i class="fas fa-home mr-1"></i> Home
+                                </a>
                             </li>
-                        @endauth
-                        @auth
-                            {{-- Hanya muncul jika role user adalah admin --}}
+
+                            {{-- Menu Khusus Admin --}}
                             @if(auth()->user()->role == 'admin')
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('manage-exams.index') }}">⚙️ Kelola Ujian</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('users.index') }}">👥 Kelola User</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('manage-exams.results') }}">📊 Kelola Hasil Ujian</a>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fas fa-cogs mr-1"></i> Administrasi
+                                    </a>
+                                    <div class="dropdown-menu shadow-sm" aria-labelledby="adminDropdown">
+                                        <a class="dropdown-item" href="{{ route('manage-exams.index') }}">
+                                            <i class="fas fa-edit mr-2 text-muted"></i> Kelola Ujian
+                                        </a>
+                                        <a class="dropdown-item" href="{{ route('users.index') }}">
+                                            <i class="fas fa-users mr-2 text-muted"></i> Kelola User
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="{{ route('manage-exams.results') }}">
+                                            <i class="fas fa-chart-bar mr-2 text-muted"></i> Hasil Ujian
+                                        </a>
+                                    </div>
                                 </li>
                             @endif
                         @endauth
-                        {{-- @auth
-                            <li class="nav-item">
-                                <a class="nav-link font-weight-bold text-primary" href="{{ route('exam.show', ['exam_id' => 1]) }}">
-                                    📝 Mulai Ujian (Demo)
-                                </a>
-                            </li>
-                        @endauth --}}
+                    </ul>
+
+                    <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ml-auto">
                         @guest
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
+                                <a class="nav-link" href="{{ route('login') }}">
+                                    <i class="fas fa-sign-in-alt mr-1"></i> {{ __('Login') }}
+                                </a>
                             </li>
                         @else
                             <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
-                                    {{ Str::before(Auth::user()->name, ' ') }} <span class="caret"></span>
+                                <a id="navbarDropdown" class="nav-link dropdown-toggle font-weight-bold" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="badge badge-pill badge-primary mr-2">{{ strtoupper(auth()->user()->role) }}</span>
+                                    Halo, {{ Str::before(Auth::user()->name, ' ') }}
                                 </a>
 
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
+                                <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" aria-labelledby="navbarDropdown">
+                                    <div class="dropdown-header">Pengaturan Akun</div>
+                                    <a class="dropdown-item text-danger" href="{{ route('logout') }}"
+                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> {{ __('Logout') }}
                                     </a>
+
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                         @csrf
                                     </form>
