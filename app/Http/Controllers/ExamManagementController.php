@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Question;
 use App\User;
 use Illuminate\Http\Request;
 use App\Exam;
@@ -26,62 +27,77 @@ class ExamManagementController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|in:mbti,disc,epps,papi,big_five',
+            'name'             => 'required|string|max:255',
+            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five',
             'duration_minutes' => 'required|integer|min:1',
-            'description' => 'nullable|string',
-            'question_file' => 'required|mimes:pdf|max:5000' // Saya ubah jadi required & max 5MB
+            'description'      => 'nullable|string',
+            'question_file'    => 'required|mimes:pdf|max:5000',
         ]);
 
         // 1. Simpan Data Ujian ke Database
         $exam = Exam::create([
-            'name' => $request->name,
-            'type' => $request->type,
+            'name'             => $request->name,
+            'type'             => $request->type,
             'duration_minutes' => $request->duration_minutes,
-            'description' => $request->description,
+            'description'      => $request->description,
         ]);
 
-        // 2. Kirim ke Python jika file di-upload
+        // 2. Kirim PDF ke Python Service
         if ($request->hasFile('question_file')) {
             $file = $request->file('question_file');
 
             try {
-                // Memanggil Service Python di Port 8001
                 $response = \Illuminate\Support\Facades\Http::attach(
-                    'file', 
-                    file_get_contents($file), 
+                    'file',
+                    file_get_contents($file),
                     $file->getClientOriginalName()
-                )->post('http://127.0.0.1:8001/extract-pdf', [
-                    'type' => $request->type
-                ]);
+                )->post('http://127.0.0.1:8001/extract-pdf');
 
                 if ($response->successful()) {
-                    $result = $response->json();
-                    $questions = $result['data'];
+                    $result    = $response->json();
+                    $pdfType   = $result['type'] ?? 'vak';   // 'disc' atau 'vak'
+                    $questions = $result['data'] ?? [];
 
-                    // 3. Simpan tiap soal hasil ekstrak Python ke tabel questions
-                    foreach ($questions as $q) {
-                        \App\Question::create([
+                    // 3. Simpan tiap soal sesuai format PDF-nya
+                    foreach ($questions as $index => $q) {
+
+                        if ($pdfType === 'disc') {
+                            // Format DISC: { "box": 1, "options": { "A": "...", "B": "...", ... } }
+                            $boxNumber    = $q['box'] ?? ($index + 1);
+                            $questionText = "Box " . $boxNumber;
+                            $options      = $q['options'] ?? [];
+
+                        } else {
+                            // Format VAK: { "question": "1. Ketika ...", "options": { "A": "...", ... } }
+                            $questionText = $q['question'] ?? '';
+                            $number       = filter_var($questionText, FILTER_SANITIZE_NUMBER_INT) ?: ($index + 1);
+                            $options      = $q['options'] ?? [];
+                        }
+
+                        Question::create([
                             'exam_id'       => $exam->id,
-                            'number'        => filter_var($q['question'], FILTER_SANITIZE_NUMBER_INT) ?: 0,
-                            'question_text' => $q['question'],
-                            'options'       => $q['options'] // Ini akan otomatis jadi JSON di DB
+                            'number'        => $pdfType === 'disc' ? $boxNumber : (int) $number,
+                            'question_text' => $questionText,
+                            'options'       => $options,   // cast ke JSON otomatis
                         ]);
                     }
 
                     return redirect()->route('manage-exams.index')
                         ->with('success', "Ujian berhasil dibuat dan " . count($questions) . " soal otomatis diimpor.");
+
                 } else {
-                    return redirect()->back()->with('error', 'Python gagal memproses PDF. Pastikan format PDF benar.');
+                    return redirect()->back()
+                        ->with('error', 'Python gagal memproses PDF. Pastikan format PDF benar.');
                 }
 
             } catch (\Exception $e) {
-                // Jika Python service mati atau port salah
-                return redirect()->back()->with('error', 'Gagal terhubung ke Python Service. Pastikan FastAPI sudah jalan di port 8001.');
+                return redirect()->back()
+                    ->with('error', 'Gagal terhubung ke Python Service: ' . $e->getMessage());
             }
         }
 
-        return redirect()->route('manage-exams.index')->with('success', 'Ujian berhasil ditambahkan tanpa soal.');
+        return redirect()->route('manage-exams.index')
+            ->with('success', 'Ujian berhasil ditambahkan tanpa soal.');
     }
 
     public function edit($id)
@@ -99,7 +115,7 @@ class ExamManagementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|in:mbti,disc,epps,papi,big_five',
+            'type' => 'required|in:mbti,disc,vak,epps,papi,big_five',
             'duration_minutes' => 'required|integer|min:1',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
@@ -132,7 +148,7 @@ class ExamManagementController extends Controller
         $session = \App\ExamSession::with(['user', 'exam.questions', 'proctoringLogs', 'userAnswers'])
                     ->findOrFail($session_id);
 
-        // Di sini nanti kamu bisa tambahkan logika hitung skor DISC/MBTI 
+        // Di sini nanti kamu bisa tambahkan logika hitung skor DISC/MBTI
         // berdasarkan data dari $session->answers
 
         return view('admin.exams.results_show', compact('session'));

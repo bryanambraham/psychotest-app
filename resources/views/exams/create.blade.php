@@ -19,6 +19,7 @@
                                 <label>Tipe Psikotes</label>
                                 <select name="type" class="form-control">
                                     <option value="disc">DISC</option>
+                                    <option value="vak">VAK</option>
                                     <option value="mbti">MBTI</option>
                                     <option value="epps">EPPS</option>
                                     <option value="big_five">Big Five</option>

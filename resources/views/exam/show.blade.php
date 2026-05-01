@@ -19,14 +19,52 @@
 
             <div class="card shadow-sm border-0">
                 <div class="card-body p-0">
-                    
+
                     {{-- ========================================== --}}
                     {{-- UI KHUSUS UNTUK UJIAN DISC (DARI DB)       --}}
                     {{-- ========================================== --}}
+
                     @if($exam->type == 'disc')
-                        <div class="alert alert-warning m-3 rounded">
-                            <strong>Instruksi DISC:</strong> Pilih satu pernyataan yang Paling Menggambarkan Diri Anda <b>(Most)</b> dan satu yang Paling Tidak Menggambarkan <b>(Least)</b>.
+                        <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
+                            <div class="card-body bg-light">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan DISC</h5>
+                                </div>
+
+                                <p class="text-secondary mb-3">
+                                    Pada setiap nomor, Anda akan menemukan 4 pernyataan. Tugas Anda adalah memilih karakteristik yang <strong>Paling Mendekati</strong> dan <strong>Paling Tidak Mendekati</strong> diri Anda.
+                                </p>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="p-3 rounded bg-white border border-success h-100">
+                                            <h6 class="text-success font-weight-bold mb-2">
+                                                <i class="fas fa-check-circle mr-1"></i> Kolom MOST (Mirip)
+                                            </h6>
+                                            <small class="text-muted">Pilih satu pernyataan yang <strong>Paling Menggambarkan</strong> diri Anda dalam lingkungan kerja/sosial.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <div class="p-3 rounded bg-white border border-danger h-100">
+                                            <h6 class="text-danger font-weight-bold mb-2">
+                                                <i class="fas fa-times-circle mr-1"></i> Kolom LEAST (Tidak Mirip)
+                                            </h6>
+                                            <small class="text-muted">Pilih satu pernyataan yang <strong>Paling Tidak Menggambarkan</strong> diri Anda saat ini.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="pembatas"></div>
+                        <style>
+                            .pembatas {
+                                margin: 3rem 0;
+                            }
+                        </style>
 
                         <table class="table table-hover table-striped mb-0">
                             <thead class="bg-light">
@@ -58,15 +96,35 @@
                         </table>
 
                     {{-- ========================================== --}}
-                    {{-- UI STANDAR UNTUK MBTI, EPPS, DLL (DARI DB) --}}
+                    {{-- UI STANDAR UNTUK MBTI, VAK, EPPS, DLL (DARI DB) --}}
                     {{-- ========================================== --}}
                     @else
                         <div class="p-4">
+                            <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
+                                <div class="card-body bg-light">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
+                                    </div>
+
+                                    <p class="text-secondary mb-3">
+                                        Pada setiap nomor, Anda akan menemukan beberapa <strong>pilihan</strong>. Tugas Anda adalah memilih karakteristik yang <strong>Paling Mendekati</strong> diri Anda.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="pembatas border-bottom "></div>
+                            <style>
+                                .pembatas {
+                                    margin: 2rem 0;
+                                }
+                            </style>
                             @foreach($exam->questions as $q)
                                 <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $q->number }}">
                                     <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
                                     <p>{{ $q->question_text }}</p>
-                                    
+
                                     @foreach($q->options as $key => $text)
                                         <div class="form-check mb-2">
                                             <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ strtoupper($key) }}">
@@ -184,12 +242,12 @@
                     showConfirmButton: false,
                     willClose: () => {
                         // 3. Jalankan fungsi finish
-                        finishExam(); 
+                        finishExam();
                     }
                 });
                 return;
             }
-            
+
             let m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
             let s = (remainingSeconds % 60).toString().padStart(2, '0');
             timerDisplay.innerHTML = m + ":" + s;
@@ -209,11 +267,11 @@
                 video.srcObject = stream;
                 cameraStatus.innerHTML = "🟢 Kamera aktif (Ujian diawasi)";
                 cameraStatus.classList.replace('badge-secondary', 'badge-success');
-                
+
                 // JEPRETAN PERTAMA: Langsung ambil foto saat masuk (Detik ke-0)
                 // Memberi delay 1 detik agar kamera sudah benar-benar terbuka
                 setTimeout(takeSnapshotAndSend, 1000);
-                
+
                 // Mulai siklus acak setelah jepretan pertama
                 scheduleNextSnapshot();
             })
@@ -242,9 +300,9 @@
             // INTERVAL DIPERPENDEK: Antara 1 menit (60rb) sampai 3 menit (180rb)
             // Agar ujian durasi pendek tetap ter-capture beberapa kali
             let timeout = Math.floor(Math.random() * (180000 - 60000 + 1)) + 60000;
-            setTimeout(() => { 
-                takeSnapshotAndSend(); 
-                scheduleNextSnapshot(); 
+            setTimeout(() => {
+                takeSnapshotAndSend();
+                scheduleNextSnapshot();
             }, timeout);
         }
 
@@ -252,7 +310,7 @@
         // 5. LOGIKA SUBMIT (KONFIRMASI & JEPRETAN AKHIR)
         // ==========================================
         const btnSubmit = document.getElementById('btn-submit-exam');
-        
+
         btnSubmit.addEventListener('click', function() {
             Swal.fire({
                 title: 'Kumpulkan Ujian?',

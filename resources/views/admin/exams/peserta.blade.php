@@ -25,6 +25,9 @@
                                 <label>Tipe</label>
                                 <select name="type" class="form-control">
                                     <option value="disc" {{ $exam->type == 'disc' ? 'selected' : '' }}>DISC</option>
+                                    <option value="vak" {{ $exam->type == 'vak' ? 'selected' : '' }}>VAK</option>
+                                    <option value="epps" {{ $exam->type == 'epps' ? 'selected' : '' }}>EPPS</option>
+                                    <option value="big_five" {{ $exam->type == 'big_five' ? 'selected' : '' }}>Big Five</option>
                                     <option value="mbti" {{ $exam->type == 'mbti' ? 'selected' : '' }}>MBTI</option>
                                     </select>
                             </div>
