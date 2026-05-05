@@ -306,15 +306,61 @@
             }, timeout);
         }
 
+
         // ==========================================
-        // 5. LOGIKA SUBMIT (KONFIRMASI & JEPRETAN AKHIR)
+        // 5. LOGIKA VALIDASI & SUBMIT
         // ==========================================
         const btnSubmit = document.getElementById('btn-submit-exam');
 
+        // Fungsi untuk mengecek apakah semua soal sudah terisi
+        function checkCompletion() {
+            let unanswered = [];
+            let isDisc = "{{ $exam->type }}" === 'disc';
+
+            // Ambil semua nomor soal unik yang ada di halaman
+            let questionNumbers = [...new Set(Array.from(document.querySelectorAll('.question-block')).map(el => el.dataset.qnum))];
+
+            questionNumbers.forEach(qNum => {
+                if (isDisc) {
+                    // Untuk DISC: Cek apakah Most DAN Least sudah dipilih
+                    let mostSelected = document.querySelector(`input[name="most_${qNum}"]:checked`);
+                    let leastSelected = document.querySelector(`input[name="least_${qNum}"]:checked`);
+
+                    if (!mostSelected || !leastSelected) {
+                        unanswered.push(qNum);
+                    }
+                } else {
+                    // Untuk Standar (MBTI/VAK): Cek apakah jawaban sudah dipilih
+                    let selected = document.querySelector(`input[name="answer_${qNum}"]:checked`);
+                    if (!selected) {
+                        unanswered.push(qNum);
+                    }
+                }
+            });
+
+            return unanswered;
+        }
+
         btnSubmit.addEventListener('click', function() {
+            // 1. Jalankan Validasi
+            let missingAnswers = checkCompletion();
+
+            if (missingAnswers.length > 0) {
+                // Jika ada yang kosong, tampilkan peringatan dan batalkan submit
+                Swal.fire({
+                    title: 'Belum Lengkap!',
+                    text: `Anda belum menjawab soal nomor: ${missingAnswers.join(', ')}. Silakan lengkapi semua jawaban sebelum mengumpulkan.`,
+                    icon: 'error',
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Oke, Saya Lengkapi'
+                });
+                return; // Berhenti di sini, jangan lanjut ke konfirmasi yakin/tidak
+            }
+
+            // 2. Jika sudah lengkap, tampilkan konfirmasi yakin/tidak
             Swal.fire({
                 title: 'Kumpulkan Ujian?',
-                text: "Anda yakin telah menyelesaikan semua soal?",
+                text: "Anda telah menjawab semua soal. Yakin ingin mengumpulkan sekarang?",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
@@ -328,16 +374,24 @@
             });
         });
 
+        // Fungsi ini dipanggil oleh Tombol (setelah validasi)
+        // ATAU dipanggil langsung oleh Timer (tanpa validasi)
         function finishExam() {
-            // Ambil foto terakhir sebagai bukti pengerjaan selesai/waktu habis
+            // Tampilkan loading agar user tidak klik berkali-kali
+            Swal.fire({
+                title: 'Memproses...',
+                text: 'Mohon tunggu sebentar',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            // Ambil foto terakhir
             takeSnapshotAndSend();
 
-            // Beri jeda sebentar (500ms) supaya proses upload foto selesai sebelum pindah halaman
             setTimeout(() => {
                 window.location.href = "/exam/finish/" + examSessionId;
             }, 500);
         }
-
-    });
+        });
 </script>
 @endsection

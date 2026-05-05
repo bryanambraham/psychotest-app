@@ -100,37 +100,72 @@ class ExamManagementController extends Controller
             ->with('success', 'Ujian berhasil ditambahkan tanpa soal.');
     }
 
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $exam = Exam::findOrFail($id);
-        $users = User::all(); // Ambil semua user untuk dipilih
+        $numbers = ['20', '40', '60', '80', '100'];
+        $number_paginate = in_array($request->number, $numbers) ? $request->number : 20;
 
-        // Ambil ID user yang sudah terdaftar di ujian ini untuk menandai checkbox
+        // Mulai query dari model User
+        $query = User::query();
+
+        // Jika ada pencarian
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Ambil data user (gunakan paginate agar tidak berat jika user banyak)
+        $users = $query->paginate($number_paginate);
+        $users->appends($request->all());
+
+        // Ambil ID user yang sudah terdaftar
         $assignedUserIds = $exam->users->pluck('id')->toArray();
 
-        return view('admin.exams.peserta', compact('exam', 'users', 'assignedUserIds'));
+        return view('admin.exams.peserta', compact('exam', 'users', 'assignedUserIds', 'number_paginate', 'number'));
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|in:mbti,disc,vak,epps,papi,big_five',
-            'duration_minutes' => 'required|integer|min:1',
-            'user_ids' => 'nullable|array',
-            'user_ids.*' => 'exists:users,id',
-        ]);
+    $exam = Exam::findOrFail($id);
 
-        $exam = Exam::findOrFail($id);
+    // 1. Ambil ID user yang sedang dicentang
+    $selectedIds = $request->input('user_ids', []); // ID yang dicheck
 
-        // Update data ujian
-        $exam->update($request->only(['name', 'type', 'duration_minutes', 'description']));
+    // 2. Ambil ID user yang sedang ditampilkan di layar (dari hidden input tadi)
+    $visibleIds  = $request->input('visible_user_ids', []);
 
-        // Sinkronisasi peserta
-        $exam->users()->sync($request->input('user_ids', []));
+    // 3. Cari user mana yang ditampilkan tapi TIDAK dicentang (berarti ingin dihapus)
+    $idsToRemove = array_diff($visibleIds, $selectedIds);
 
-        // Pastikan nama route sesuai dengan web.php (manage-exams.index)
-        return redirect()->route('manage-exams.index')->with('success', 'Ujian dan peserta berhasil diperbarui.');
+    // 4. Proses Update Database
+    // Tambahkan user yang dicentang (tanpa menghapus yang lama/yang tidak tampil)
+    if (!empty($selectedIds)) {
+        $exam->users()->syncWithoutDetaching($selectedIds);
+    }
+
+    // Hapus hanya user yang tampil di layar tapi tidak dicentang
+    if (!empty($idsToRemove)) {
+        $exam->users()->detach($idsToRemove);
+    }
+
+    // Update detail ujian lainnya
+    $exam->update([
+        'name' => $request->input('name', $exam->name),
+        'type' => $request->input('type', $exam->type),
+        'duration_minutes' => $request->input('duration_minutes', $exam->duration_minutes),
+    ]);
+
+    $exam->refresh();
+
+    // // Ambil semua nama user yang terdaftar di ujian ini
+    // $userNames = $exam->users()->pluck('name')->implode(', ');
+
+
+    return redirect()->back()->with('success', 'Daftar peserta ' . ' berhasil diperbarui.');
     }
 
     public function resultsIndex()
