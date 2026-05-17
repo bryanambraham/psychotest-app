@@ -61,17 +61,53 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($session->exam->questions as $question)
+                                            @if($session->exam->type == 'akuntansi_kasus')
+                                                {{-- ======================================================== --}}
+                                                {{-- TAMPILAN KHUSUS UNTUK DOWNLOAD MULTIPLE FILE JAWABAN     --}}
+                                                {{-- ======================================================== --}}
                                                 @php
-                                                    // Cari jawaban user untuk soal nomor ini
-                                                    $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
-                                                    $data = $userAnswer ? $userAnswer->answers : null;
+                                                    // Decode data JSON array file dari tabel exam_sessions
+                                                    $uploadedFiles = json_decode($session->answer_file, true) ?: [];
                                                 @endphp
                                                 <tr>
-                                                    <td class="text-center">{{ $question->number }}</td>
-                                                    <td>
-                                                        {{ $question->question_text }}
-                                                        <div class="small text-muted mt-1">
+                                                    <td class="text-center align-middle">1</td>
+                                                    <td class="align-middle">
+                                                        <span class="font-weight-bold text-dark d-block">📄 Pertanyaan bisa diliat dari File Soal</span>
+                                                        <small class="text-muted">Seluruh instruksi siklus akuntansi dikerjakan peserta melalui lembar kerja eksternal.</small>
+                                                    </td>
+                                                    <td class="align-middle">
+                                                        @if(!empty($uploadedFiles))
+                                                            <div class="font-weight-bold small text-secondary mb-2">📥 Klik untuk mengunduh jawaban peserta:</div>
+                                                            <div class="d-flex flex-column" style="gap: 8px;">
+                                                                @foreach($uploadedFiles as $file)
+                                                                    <a href="{{ asset($file['path']) }}" target="_blank"
+                                                                    class="btn btn-sm btn-white border text-left d-inline-flex align-items-center shadow-sm rounded p-2"
+                                                                    style="gap: 10px; width: max-content; color: #4e73df; font-size: 0.9rem;">
+                                                                        <span style="font-size: 1.1rem;">📊</span>
+                                                                        <span class="font-weight-bold" style="text-decoration: underline;">{{ $file['name'] }}</span>
+                                                                        <i class="fas fa-download text-muted ml-2"></i>
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        @else
+                                                            <span class="badge badge-danger p-2">❌ Kosong / Peserta tidak mengunggah file apa pun.</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+
+                                            @else
+                                                {{-- ======================================================== --}}
+                                                {{-- TAMPILAN DEFAULT UNTUK UJIAN DISC, MBTI, VAK, DLL        --}}
+                                                {{-- ======================================================== --}}
+                                                @foreach($session->exam->questions as $question)
+                                                    @php
+                                                        $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
+                                                        $data = $userAnswer ? $userAnswer->answers : null;
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="text-center">{{ $question->number }}</td>
+                                                        <td>
+                                                            {{ $question->question_text }}
                                                             <div class="small text-muted mt-2">
                                                                 @foreach($question->options as $key => $val)
                                                                     <div class="mb-1">
@@ -79,25 +115,22 @@
                                                                     </div>
                                                                 @endforeach
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        @if($data)
-                                                            {{-- Tampilkan jawaban yang ada --}}
-                                                            @if($session->exam->type == 'disc')
-                                                                <span class="badge badge-success">Most: {{ $data['most'] ?? '-' }}</span>
-                                                                <span class="badge badge-danger">Least: {{ $data['least'] ?? '-' }}</span>
+                                                        </td>
+                                                        <td>
+                                                            @if($data)
+                                                                @if($session->exam->type == 'disc')
+                                                                    <span class="badge badge-success">Most: {{ $data['most'] ?? '-' }}</span>
+                                                                    <span class="badge badge-danger">Least: {{ $data['least'] ?? '-' }}</span>
+                                                                @else
+                                                                    <span class="badge badge-primary">Pilihan: {{ $data['selected'] ?? '-' }}</span>
+                                                                @endif
                                                             @else
-                                                                <span class="badge badge-primary">Pilihan: {{ $data['selected'] ?? '-' }}</span>
+                                                                <span class="badge badge-secondary">Kosong atau Tidak terisi.</span>
                                                             @endif
-                                                        @else
-                                                            {{-- Jika waktu habis dan tidak terisi, tampilkan label ini --}}
-                                                            <span class="badge badge-secondary">Kosong atau Tidak terisi.</span>
-                                                            <!-- <div class="small text-muted italic">Peserta kehabisan waktu pada soal ini.</div> -->
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @endif
                                         </tbody>
                                     </table>
                                 </div>

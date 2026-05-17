@@ -95,6 +95,170 @@
                             </tbody>
                         </table>
 
+                    @elseif($exam->type == 'akuntansi_kasus')
+                        {{-- ======================================================== --}}
+                        {{-- UI PREMIUM STACKED & SMART PARSER FOR KASUS AKUNTANSI    --}}
+                        {{-- ======================================================== --}}
+                        <div class="p-4 bg-light text-dark">
+                            <div class="card border-0 shadow-sm bg-white" style="border-radius: 12px; border-top: 6px solid #1a73e8 !important;">
+                                <div class="card-body p-4 p-md-5">
+
+                                    @foreach($exam->questions as $q)
+                                        @php
+                                            $fullText = $q->question_text;
+
+                                            // 1. Potong bagian Instruksi Kerja / Tugas (Paling Bawah)
+                                            $instructionSplit = preg_split('/Tugas\s*[\/|:]\s*Instruksi Kerja:/i', $fullText);
+                                            $mainBody = $instructionSplit[0];
+                                            $instructionsText = $instructionSplit[1] ?? '';
+
+                                            // 2. Potong bagian Transaksi
+                                            $transactionSplit = preg_split('/Transaksi selama[^:]*:/i', $mainBody);
+                                            $upperBody = $transactionSplit[0];
+                                            $transactionsText = $transactionSplit[1] ?? '';
+
+                                            // 3. Potong Judul + Intro dari Tabel Saldo
+                                            $tableHeaderPattern = '/Nama Perkiraan\s*[\/|:]\s*Akun\s+Saldo Berjalan\s*\(Rp\)/i';
+                                            $tableSplit = preg_split($tableHeaderPattern, $upperBody);
+                                            $introText = $tableSplit[0] ?? '';
+                                            $tableRowsText = $tableSplit[1] ?? '';
+
+                                            // --- LOGIKA BARU: EKSTRAK JUDUL & PENGANTAR SECARA DINAMIS DARI PDF ---
+                                            $introLines = array_values(array_filter(array_map('trim', explode("\n", $introText))));
+                                            $dynamicTitle = $introLines[0] ?? 'SOAL KASUS AKUNTANSI';
+                                            $dynamicParagraph = implode(" ", array_slice($introLines, 1));
+
+                                            // --- PARSING TABEL SALDO ---
+                                            $tableRows = [];
+                                            foreach (explode("\n", $tableRowsText) as $line) {
+                                                $line = trim($line);
+                                                if (empty($line)) continue;
+                                                if (preg_match('/^(.*?)\s+(\(?\d+(?:\.\d+)*\)?)$/', $line, $matches)) {
+                                                    $tableRows[] = [
+                                                        'account' => trim($matches[1]),
+                                                        'balance' => trim($matches[2])
+                                                    ];
+                                                }
+                                            }
+
+                                            // --- PARSING DAFTAR TRANSAKSI ---
+                                            $transactions = [];
+                                            foreach (explode("\n", $transactionsText) as $line) {
+                                                $line = trim($line);
+                                                if (empty($line)) continue;
+                                                if (preg_match('/^\d+[\.\)]\s+(.*)$/', $line, $matches)) {
+                                                    $transactions[] = $matches[1];
+                                                } else if (!empty($transactions)) {
+                                                    $transactions[count($transactions) - 1] .= " " . $line;
+                                                }
+                                            }
+
+                                            // --- PARSING DAFTAR INSTRUKSI ---
+                                            $instructions = [];
+                                            foreach (explode("\n", $instructionsText) as $line) {
+                                                $line = trim($line);
+                                                if (empty($line)) continue;
+                                                if (preg_match('/^\d+[\.\)]\s+(.*)$/', $line, $matches)) {
+                                                    $instructions[] = $matches[1];
+                                                } else if (!empty($instructions)) {
+                                                    $instructions[count($instructions) - 1] .= " " . $line;
+                                                }
+                                            }
+                                        @endphp
+
+                                        @if(!empty($tableRows) && !empty($transactions))
+
+                                            <div class="border-bottom pb-2 mb-4">
+                                                <h4 class="font-weight-bold text-dark mb-1" style="letter-spacing: 0.5px;">
+                                                    {{ $dynamicTitle }}
+                                                </h4>
+                                                <p class="text-secondary mb-0">Mata Ujian: {{ $exam->name }}</p>
+                                            </div>
+
+                                            <p class="text-dark mb-4" style="font-size: 1.05rem; line-height: 1.6;">
+                                                {{ $dynamicParagraph }}
+                                            </p>
+
+                                            <div class="table-responsive mb-4 shadow-sm rounded border">
+                                                <table class="table table-bordered table-hover mb-0" style="font-size: 1rem;">
+                                                    <thead class="bg-light text-dark font-weight-bold">
+                                                        <tr>
+                                                            <th style="width: 60%;" class="py-3 px-4">Nama Perkiraan / Akun</th>
+                                                            <th style="width: 40%;" class="py-3 px-4 text-left">Saldo Berjalan (Rp)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($tableRows as $row)
+                                                            <tr>
+                                                                <td class="py-2.5 px-4 text-secondary font-weight-normal">{{ $row['account'] }}</td>
+                                                                <td class="py-2.5 px-4 text-dark font-weight-bold text-left">{{ $row['balance'] }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <h6 class="font-weight-bold text-dark mb-3" style="font-size: 1.05rem;">Transaksi selama periode ini:</h6>
+                                            <ol class="text-dark pl-4 mb-5" style="font-size: 1rem; line-height: 1.85;">
+                                                @foreach($transactions as $tx)
+                                                    <li class="mb-2 pl-2 text-secondary font-weight-normal">
+                                                        <span class="text-dark">{{ $tx }}</span>
+                                                    </li>
+                                                @endforeach
+                                            </ol>
+
+                                            <div class="p-4 rounded border-success" style="background-color: #f4faf6; border: 1px solid #c3e6cb !important; border-left: 5px solid #28a745 !important;">
+                                                <h6 class="font-weight-bold text-success mb-3" style="font-size: 1.05rem;">
+                                                    <i class="fas fa-clipboard-list mr-2"></i>Tugas / Instruksi Kerja:
+                                                </h6>
+                                                <ol class="text-dark pl-4 mb-0" style="font-size: 0.95rem; line-height: 1.75;">
+                                                    @foreach($instructions as $inst)
+                                                        <li class="mb-2 text-success font-weight-bold">
+                                                            <span class="text-dark font-weight-normal">{{ $inst }}</span>
+                                                        </li>
+                                                    @endforeach
+                                                </ol>
+                                            </div>
+
+                                        @else
+                                            <div class="text-dark p-4 bg-light border rounded" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-line;">
+                                                {{ $fullText }}
+                                            </div>
+                                        @endif
+
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                                <div class="card-body p-4">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-7 text-center text-lg-left d-md-flex align-items-center mb-3 mb-lg-0">
+                                            <div class="text-primary mr-3 mb-2 mb-md-0">
+                                                <i class="fas fa-folder-open fa-3x"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="font-weight-bold mb-1 text-dark">Lembar Kerja Jawaban Peserta</h5>
+                                                <p class="small text-muted mb-0">Anda dapat mengunggah **lebih dari 1 file** (Excel, PDF, Word). File akan langsung tersimpan otomatis.</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-5">
+                                            <div class="custom-file shadow-sm mb-2">
+                                                <input type="file" class="custom-file-input" id="answer-file-input" accept=".xlsx,.xls,.pdf,.doc,.docx" multiple>
+                                                <label class="custom-file-label text-left font-weight-normal" for="answer-file-input">Pilih satu atau beberapa file...</label>
+                                            </div>
+                                            <div id="upload-alert" class="alert small p-2 text-center mb-0" style="display: none; border-radius: 6px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div id="uploaded-files-box" class="mt-3 p-3 bg-light rounded border" style="display: none;">
+                                        <h6 class="small font-weight-bold text-secondary mb-2"><i class="fas fa-paperclip mr-1"></i> File Terunggah:</h6>
+                                        <div id="uploaded-files-list" class="d-flex flex-wrap" style="gap: 10px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     {{-- ========================================== --}}
                     {{-- UI STANDAR UNTUK MBTI, VAK, EPPS, DLL (DARI DB) --}}
                     {{-- ========================================== --}}
@@ -307,6 +471,149 @@
         }
 
 
+        const isKasus = "{{ $exam->type }}" === 'akuntansi_kasus';
+            let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
+
+            if (isKasus) {
+                const fileInput = document.getElementById('answer-file-input');
+                const uploadAlert = document.getElementById('upload-alert');
+                const filesBox = document.getElementById('uploaded-files-box');
+                const filesList = document.getElementById('uploaded-files-list');
+                const fileLabel = document.querySelector('.custom-file-label');
+
+                // 1. FUNGSI UNTUK MERENDER BADGE FILE + TOMBOL CANCEL
+                function renderFileList(files) {
+                    if (!files || files.length === 0) {
+                        filesBox.style.display = 'none';
+                        fileLabel.innerHTML = "Pilih satu atau beberapa file...";
+                        return;
+                    }
+                    filesBox.style.display = 'block';
+                    filesList.innerHTML = '';
+
+                    files.forEach(file => {
+                        filesList.innerHTML += `
+                            <div class="badge badge-white border text-dark p-2 shadow-sm d-flex align-items-center rounded" style="font-size: 0.85rem; gap: 10px;">
+                                <span>📄</span>
+                                <span class="font-weight-normal">${file.name}</span>
+
+                                <button type="button" class="btn-delete-file" data-path="${file.path}"
+                                        style="border: none; background: none; color: #dc3545; font-size: 1.2rem; line-height: 1; padding: 0 0 2px 0; margin-left: 5px; cursor: pointer; font-weight: bold;"
+                                        title="Batalkan file ini">
+                                    &times;
+                                </button>
+                            </div>
+                        `;
+                    });
+
+                    // Daftarkan kembali event klik hapus untuk tombol baru
+                    attachDeleteEvents();
+                }
+
+                // 2. FUNGSI AJAX UNTUK MENGHAPUS/CANCEL FILE
+                function attachDeleteEvents() {
+                    const deleteButtons = document.querySelectorAll('.btn-delete-file');
+                    deleteButtons.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const filePath = this.dataset.path;
+
+                            Swal.fire({
+                                title: 'Batalkan file ini?',
+                                text: "File akan dihapus dari server lembar jawaban Anda.",
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                cancelButtonColor: '#6c757d',
+                                confirmButtonText: 'Ya, Hapus!',
+                                cancelButtonText: 'Batal'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    let formData = new FormData();
+                                    formData.append('exam_session_id', examSessionId);
+                                    formData.append('file_path', filePath);
+
+                                    fetch("{{ route('exam.delete-file') }}", {
+                                        method: 'POST',
+                                        headers: { 'X-CSRF-TOKEN': csrfToken },
+                                        body: formData
+                                    })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            // Ganti array global dengan sisa file dari server
+                                            uploadedFilesArray = data.files;
+                                            renderFileList(uploadedFilesArray);
+
+                                            if(uploadedFilesArray.length > 0) {
+                                                fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
+                                            }
+
+                                            Swal.fire('Dibatalkan!', 'File berhasil dihapus.', 'success');
+                                        } else {
+                                            Swal.fire('Gagal!', data.message, 'error');
+                                        }
+                                    })
+                                    .catch(err => console.error("Gagal menghapus berkas:", err));
+                                }
+                            });
+                        });
+                    });
+                }
+
+                // Render pertama kali saat halaman dibuka
+                renderFileList(uploadedFilesArray);
+
+                // 3. LOGIKA UPLOAD (Sudah Diperbaiki Sistem Error Handling & Header)
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length === 0) return;
+
+                    let formData = new FormData();
+                    formData.append('exam_session_id', examSessionId);
+                    for (let i = 0; i < this.files.length; i++) {
+                        formData.append('answer_files[]', this.files[i]);
+                    }
+
+                    uploadAlert.style.display = 'block';
+                    uploadAlert.className = 'alert alert-info small p-2';
+                    uploadAlert.innerHTML = '⏳ Sedang mengunggah berkas...';
+
+                    fetch("{{ route('exam.upload-file') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json' // WAKIB: Biar Laravel return JSON kalau error, bukan redirect HTML
+                        },
+                        body: formData
+                    })
+                    .then(async res => {
+                        // Jika server merespon dengan status error (422, 500, dll)
+                        if (!res.ok) {
+                            const errorData = await res.json();
+                            throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            uploadAlert.className = 'alert alert-success small p-2';
+                            uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
+                            uploadedFilesArray = data.files;
+                            renderFileList(uploadedFilesArray);
+                            fileLabel.innerHTML = `${data.files.length} file terpilih...`;
+                        } else {
+                            uploadAlert.className = 'alert alert-danger small p-2';
+                            uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
+                        }
+                    })
+                    .catch(err => {
+                        // Tangkap error di sini agar alert tidak stuck loading terus
+                        uploadAlert.className = 'alert alert-danger small p-2';
+                        uploadAlert.innerHTML = '❌ ' + err.message;
+                        console.error(err);
+                    });
+                });
+            }
+
         // ==========================================
         // 5. LOGIKA VALIDASI & SUBMIT
         // ==========================================
@@ -314,6 +621,14 @@
 
         // Fungsi untuk mengecek apakah semua soal sudah terisi
         function checkCompletion() {
+            if (isKasus) {
+                // Jika semua file dihapus (kosong), gembok submit akan otomatis aktif kembali
+                if (!uploadedFilesArray || uploadedFilesArray.length === 0) {
+                    return ['Anda belum mengunggah file lembar jawaban apa pun'];
+                }
+                return [];
+            }
+
             let unanswered = [];
             let isDisc = "{{ $exam->type }}" === 'disc';
 

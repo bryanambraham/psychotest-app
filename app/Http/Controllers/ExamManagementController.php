@@ -28,13 +28,12 @@ class ExamManagementController extends Controller
     {
         $request->validate([
             'name'             => 'required|string|max:255',
-            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five',
+            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,akuntansi,akuntansi_kasus',
             'duration_minutes' => 'required|integer|min:1',
             'description'      => 'nullable|string',
             'question_file'    => 'required|mimes:pdf|max:5000',
         ]);
 
-        // 1. Simpan Data Ujian ke Database
         $exam = Exam::create([
             'name'             => $request->name,
             'type'             => $request->type,
@@ -42,7 +41,6 @@ class ExamManagementController extends Controller
             'description'      => $request->description,
         ]);
 
-        // 2. Kirim PDF ke Python Service
         if ($request->hasFile('question_file')) {
             $file = $request->file('question_file');
 
@@ -55,30 +53,27 @@ class ExamManagementController extends Controller
 
                 if ($response->successful()) {
                     $result    = $response->json();
-                    $pdfType   = $result['type'] ?? 'vak';   // 'disc' atau 'vak'
+                    $pdfType   = $result['type'] ?? 'pilgan';
                     $questions = $result['data'] ?? [];
 
-                    // 3. Simpan tiap soal sesuai format PDF-nya
                     foreach ($questions as $index => $q) {
-
                         if ($pdfType === 'disc') {
-                            // Format DISC: { "box": 1, "options": { "A": "...", "B": "...", ... } }
                             $boxNumber    = $q['box'] ?? ($index + 1);
                             $questionText = "Box " . $boxNumber;
                             $options      = $q['options'] ?? [];
-
+                            $number       = $boxNumber;
                         } else {
-                            // Format VAK: { "question": "1. Ketika ...", "options": { "A": "...", ... } }
                             $questionText = $q['question'] ?? '';
-                            $number       = filter_var($questionText, FILTER_SANITIZE_NUMBER_INT) ?: ($index + 1);
+                            // Pengambilan nomor soal yang aman dari angka di dalam teks soal
+                            $number = preg_match('/^(\d+)/', trim($questionText), $matches) ? $matches[1] : ($index + 1);
                             $options      = $q['options'] ?? [];
                         }
 
                         Question::create([
                             'exam_id'       => $exam->id,
-                            'number'        => $pdfType === 'disc' ? $boxNumber : (int) $number,
+                            'number'        => (int) $number,
                             'question_text' => $questionText,
-                            'options'       => $options,   // cast ke JSON otomatis
+                            'options'       => $options,
                         ]);
                     }
 
@@ -86,18 +81,15 @@ class ExamManagementController extends Controller
                         ->with('success', "Ujian berhasil dibuat dan " . count($questions) . " soal otomatis diimpor.");
 
                 } else {
-                    return redirect()->back()
-                        ->with('error', 'Python gagal memproses PDF. Pastikan format PDF benar.');
+                    return redirect()->back()->with('error', 'Python gagal memproses PDF. Pastikan format PDF benar.');
                 }
 
             } catch (\Exception $e) {
-                return redirect()->back()
-                    ->with('error', 'Gagal terhubung ke Python Service: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Gagal terhubung ke Python Service: ' . $e->getMessage());
             }
         }
 
-        return redirect()->route('manage-exams.index')
-            ->with('success', 'Ujian berhasil ditambahkan tanpa soal.');
+        return redirect()->route('manage-exams.index')->with('success', 'Ujian berhasil ditambahkan tanpa soal.');
     }
 
     public function edit(Request $request, $id)
@@ -106,10 +98,8 @@ class ExamManagementController extends Controller
         $numbers = ['20', '40', '60', '80', '100'];
         $number_paginate = in_array($request->number, $numbers) ? $request->number : 20;
 
-        // Mulai query dari model User
         $query = User::query();
 
-        // Jika ada pencarian
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -118,14 +108,13 @@ class ExamManagementController extends Controller
             });
         }
 
-        // Ambil data user (gunakan paginate agar tidak berat jika user banyak)
         $users = $query->paginate($number_paginate);
         $users->appends($request->all());
 
-        // Ambil ID user yang sudah terdaftar
         $assignedUserIds = $exam->users->pluck('id')->toArray();
 
-        return view('admin.exams.peserta', compact('exam', 'users', 'assignedUserIds', 'number_paginate', 'number'));
+        // Variabel 'number' yang tidak ada sudah dihapus dari compact()
+        return view('admin.exams.peserta', compact('exam', 'users', 'assignedUserIds', 'number_paginate'));
     }
 
     public function update(Request $request, $id)

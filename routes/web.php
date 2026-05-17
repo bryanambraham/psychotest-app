@@ -37,6 +37,9 @@ Route::middleware(['auth'])->group(function () {
     // Menampilkan halaman ujian & timer
     Route::get('/exam/{exam_id}', 'ExamController@show')->name('exam.show');
 
+    Route::post('/exam/upload-file-answer', 'ExamController@uploadFileAnswer')->name('exam.upload-file');
+    Route::post('/exam/delete-file-answer', 'ExamController@deleteFileAnswer')->name('exam.delete-file');
+
     // Auto-save jawaban via AJAX
     Route::post('/exam/answer', 'ExamController@storeAnswer')->name('exam.answer');
 
@@ -70,4 +73,5 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/exam-results', 'ExamManagementController@resultsIndex')->name('manage-exams.results')->middleware('role:admin');
     Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')->name('manage-exams.results.show')->middleware('role:admin');
+
 });

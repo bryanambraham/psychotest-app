@@ -8,6 +8,7 @@ use App\ExamSession;
 use App\UserAnswer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class ExamController extends Controller
 {
@@ -68,6 +69,98 @@ class ExamController extends Controller
         );
 
         return response()->json(['status' => 'success']);
+    }
+
+
+    public function uploadFileAnswer(Request $request)
+    {
+        $request->validate([
+            'exam_session_id' => 'required|exists:exam_sessions,id',
+            'answer_files'    => 'required|array', // Validasi input harus berupa array file
+            'answer_files.*'  => 'required|mimes:xlsx,xls,pdf,doc,docx|max:10000', // Maks 10MB per file
+        ]);
+
+        $session = ExamSession::findOrFail($request->exam_session_id);
+
+        // Ambil daftar berkas lama di DB agar tidak terhapus saat peserta mencicil upload berkas baru
+        $currentFiles = json_decode($session->answer_file, true) ?: [];
+
+        $relativeFolder = 'uploads/answers/' . $session->id;
+        $destinationPath = public_path($relativeFolder);
+
+        if (!File::exists($destinationPath)) {
+            File::makeDirectory($destinationPath, 0755, true);
+        }
+
+        if ($request->hasFile('answer_files')) {
+            foreach ($request->file('answer_files') as $file) {
+                // Berikan token uniqid agar nama file tidak bentrok jika mengunggah file bernama sama
+                $filename = 'answer_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($destinationPath, $filename);
+
+                $dbPath = $relativeFolder . '/' . $filename;
+
+                // Masukkan data struktur file ke dalam list
+                $currentFiles[] = [
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $dbPath
+                ];
+            }
+        }
+
+        // Update kolom dengan bentuk JSON Array stringified
+        $session->update([
+            'answer_file' => json_encode($currentFiles)
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berkas berhasil disimpan!',
+            'files' => $currentFiles
+        ]);
+    }
+
+    public function deleteFileAnswer(Request $request)
+    {
+        $request->validate([
+            'exam_session_id' => 'required|exists:exam_sessions,id',
+            'file_path'       => 'required|string', // Path file relatif yang mau didelete
+        ]);
+
+        $session = ExamSession::findOrFail($request->exam_session_id);
+
+        // Ambil daftar file JSON saat ini
+        $currentFiles = json_decode($session->answer_file, true) ?: [];
+
+        $updatedFiles = [];
+        $fileDeleted = false;
+
+        foreach ($currentFiles as $file) {
+            // Jika path-nya cocok, hapus fisik filenya dari folder public
+            if ($file['path'] === $request->file_path) {
+                $absolutePath = public_path($file['path']);
+                if (File::exists($absolutePath)) {
+                    File::delete($absolutePath);
+                }
+                $fileDeleted = true;
+            } else {
+                // Jika tidak cocok, amankan filenya ke dalam list update
+                $updatedFiles[] = $file;
+            }
+        }
+
+        if ($fileDeleted) {
+            // Update database dengan array yang baru (jika kosong jadikan null)
+            $session->update([
+                'answer_file' => empty($updatedFiles) ? null : json_encode(array_values($updatedFiles))
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Berkas berhasil dibatalkan!',
+            'files' => array_values($updatedFiles) // Kirim sisa file terbaru ke frontend
+        ]);
     }
 
     public function finish($session_id)
