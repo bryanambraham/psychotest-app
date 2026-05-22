@@ -450,7 +450,7 @@
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
             let base64Image = canvas.toDataURL('image/jpeg', 0.6);
 
-            fetch('/proctoring/snap', {
+            fetch("{{ url('/proctoring/snap') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -704,7 +704,9 @@
             takeSnapshotAndSend();
 
             setTimeout(() => {
-                window.location.href = "/exam/finish/" + examSessionId;
+                // Trik jitu: Render URL dasar dari PHP, lalu ganti teks 'PLACEHOLDER' dengan variable JavaScript
+                let url = "{{ route('exam.finish', ['session_id' => 'PLACEHOLDER']) }}";
+                window.location.href = url.replace('PLACEHOLDER', examSessionId);
             }, 500);
         }
         });
