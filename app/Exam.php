@@ -3,11 +3,26 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Exam extends Model
 {
     //
     protected $guarded = ['id'];
+
+    protected static function booted()
+    {
+        static::creating(function ($exam) {
+            if (empty($exam->public_token)) {
+                $exam->public_token = Str::random(32);
+            }
+        });
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'public_token';
+    }
 
     public function examSessions()
     {
@@ -28,5 +43,5 @@ class Exam extends Model
     {
         return $this->hasMany(Question::class, 'exam_id');
     }
-    
+
 }

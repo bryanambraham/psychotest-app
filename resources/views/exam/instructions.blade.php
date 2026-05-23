@@ -45,7 +45,7 @@
                         </ul>
                     </div>
 
-                    <form method="POST" action="{{ route('exam.begin', $exam->id) }}" class="d-flex justify-content-end mt-4">
+                    <form method="POST" action="{{ route('exam.begin', $exam) }}" class="d-flex justify-content-end mt-4">
                         @csrf
                         <button type="submit" class="btn btn-success px-5">Mulai Ujian</button>
                     </form>

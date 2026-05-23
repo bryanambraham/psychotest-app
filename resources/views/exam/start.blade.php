@@ -54,7 +54,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('exam.participant.store', $exam->id) }}">
+                    <form method="POST" action="{{ route('exam.participant.store', $exam) }}">
                         @csrf
                         <div class="form-row">
                             <div class="form-group col-md-6">

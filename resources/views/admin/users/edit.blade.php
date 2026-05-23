@@ -24,6 +24,11 @@
                         </div>
 
                         <div class="form-group">
+                            <label>Phone</label>
+                            <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}" required>
+                        </div>
+
+                        <div class="form-group">
                             <label>Role</label>
                             <select name="role" class="form-control">
                                 <option value="user" {{ $user->role == 'user' ? 'selected' : '' }}>Peserta (User)</option>

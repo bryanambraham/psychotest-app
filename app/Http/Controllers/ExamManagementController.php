@@ -177,4 +177,33 @@ class ExamManagementController extends Controller
 
         return view('admin.exams.results_show', compact('session'));
     }
+
+    // Menghasilkan dan mengembalikan QR code PNG berisi link publik ujian
+    public function downloadQr($id)
+    {
+        $exam = Exam::findOrFail($id);
+
+        // Gunakan link publik untuk peserta (route model binding by token)
+        $publicLink = route('exam.show', $exam);
+
+        // Gunakan QuickChart API untuk membuat QR sederhana tanpa dependensi tambahan
+        $qrUrl = 'https://quickchart.io/qr?text=' . urlencode($publicLink) . '&size=400';
+
+        try {
+            $response = Http::get($qrUrl);
+            if ($response->successful()) {
+                $contents = $response->body();
+                $filename = 'exam_qr_' . $exam->id . '.png';
+
+                return response($contents, 200)
+                    ->header('Content-Type', 'image/png')
+                    ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            }
+        } catch (\Exception $e) {
+            // Jika gagal, redirect kembali dengan pesan error
+            return redirect()->back()->with('error', 'Gagal membuat QR: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('error', 'Gagal membuat QR untuk ujian ini.');
+    }
 }

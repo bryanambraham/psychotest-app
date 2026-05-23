@@ -14,9 +14,8 @@ use Illuminate\Support\Str;
 
 class ExamController extends Controller
 {
-    public function show($exam_id)
+    public function show(Exam $exam)
     {
-        $exam = Exam::findOrFail($exam_id);
         $activeSessionId = session()->get('active_exam_session.' . $exam->id);
 
         if ($activeSessionId) {
@@ -24,7 +23,7 @@ class ExamController extends Controller
 
             if ($session && $session->status === 'in_progress') {
                 return redirect()->route('exam.take', [
-                    'exam_id' => $exam->id,
+                    'exam' => $exam,
                     'session_id' => $session->id,
                 ]);
             }
@@ -35,10 +34,8 @@ class ExamController extends Controller
         return view('exam.start', compact('exam', 'participant'));
     }
 
-    public function storeParticipant(Request $request, $exam_id)
+    public function storeParticipant(Request $request, Exam $exam)
     {
-        $exam = Exam::findOrFail($exam_id);
-
         $request->validate([
             'name'  => 'required|string|max:255',
             'phone' => 'required|string|max:30',
@@ -51,29 +48,28 @@ class ExamController extends Controller
             'email' => trim(strtolower($request->email)),
         ]);
 
-        return redirect()->route('exam.instructions', $exam->id);
+        return redirect()->route('exam.instructions', $exam);
     }
 
-    public function instructions($exam_id)
+    public function instructions(Exam $exam)
     {
-        $exam = Exam::findOrFail($exam_id);
         $participant = session()->get('exam_candidate.' . $exam->id);
 
         if (!$participant) {
-            return redirect()->route('exam.show', $exam->id)
+            return redirect()->route('exam.show', $exam)
                 ->with('error', 'Silakan isi data peserta terlebih dahulu.');
         }
 
         return view('exam.instructions', compact('exam', 'participant'));
     }
 
-    public function begin(Request $request, $exam_id)
+    public function begin(Request $request, Exam $exam)
     {
-        $exam = Exam::with('questions')->findOrFail($exam_id);
+        $exam->load('questions');
         $participant = session()->get('exam_candidate.' . $exam->id);
 
         if (!$participant) {
-            return redirect()->route('exam.show', $exam->id)
+            return redirect()->route('exam.show', $exam)
                 ->with('error', 'Silakan isi data peserta terlebih dahulu.');
         }
 
@@ -89,12 +85,12 @@ class ExamController extends Controller
                     session()->put('active_exam_session.' . $exam->id, $existingSession->id);
 
                     return redirect()->route('exam.take', [
-                        'exam_id' => $exam->id,
+                        'exam' => $exam,
                         'session_id' => $existingSession->id,
                     ]);
                 }
 
-                return redirect()->route('exam.instructions', $exam->id)
+                return redirect()->route('exam.instructions', $exam)
                     ->with('error', 'Email ini sudah pernah dipakai untuk mengerjakan ujian ini. Satu email hanya bisa mengerjakan satu kali.');
             }
         }
@@ -133,14 +129,13 @@ class ExamController extends Controller
         session()->forget('exam_candidate.' . $exam->id);
 
         return redirect()->route('exam.take', [
-            'exam_id' => $exam->id,
+            'exam' => $exam,
             'session_id' => $session->id,
         ]);
     }
 
-    public function take($exam_id, $session_id)
+    public function take(Exam $exam, $session_id)
     {
-        $exam = Exam::with('questions')->findOrFail($exam_id);
         $session = ExamSession::with(['user', 'exam.questions'])->findOrFail($session_id);
 
         if ((int) $session->exam_id !== (int) $exam->id) {
@@ -149,7 +144,7 @@ class ExamController extends Controller
 
         $activeSessionId = session()->get('active_exam_session.' . $exam->id);
         if ((int) $activeSessionId !== (int) $session->id) {
-            return redirect()->route('exam.show', $exam->id)
+            return redirect()->route('exam.show', $exam)
                 ->with('error', 'Silakan mulai ujian dari halaman awal terlebih dahulu.');
         }
 

@@ -28,9 +28,15 @@
                     <td class="align-middle"><span class="badge badge-info">{{ strtoupper($exam->type) }}</span></td>
                     <td class="align-middle">{{ $exam->duration_minutes }} Menit</td>
                     <td class="text-center">
-                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-sm btn-outline-success">Preview</a>
+                        <a href="{{ route('exam.show', $exam) }}" class="btn btn-sm btn-outline-success">Preview</a>
 
                         <a href="{{ route('manage-exams.edit', $exam->id) }}" class="btn btn-sm btn-primary">Kelola</a>
+
+                        <a href="{{ route('manage-exams.qr', $exam->id) }}" class="btn btn-sm btn-outline-secondary" title="Download QR">QR</a>
+
+                        <button onclick="navigator.clipboard.writeText('{{ route('exam.show', $exam) }}'); alert('Link berhasil disalin!')" class="btn btn-sm btn-outline-info">
+                            Copy Link
+                        </button>
                     </td>
                 </tr>
                 @endforeach

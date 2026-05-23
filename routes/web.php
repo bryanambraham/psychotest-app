@@ -28,10 +28,10 @@ Route::get('/home', 'HomeController@index')->name('home');
 // RUTE UJIAN PSIKOTES & PROCTORING
 // ==========================================
 // Sisi Peserta (Pengerjaan Ujian) - publik tanpa login
-Route::post('/exam/{exam_id}/participant', 'ExamController@storeParticipant')->name('exam.participant.store');
-Route::get('/exam/{exam_id}/instructions', 'ExamController@instructions')->name('exam.instructions');
-Route::post('/exam/{exam_id}/begin', 'ExamController@begin')->name('exam.begin');
-Route::get('/exam/{exam_id}/take/{session_id}', 'ExamController@take')->name('exam.take');
+Route::post('/exam/{exam}/participant', 'ExamController@storeParticipant')->name('exam.participant.store');
+Route::get('/exam/{exam}/instructions', 'ExamController@instructions')->name('exam.instructions');
+Route::post('/exam/{exam}/begin', 'ExamController@begin')->name('exam.begin');
+Route::get('/exam/{exam}/take/{session_id}', 'ExamController@take')->name('exam.take');
 
 Route::post('/exam/upload-file-answer', 'ExamController@uploadFileAnswer')->name('exam.upload-file');
 Route::post('/exam/delete-file-answer', 'ExamController@deleteFileAnswer')->name('exam.delete-file');
@@ -46,7 +46,7 @@ Route::post('/proctoring/snap', 'ProctoringController@storeSnapshot')->name('pro
 Route::get('/exam/finish/{session_id}', 'ExamController@finish')->name('exam.finish');
 
 // Menampilkan halaman awal pengisian data peserta
-Route::get('/exam/{exam_id}', 'ExamController@show')->name('exam.show');
+Route::get('/exam/{exam}', 'ExamController@show')->name('exam.show');
 
 // Grup Rute yang memerlukan Login
 Route::middleware(['auth'])->group(function () {
@@ -75,5 +75,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/exam-results', 'ExamManagementController@resultsIndex')->name('manage-exams.results')->middleware('role:admin');
     Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')->name('manage-exams.results.show')->middleware('role:admin');
+
+    // Download QR untuk setiap ujian (menghasilkan PNG yang bisa diunduh)
+    Route::get('/manage-exams/{id}/qr', 'ExamManagementController@downloadQr')->name('manage-exams.qr')->middleware('role:admin');
 
 });

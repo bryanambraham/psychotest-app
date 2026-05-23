@@ -71,7 +71,7 @@
                                     @if($status == 'completed' || $status == 'timeout')
                                         <button class="btn btn-secondary btn-sm" disabled>Sudah Selesai</button>
                                     @else
-                                        <a href="{{ route('exam.show', $exam->id) }}" class="btn btn-primary btn-sm px-4 shadow-sm">
+                                        <a href="{{ route('exam.show', $exam) }}" class="btn btn-primary btn-sm px-4 shadow-sm">
                                             {{ $status == 'in_progress' ? 'Lanjutkan' : 'Mulai Ujian' }}
                                         </a>
                                     @endif
