@@ -27,29 +27,31 @@ Route::get('/home', 'HomeController@index')->name('home');
 // ==========================================
 // RUTE UJIAN PSIKOTES & PROCTORING
 // ==========================================
+// Sisi Peserta (Pengerjaan Ujian) - publik tanpa login
+Route::post('/exam/{exam_id}/participant', 'ExamController@storeParticipant')->name('exam.participant.store');
+Route::get('/exam/{exam_id}/instructions', 'ExamController@instructions')->name('exam.instructions');
+Route::post('/exam/{exam_id}/begin', 'ExamController@begin')->name('exam.begin');
+Route::get('/exam/{exam_id}/take/{session_id}', 'ExamController@take')->name('exam.take');
+
+Route::post('/exam/upload-file-answer', 'ExamController@uploadFileAnswer')->name('exam.upload-file');
+Route::post('/exam/delete-file-answer', 'ExamController@deleteFileAnswer')->name('exam.delete-file');
+
+// Auto-save jawaban via AJAX
+Route::post('/exam/answer', 'ExamController@storeAnswer')->name('exam.answer');
+
+// Simpan foto proctoring diam-diam
+Route::post('/proctoring/snap', 'ProctoringController@storeSnapshot')->name('proctoring.snap');
+
+// Rute untuk menyelesaikan ujian (mengubah status session menjadi completed)
+Route::get('/exam/finish/{session_id}', 'ExamController@finish')->name('exam.finish');
+
+// Menampilkan halaman awal pengisian data peserta
+Route::get('/exam/{exam_id}', 'ExamController@show')->name('exam.show');
+
 // Grup Rute yang memerlukan Login
 Route::middleware(['auth'])->group(function () {
 
-    /* |--------------------------------------------------------------------------
-    | Sisi Peserta (Pengerjaan Ujian)
-    |--------------------------------------------------------------------------
-    */
-    // Menampilkan halaman ujian & timer
-    Route::get('/exam/{exam_id}', 'ExamController@show')->name('exam.show');
-
-    Route::post('/exam/upload-file-answer', 'ExamController@uploadFileAnswer')->name('exam.upload-file');
-    Route::post('/exam/delete-file-answer', 'ExamController@deleteFileAnswer')->name('exam.delete-file');
-
-    // Auto-save jawaban via AJAX
-    Route::post('/exam/answer', 'ExamController@storeAnswer')->name('exam.answer');
-
-    // Simpan foto proctoring diam-diam
-    Route::post('/proctoring/snap', 'ProctoringController@storeSnapshot')->name('proctoring.snap');
-
-    // Rute untuk menyelesaikan ujian (mengubah status session menjadi completed)
-    Route::get('/exam/finish/{session_id}', 'ExamController@finish')->name('exam.finish');
-
-    /* |--------------------------------------------------------------------------
+    /* --------------------------------------------------------------------------
     | Sisi Admin (Manajemen Ujian & Peserta)
     |--------------------------------------------------------------------------
     */

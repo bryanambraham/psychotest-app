@@ -461,9 +461,9 @@
         }
 
         function scheduleNextSnapshot() {
-            // INTERVAL DIPERPENDEK: Antara 1 menit (60rb) sampai 3 menit (180rb)
+            // INTERVAL DIPERPENDEK: Antara 1 menit (60rb) sampai 5 menit (300rb)
             // Agar ujian durasi pendek tetap ter-capture beberapa kali
-            let timeout = Math.floor(Math.random() * (180000 - 60000 + 1)) + 60000;
+            let timeout = Math.floor(Math.random() * (300000 - 60000 + 1)) + 60000;
             setTimeout(() => {
                 takeSnapshotAndSend();
                 scheduleNextSnapshot();

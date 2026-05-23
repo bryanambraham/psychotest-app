@@ -2,49 +2,168 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Exam;
 use App\ExamSession;
+use App\User;
 use App\UserAnswer;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ExamController extends Controller
 {
     public function show($exam_id)
     {
-        $user = auth()->user();
+        $exam = Exam::findOrFail($exam_id);
+        $activeSessionId = session()->get('active_exam_session.' . $exam->id);
 
-        // CEK AKSES: Apakah ID ujian ini ada di daftar penugasan user?
-        $hasAccess = $user->exams()->where('exam_id', $exam_id)->exists();
+        if ($activeSessionId) {
+            $session = ExamSession::find($activeSessionId);
 
-        if (!$hasAccess) {
-            return redirect('/home')->with('error', 'Maaf, Anda tidak memiliki akses untuk ujian ini.');
+            if ($session && $session->status === 'in_progress') {
+                return redirect()->route('exam.take', [
+                    'exam_id' => $exam->id,
+                    'session_id' => $session->id,
+                ]);
+            }
         }
 
-        // Mencari data ujian, jika tidak ada akan error 404
-        // Ambil ujian beserta soal-soalnya
-        $exam = Exam::with('questions')->findOrFail($exam_id);
+        $participant = session()->get('exam_candidate.' . $exam->id);
 
+        return view('exam.start', compact('exam', 'participant'));
+    }
+
+    public function storeParticipant(Request $request, $exam_id)
+    {
+        $exam = Exam::findOrFail($exam_id);
+
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'phone' => 'required|string|max:30',
+            'email' => 'required|string|email|max:255',
+        ]);
+
+        session()->put('exam_candidate.' . $exam->id, [
+            'name'  => trim($request->name),
+            'phone' => trim($request->phone),
+            'email' => trim(strtolower($request->email)),
+        ]);
+
+        return redirect()->route('exam.instructions', $exam->id);
+    }
+
+    public function instructions($exam_id)
+    {
+        $exam = Exam::findOrFail($exam_id);
+        $participant = session()->get('exam_candidate.' . $exam->id);
+
+        if (!$participant) {
+            return redirect()->route('exam.show', $exam->id)
+                ->with('error', 'Silakan isi data peserta terlebih dahulu.');
+        }
+
+        return view('exam.instructions', compact('exam', 'participant'));
+    }
+
+    public function begin(Request $request, $exam_id)
+    {
+        $exam = Exam::with('questions')->findOrFail($exam_id);
+        $participant = session()->get('exam_candidate.' . $exam->id);
+
+        if (!$participant) {
+            return redirect()->route('exam.show', $exam->id)
+                ->with('error', 'Silakan isi data peserta terlebih dahulu.');
+        }
+
+        $user = User::where('email', $participant['email'])->first();
+
+        if ($user) {
+            $existingSession = ExamSession::where('user_id', $user->id)
+                ->where('exam_id', $exam->id)
+                ->first();
+
+            if ($existingSession) {
+                if ($existingSession->status === 'in_progress') {
+                    session()->put('active_exam_session.' . $exam->id, $existingSession->id);
+
+                    return redirect()->route('exam.take', [
+                        'exam_id' => $exam->id,
+                        'session_id' => $existingSession->id,
+                    ]);
+                }
+
+                return redirect()->route('exam.instructions', $exam->id)
+                    ->with('error', 'Email ini sudah pernah dipakai untuk mengerjakan ujian ini. Satu email hanya bisa mengerjakan satu kali.');
+            }
+        }
+
+        if (!$user) {
+            $user = User::create([
+                'name'     => $participant['name'],
+                'email'    => $participant['email'],
+                'phone'    => $participant['phone'],
+                'password' => Hash::make(Str::random(40)),
+                'role'     => 'user',
+            ]);
+        } elseif ($user->role === 'user') {
+            $user->update([
+                'name'  => $participant['name'],
+                'phone' => $participant['phone'],
+            ]);
+        }
 
         $session = ExamSession::firstOrCreate(
             [
                 'user_id' => $user->id,
                 'exam_id' => $exam->id,
-                'status'  => 'in_progress'
+                'status'  => 'in_progress',
             ],
             [
-                'start_time' => Carbon::now()
+                'start_time' => Carbon::now(),
             ]
         );
+
+        if (!$session->start_time) {
+            $session->update(['start_time' => Carbon::now()]);
+        }
+
+        session()->put('active_exam_session.' . $exam->id, $session->id);
+        session()->forget('exam_candidate.' . $exam->id);
+
+        return redirect()->route('exam.take', [
+            'exam_id' => $exam->id,
+            'session_id' => $session->id,
+        ]);
+    }
+
+    public function take($exam_id, $session_id)
+    {
+        $exam = Exam::with('questions')->findOrFail($exam_id);
+        $session = ExamSession::with(['user', 'exam.questions'])->findOrFail($session_id);
+
+        if ((int) $session->exam_id !== (int) $exam->id) {
+            abort(404);
+        }
+
+        $activeSessionId = session()->get('active_exam_session.' . $exam->id);
+        if ((int) $activeSessionId !== (int) $session->id) {
+            return redirect()->route('exam.show', $exam->id)
+                ->with('error', 'Silakan mulai ujian dari halaman awal terlebih dahulu.');
+        }
 
         $endTime = Carbon::parse($session->start_time)->addMinutes($exam->duration_minutes);
         $remainingSeconds = Carbon::now()->diffInSeconds($endTime, false);
 
         if ($remainingSeconds <= 0) {
             $session->update(['status' => 'timeout']);
-            return redirect('/home')->with('error', 'Waktu ujian Anda sudah habis.');
+            session()->forget('active_exam_session.' . $exam->id);
+
+            return view('exam.completed', [
+                'exam' => $exam,
+                'session' => $session,
+            ]);
         }
 
         return view('exam.show', compact('exam', 'session', 'remainingSeconds'));
@@ -76,13 +195,12 @@ class ExamController extends Controller
     {
         $request->validate([
             'exam_session_id' => 'required|exists:exam_sessions,id',
-            'answer_files'    => 'required|array', // Validasi input harus berupa array file
-            'answer_files.*'  => 'required|mimes:xlsx,xls,pdf,doc,docx|max:10000', // Maks 10MB per file
+            'answer_files'    => 'required|array',
+            'answer_files.*'  => 'required|mimes:xlsx,xls,pdf,doc,docx|max:10000',
         ]);
 
         $session = ExamSession::findOrFail($request->exam_session_id);
 
-        // Ambil daftar berkas lama di DB agar tidak terhapus saat peserta mencicil upload berkas baru
         $currentFiles = json_decode($session->answer_file, true) ?: [];
 
         $relativeFolder = 'uploads/answers/' . $session->id;
@@ -94,13 +212,11 @@ class ExamController extends Controller
 
         if ($request->hasFile('answer_files')) {
             foreach ($request->file('answer_files') as $file) {
-                // Berikan token uniqid agar nama file tidak bentrok jika mengunggah file bernama sama
                 $filename = 'answer_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                 $file->move($destinationPath, $filename);
 
                 $dbPath = $relativeFolder . '/' . $filename;
 
-                // Masukkan data struktur file ke dalam list
                 $currentFiles[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $dbPath
@@ -108,7 +224,6 @@ class ExamController extends Controller
             }
         }
 
-        // Update kolom dengan bentuk JSON Array stringified
         $session->update([
             'answer_file' => json_encode($currentFiles)
         ]);
@@ -124,19 +239,17 @@ class ExamController extends Controller
     {
         $request->validate([
             'exam_session_id' => 'required|exists:exam_sessions,id',
-            'file_path'       => 'required|string', // Path file relatif yang mau didelete
+            'file_path'       => 'required|string',
         ]);
 
         $session = ExamSession::findOrFail($request->exam_session_id);
 
-        // Ambil daftar file JSON saat ini
         $currentFiles = json_decode($session->answer_file, true) ?: [];
 
         $updatedFiles = [];
         $fileDeleted = false;
 
         foreach ($currentFiles as $file) {
-            // Jika path-nya cocok, hapus fisik filenya dari folder public
             if ($file['path'] === $request->file_path) {
                 $absolutePath = public_path($file['path']);
                 if (File::exists($absolutePath)) {
@@ -144,13 +257,11 @@ class ExamController extends Controller
                 }
                 $fileDeleted = true;
             } else {
-                // Jika tidak cocok, amankan filenya ke dalam list update
                 $updatedFiles[] = $file;
             }
         }
 
         if ($fileDeleted) {
-            // Update database dengan array yang baru (jika kosong jadikan null)
             $session->update([
                 'answer_file' => empty($updatedFiles) ? null : json_encode(array_values($updatedFiles))
             ]);
@@ -159,25 +270,29 @@ class ExamController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Berkas berhasil dibatalkan!',
-            'files' => array_values($updatedFiles) // Kirim sisa file terbaru ke frontend
+            'files' => array_values($updatedFiles)
         ]);
     }
 
     public function finish($session_id)
     {
-        $session = ExamSession::findOrFail($session_id);
+        $session = ExamSession::with('exam')->findOrFail($session_id);
 
-        // Pastikan hanya pemilik sesi yang bisa mengakhiri
-        if ($session->user_id !== auth()->id()) {
+        $activeSessionId = session()->get('active_exam_session.' . $session->exam_id);
+        if ((int) $activeSessionId !== (int) $session->id) {
             abort(403);
         }
 
-        // Update status dan catat waktu selesai
         $session->update([
             'status' => 'completed',
             'end_time' => now()
         ]);
 
-        return redirect()->route('home')->with('success', 'Ujian telah berhasil dikumpulkan. Terima kasih!');
+        session()->forget('active_exam_session.' . $session->exam_id);
+
+        return view('exam.completed', [
+            'exam' => $session->exam,
+            'session' => $session,
+        ]);
     }
 }

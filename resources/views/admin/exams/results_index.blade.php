@@ -9,6 +9,8 @@
             <thead class="bg-light">
                 <tr>
                     <th>Nama Peserta</th>
+                    <th>Email</th>
+                    <th>No. Telepon</th>
                     <th>Ujian</th>
                     <th>Status</th>
                     <th>Waktu Mulai</th>
@@ -19,6 +21,8 @@
                 @foreach($sessions as $session)
                 <tr>
                     <td>{{ $session->user->name }}</td>
+                    <td>{{ $session->user->email }}</td>
+                    <td>{{ $session->user->phone ?? '-' }}</td>
                     <td>{{ $session->exam->name }}</td>
                     <td>
                         <span class="badge {{ $session->status == 'completed' ? 'badge-success' : 'badge-warning' }}">

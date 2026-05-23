@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\ExamSession;
 use App\ProctoringLog;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -17,6 +17,12 @@ class ProctoringController extends Controller
             'exam_session_id' => 'required|exists:exam_sessions,id',
             'image'           => 'required|string' // Format base64
         ]);
+
+        $session = ExamSession::with('user')->findOrFail($request->exam_session_id);
+        $activeSessionId = session()->get('active_exam_session.' . $session->exam_id);
+        if ((int) $activeSessionId !== (int) $session->id) {
+            return response()->json(['status' => 'error', 'message' => 'Sesi ujian tidak valid.'], 403);
+        }
 
         $base64Image = $request->input('image');
 
@@ -35,7 +41,7 @@ class ProctoringController extends Controller
         $folderPath = 'proctoring';
 
         // Jangan lupa tambahkan di paling atas: use Illuminate\Support\Str;
-        $safeName = Str::slug(auth()->user()->name, '_');
+        $safeName = Str::slug(optional($session->user)->name ?? 'participant', '_');
         $fileName = 'user_' . $safeName . '_session_' . $request->exam_session_id . '_' . time() . '.jpg';
 
         $fullPath = $folderPath . '/' . $fileName;

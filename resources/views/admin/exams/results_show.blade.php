@@ -3,7 +3,10 @@
 @section('content')
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4>Detail Hasil: {{ $session->user->name }}</h4>
+        <div>
+            <h4 class="mb-1">Detail Hasil: {{ $session->user->name }}</h4>
+            <div class="text-muted small">{{ $session->user->email }} | {{ $session->user->phone ?? '-' }}</div>
+        </div>
         <a href="{{ route('manage-exams.results') }}" class="btn btn-secondary btn-sm">Kembali</a>
     </div>
 
