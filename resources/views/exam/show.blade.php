@@ -95,7 +95,7 @@
                             </tbody>
                         </table>
 
-                    @elseif($exam->type == 'akuntansi_kasus')
+                    @elseif($exam->type == 'kasus_akuntansi')
                         {{-- ======================================================== --}}
                         {{-- UI PREMIUM STACKED & SMART PARSER FOR KASUS AKUNTANSI    --}}
                         {{-- ======================================================== --}}
@@ -260,6 +260,154 @@
                         </div>
 
                     {{-- ========================================== --}}
+                    {{-- UI UNTUK SOAL TABEL ANGKA (PENJUMLAHAN) --}}
+                    {{-- ========================================== --}}
+                    @elseif($exam->type == 'angka_akuntansi')
+                        <div class="p-4">
+                            <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #28a745 !important;">
+                                <div class="card-body bg-light">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-calculator"></i>
+                                        </div>
+                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
+                                    </div>
+
+                                    <p class="text-secondary mb-3">
+                                        Perhatikan tabel angka di bawah dengan <strong>seksama</strong>. Hitung jumlah angka sesuai instruksi yang diberikan. Tulis jawaban numerik Anda pada kolom yang tersedia.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="pembatas border-bottom"></div>
+                            @foreach($exam->questions as $q)
+                                @php
+                                    $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
+                                    $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
+                                    
+                                    // Parse table data jika ada
+                                    $tableData = json_decode($q->question_text, true);
+                                    $isStructuredTable = is_array($tableData) && isset($tableData['table']);
+                                @endphp
+                                <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
+                                    <h5 class="font-weight-bold mb-3 text-dark">
+                                        <span class="badge badge-success mr-2">Soal {{ $q->number }}</span>
+                                    </h5>
+                                    
+                                    {{-- Tampilkan instruksi --}}
+                                    @if($isStructuredTable && isset($tableData['question']))
+                                        <div class="card border-0 bg-light mb-3 p-3" style="border-left: 3px solid #28a745;">
+                                            <p class="mb-0 text-dark font-weight-bold">{{ $tableData['question'] }}</p>
+                                        </div>
+                                    @endif
+                                    
+                                    {{-- Render Tabel Structured --}}
+                                    @if($isStructuredTable && isset($tableData['table']['headers']) && isset($tableData['table']['rows']))
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-bordered table-sm text-center mb-4" style="background-color: #f8f9fa; font-size: 0.85rem;">
+                                                <thead class="bg-success text-white" style="position: sticky; top: 0;">
+                                                    <tr>
+                                                        @foreach($tableData['table']['headers'] as $header)
+                                                            <th class="py-2">{{ $header }}</th>
+                                                        @endforeach
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {{-- Data Rows (Menampilkan angka & Input Mendatar di Kolom Terakhir) --}}
+                                                    @foreach($tableData['table']['rows'] as $rowIdx => $row)
+                                                        <tr style="background-color: {{ $rowIdx % 2 == 0 ? '#ffffff' : '#f8f9fa' }};">
+                                                            @foreach($row as $colIdx => $cellValue)
+                                                                <td class="py-2 px-1 align-middle" style="font-family: 'Courier New', monospace; font-weight: 500;">
+                                                                    
+                                                                    {{-- Cek apakah ini adalah kolom paling kanan (Kolom 9) --}}
+                                                                    @if($colIdx == count($row) - 1)
+                                                                        {{-- Render Kotak Input untuk Penjumlahan Mendatar --}}
+                                                                        <input type="text" 
+                                                                            class="form-control form-control-sm table-number-cell" 
+                                                                            name="answer_{{ $q->number }}_row_{{ $rowIdx }}" 
+                                                                            placeholder="..." 
+                                                                            style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #17a2b8;"
+                                                                            data-question="{{ $q->number }}">
+                                                                    @else
+                                                                        {{-- Render Angka Biasa --}}
+                                                                        {{ $cellValue }}
+                                                                    @endif
+
+                                                                </td>
+                                                            @endforeach
+                                                        </tr>
+                                                    @endforeach
+                                                    
+                                                    {{-- Empty Row untuk Input Jawaban Menurun (Di paling bawah) --}}
+                                                    <tr style="background-color: #e3f2fd; border-top: 3px solid #28a745;">
+                                                        @for($col = 0; $col < count($tableData['table']['headers']); $col++)
+                                                            <td class="py-2 px-1">
+                                                                <input type="text" 
+                                                                    class="form-control form-control-sm table-number-cell" 
+                                                                    name="answer_{{ $q->number }}_col_{{ $col }}" 
+                                                                    placeholder="..." 
+                                                                    style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745;"
+                                                                    data-question="{{ $q->number }}">
+                                                            </td>
+                                                        @endfor
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        {{-- Fallback jika tidak ada structured table data --}}
+                                        <div class="card border-0 bg-light mb-3 p-4" style="overflow-x: auto;">
+                                            <pre class="mb-0 text-dark" style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">{{ $q->question_text }}</pre>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="font-weight-bold text-secondary mb-2">Jawaban Anda (angka saja):</label>
+                                            <input type="text" class="form-control table-number-input" name="answer_{{ $q->number }}" placeholder="Contoh: 1234567" style="font-size: 1rem; border-radius: 6px; font-weight: bold;" value="{{ $answerText }}">
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+
+                    {{-- ========================================== --}}
+                    {{-- UI UNTUK SOAL BERNOMOR (ESSAY/URAIAN)  --}}
+                    {{-- ========================================== --}}
+                    @elseif($exam->type == 'uraian')
+                        <div class="p-4">
+                            <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #17a2b8 !important;">
+                                <div class="card-body bg-light">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
+                                    </div>
+
+                                    <p class="text-secondary mb-3">
+                                        Bacalah setiap pertanyaan dengan <strong>seksama</strong>. Ketik jawaban Anda pada kolom yang tersedia di bawah setiap soal. Pastikan jawaban Anda <strong>lengkap dan jelas</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="pembatas border-bottom"></div>
+                            @foreach($exam->questions as $q)
+                                @php
+                                    $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
+                                    $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
+                                @endphp
+                                <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
+                                    <h5 class="font-weight-bold mb-3 text-dark">
+                                        <span class="badge badge-info mr-2">No. {{ $q->number }}</span>
+                                    </h5>
+                                    <div class="card border-0 bg-light mb-3 p-3">
+                                        <p class="mb-0 text-dark" style="line-height: 1.6; white-space: pre-line;">{{ $q->question_text }}</p>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="font-weight-bold text-secondary mb-2">Jawaban Anda:</label>
+                                        <textarea class="form-control uraian-textarea" name="answer_{{ $q->number }}" rows="4" placeholder="Ketik jawaban Anda di sini..." style="font-size: 0.95rem; border-radius: 6px;">{{ $answerText }}</textarea>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                    {{-- ========================================== --}}
                     {{-- UI STANDAR UNTUK MBTI, VAK, EPPS, DLL (DARI DB) --}}
                     {{-- ========================================== --}}
                     @else
@@ -382,6 +530,70 @@
             });
         });
 
+        // Handler untuk textarea (uraian questions)
+        const uraianTextareas = document.querySelectorAll('.uraian-textarea');
+        uraianTextareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                let qNum = this.closest('.question-block').dataset.qnum;
+                let val = this.value;
+                saveAnswerAjax(qNum, { answer_text: val });
+            });
+        });
+
+        // Handler untuk input number (angka_akuntasi questions)
+        const tableNumberInputs = document.querySelectorAll('.table-number-input');
+        tableNumberInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                let qNum = this.closest('.question-block').dataset.qnum;
+                let val = this.value;
+                saveAnswerAjax(qNum, { answer_text: val });
+            });
+        });
+
+        // Handler untuk cell inputs di dalam tabel (angka_akuntasi questions)
+        const tableNumberCells = document.querySelectorAll('.table-number-cell');
+        tableNumberCells.forEach(cell => {
+            cell.addEventListener('input', function() {
+                let qNum = this.dataset.question;
+                let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
+                
+                let cells = block.querySelectorAll('.table-number-cell');
+                let allValues = [];
+                let detailsObj = {}; // Wadah baru untuk menyimpan posisi baris/kolom
+                
+                cells.forEach(c => {
+                    let val = c.value.trim();
+                    if(val !== '') {
+                        allValues.push(val);
+                        
+                        // Ekstrak nama input (contoh: answer_1_row_0 atau answer_1_col_2)
+                        let nameParts = c.name.split('_');
+                        if(nameParts.length >= 4) {
+                            let type = nameParts[2]; // 'row' atau 'col'
+                            let index = parseInt(nameParts[3]) + 1; // +1 agar visualnya mulai dari 1, bukan 0
+                            
+                            let label = type === 'row' ? `Mendatar (Baris ${index})` : `Menurun (Kolom ${index})`;
+                            detailsObj[label] = val;
+                        }
+                    }
+                });
+                
+                let combinedValue = allValues.join(', ');
+                
+                // Update input final fallback (jika masih ada)
+                let finalInput = block.querySelector('.table-number-input');
+                if (finalInput) {
+                    finalInput.value = combinedValue;
+                }
+                
+                // SIMPAN KE DB DENGAN FORMAT STRUKTUR JSON YANG BARU
+                saveAnswerAjax(qNum, { 
+                    answer_text: combinedValue,
+                    details: detailsObj // Kirim detail posisi ke server
+                });
+            });
+        });
+
         // ==========================================
         // 3. LOGIKA TIMER MUNDUR
         // ==========================================
@@ -471,7 +683,7 @@
         }
 
 
-        const isKasus = "{{ $exam->type }}" === 'akuntansi_kasus';
+        const isKasus = "{{ $exam->type }}" === 'kasus_akuntansi';
             let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
 
             if (isKasus) {
@@ -631,11 +843,15 @@
 
             let unanswered = [];
             let isDisc = "{{ $exam->type }}" === 'disc';
+            let isuraian = "{{ $exam->type }}" === 'uraian';
+            let isTableNumber = "{{ $exam->type }}" === 'angka_akuntansi';
 
             // Ambil semua nomor soal unik yang ada di halaman
             let questionNumbers = [...new Set(Array.from(document.querySelectorAll('.question-block')).map(el => el.dataset.qnum))];
 
             questionNumbers.forEach(qNum => {
+                let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
+
                 if (isDisc) {
                     // Untuk DISC: Cek apakah Most DAN Least sudah dipilih
                     let mostSelected = document.querySelector(`input[name="most_${qNum}"]:checked`);
@@ -644,8 +860,27 @@
                     if (!mostSelected || !leastSelected) {
                         unanswered.push(qNum);
                     }
-                } else {
-                    // Untuk Standar (MBTI/VAK): Cek apakah jawaban sudah dipilih
+                } 
+                else if (isTableNumber) {
+                    // LOGIKA BARU KHUSUS TABEL ANGKA
+                    // Cek semua kotak kecil di dalam tabel
+                    let cells = block.querySelectorAll('.table-number-cell');
+                    // Cek apakah minimal ada 1 kotak yang sudah diisi angka oleh peserta
+                    let hasAnswer = Array.from(cells).some(c => c.value.trim() !== '');
+                    
+                    if (!hasAnswer) {
+                        unanswered.push(qNum);
+                    }
+                } 
+                else if (isuraian) {
+                    // Untuk uraian: Cek apakah textarea sudah diisi
+                    let textarea = document.querySelector(`textarea[name="answer_${qNum}"]`);
+                    if (!textarea || !textarea.value.trim()) {
+                        unanswered.push(qNum);
+                    }
+                } 
+                else {
+                    // Untuk Standar (MBTI/VAK): Cek apakah radio button sudah dipilih
                     let selected = document.querySelector(`input[name="answer_${qNum}"]:checked`);
                     if (!selected) {
                         unanswered.push(qNum);

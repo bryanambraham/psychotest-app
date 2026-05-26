@@ -64,12 +64,11 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @if($session->exam->type == 'akuntansi_kasus')
+                                            @if($session->exam->type == 'kasus_akuntansi')
                                                 {{-- ======================================================== --}}
                                                 {{-- TAMPILAN KHUSUS UNTUK DOWNLOAD MULTIPLE FILE JAWABAN     --}}
                                                 {{-- ======================================================== --}}
                                                 @php
-                                                    // Decode data JSON array file dari tabel exam_sessions
                                                     $uploadedFiles = json_decode($session->answer_file, true) ?: [];
                                                 @endphp
                                                 <tr>
@@ -97,6 +96,76 @@
                                                         @endif
                                                     </td>
                                                 </tr>
+
+                                            @elseif($session->exam->type == 'uraian')
+                                                {{-- ======================================================== --}}
+                                                {{-- TAMPILAN KHUSUS UNTUK SOAL URAIAN (ESSAY)                --}}
+                                                {{-- ======================================================== --}}
+                                                @foreach($session->exam->questions as $question)
+                                                    @php
+                                                        $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
+                                                        $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="text-center align-middle font-weight-bold">{{ $question->number }}</td>
+                                                        <td class="align-middle">
+                                                            <div class="text-dark" style="white-space: pre-wrap; line-height: 1.5;">{{ $question->question_text }}</div>
+                                                        </td>
+                                                        <td class="align-middle">
+                                                            @if($answerText)
+                                                                <div class="p-2 bg-light rounded" style="border-left: 3px solid #17a2b8; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto;">
+                                                                    {{ $answerText }}
+                                                                </div>
+                                                            @else
+                                                                <span class="badge badge-secondary">❌ Tidak ada jawaban</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+
+                                            @elseif($session->exam->type == 'angka_akuntansi')
+                                                    {{-- ======================================================== --}}
+                                                    {{-- TAMPILAN KHUSUS UNTUK SOAL TABEL ANGKA                   --}}
+                                                    {{-- ======================================================== --}}
+                                                    @foreach($session->exam->questions as $question)
+                                                        @php
+                                                            $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
+                                                            // Ambil data JSON jawaban peserta
+                                                            $data = $userAnswer ? $userAnswer->answers : [];
+                                                            $answerText = $data['answer_text'] ?? '';
+                                                            $details = $data['details'] ?? [];
+                                                        @endphp
+                                                        <tr>
+                                                            <td class="text-center align-middle font-weight-bold">{{ $question->number }}</td>
+                                                            <td class="align-middle">
+                                                                <span class="font-weight-bold text-dark d-block">🔢 Soal Penjumlahan Tabel Angka</span>
+                                                                <small class="text-muted">Peserta diminta menghitung tabel angka secara mendatar & menurun.</small>
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                {{-- Cek apakah ada data struktur array (Versi Baru) --}}
+                                                                @if(!empty($details))
+                                                                    <div class="row" style="margin: 0 -5px;">
+                                                                        @foreach($details as $label => $val)
+                                                                            <div class="col-sm-6 p-1">
+                                                                                <div class="border rounded p-2 bg-white shadow-sm d-flex justify-content-between align-items-center">
+                                                                                    <small class="text-secondary font-weight-bold">{{ $label }}</small>
+                                                                                    <span class="badge badge-success" style="font-size: 0.95rem;">{{ $val }}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        @endforeach
+                                                                    </div>
+                                                                    
+                                                                {{-- Fallback jika ada peserta lama yang menjawab pakai format lama (1, 2) --}}
+                                                                @elseif($answerText)
+                                                                    <div class="p-2 bg-light rounded font-weight-bold text-success" style="border-left: 3px solid #28a745; font-size: 1.1rem; letter-spacing: 2px;">
+                                                                        {{ $answerText }}
+                                                                    </div>
+                                                                @else
+                                                                    <span class="badge badge-secondary">❌ Tidak ada jawaban</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
 
                                             @else
                                                 {{-- ======================================================== --}}

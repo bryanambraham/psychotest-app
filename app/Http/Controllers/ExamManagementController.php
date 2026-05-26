@@ -28,7 +28,7 @@ class ExamManagementController extends Controller
     {
         $request->validate([
             'name'             => 'required|string|max:255',
-            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,akuntansi,akuntansi_kasus',
+            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pg_akuntansi,kasus_akuntansi,uraian,angka_akuntansi',
             'duration_minutes' => 'required|integer|min:1',
             'description'      => 'nullable|string',
             'question_file'    => 'required|mimes:pdf|max:5000',
@@ -63,9 +63,15 @@ class ExamManagementController extends Controller
                             $options      = $q['options'] ?? [];
                             $number       = $boxNumber;
                         } else {
-                            $questionText = $q['question'] ?? '';
+                            // Untuk angka_akuntasi, simpan seluruh struktur sebagai JSON
+                            if ($pdfType === 'angka_akuntasi' && isset($q['table'])) {
+                                $questionText = json_encode($q);
+                            } else {
+                                $questionText = $q['question'] ?? '';
+                            }
+                            
                             // Pengambilan nomor soal yang aman dari angka di dalam teks soal
-                            $number = preg_match('/^(\d+)/', trim($questionText), $matches) ? $matches[1] : ($index + 1);
+                            $number = preg_match('/^(\d+)/', trim($q['question'] ?? ''), $matches) ? $matches[1] : ($index + 1);
                             $options      = $q['options'] ?? [];
                         }
 
@@ -206,4 +212,13 @@ class ExamManagementController extends Controller
 
         return redirect()->back()->with('error', 'Gagal membuat QR untuk ujian ini.');
     }
+
+    public function destroy($id){
+        $exam = Exam::findOrFail($id);
+        $exam->delete();
+    
+        return redirect()->route('manage-exams.index')->with('success', 'Ujian berhasil dihapus.');
+    }
 }
+
+

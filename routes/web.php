@@ -58,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
     // Daftar semua materi ujian
     Route::get('/manage-exams', 'ExamManagementController@index')->name('manage-exams.index')->middleware('role:admin');
 
+    Route::delete('/manage-exams/destroy/{id}', 'ExamManagementController@destroy')->name('manage-exams.destroy')->middleware('role:admin');
+
     // Form tambah materi baru
     Route::get('/manage-exams/create', 'ExamManagementController@create')->name('manage-exams.create')->middleware('role:admin');
 
@@ -66,6 +68,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Form edit ujian & Atur Penugasan Peserta (Assignment)
     Route::get('/manage-exams/{id}/peserta', 'ExamManagementController@edit')->name('manage-exams.edit')->middleware('role:admin');
+
+    Route::get('/manage-exams/edit/{id}', 'ExamManagementController@edit')->name('manage-exams.edit')->middleware('role:admin');
 
     // Update data ujian & Sinkronisasi Peserta (Sync many-to-many)
     Route::put('/manage-exams/{id}', 'ExamManagementController@update')->name('manage-exams.update')->middleware('role:admin');

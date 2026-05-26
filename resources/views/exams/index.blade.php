@@ -32,6 +32,12 @@
 
                         <a href="{{ route('manage-exams.edit', $exam->id) }}" class="btn btn-sm btn-primary">Kelola</a>
 
+                        <form action="{{ route('manage-exams.destroy', $exam->id) }}" method="POST" style="display: inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus ujian ini?')">Hapus</button>
+                        </form>
+
                         <a href="{{ route('manage-exams.qr', $exam->id) }}" class="btn btn-sm btn-outline-secondary" title="Download QR">QR</a>
 
                         <button onclick="navigator.clipboard.writeText('{{ route('exam.show', $exam) }}'); alert('Link berhasil disalin!')" class="btn btn-sm btn-outline-info">
