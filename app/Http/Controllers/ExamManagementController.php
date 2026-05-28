@@ -63,8 +63,8 @@ class ExamManagementController extends Controller
                             $options      = $q['options'] ?? [];
                             $number       = $boxNumber;
                         } else {
-                            // Untuk angka_akuntasi, simpan seluruh struktur sebagai JSON
-                            if ($pdfType === 'angka_akuntasi' && isset($q['table'])) {
+                            // Untuk angka_akuntansi, simpan seluruh struktur sebagai JSON
+                            if ($pdfType === 'angka_akuntansi' && isset($q['table'])) {
                                 $questionText = json_encode($q);
                             } else {
                                 $questionText = $q['question'] ?? '';
