@@ -480,7 +480,8 @@
         // 1. FUNGSI AJAX REUSABLE (Simpan Jawaban)
         // ==========================================
         function saveAnswerAjax(qNum, jsonAnswer) {
-            fetch('/exam/answer', {
+            // PERBAIKAN: Gunakan helper url() agar path folder otomatis terdeteksi di server
+            fetch("{{ url('/exam/answer') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
