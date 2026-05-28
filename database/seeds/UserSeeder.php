@@ -16,8 +16,20 @@ class UserSeeder extends Seeder
             'name' => 'Bryan',
             'email' => 'bryanambraham@gmail.com',
             'role' => 'admin',
+            'phone' => '081311574806',
             'email_verified_at' => now(),
             'password' => Hash::make('bryan123'),
+            'remember_token' => Str::random(10),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        \App\User::create([
+            'name' => 'Rifdah',
+            'email' => 'rifdah@gmail.com',
+            'role' => 'admin',
+            'email_verified_at' => now(),
+            'password' => Hash::make('rifdah123'),
             'remember_token' => Str::random(10),
             'created_at' => now(),
             'updated_at' => now(),
