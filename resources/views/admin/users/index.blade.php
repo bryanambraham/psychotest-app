@@ -15,6 +15,10 @@
     <x-search-bar placeholder="Masukkan nama, email, atau posisi..." tableId="usersTable" />
     {{-- ========================================================== --}}
 
+    <div class="my-4">
+        {{ $users->links() }}
+    </div>
+
     <div class="card shadow-sm border-0">
         <table class="table initialism mb-0" id="usersTable">
             <thead>
@@ -44,6 +48,10 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+    
+    <div class="my-4">
+        {{ $users->links() }}
     </div>
 </div>
 @endsection

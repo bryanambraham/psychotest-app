@@ -9,6 +9,10 @@
     <x-search-bar placeholder="Masukkan nama, email, atau posisi..." tableId="examUsersTable" />
     {{-- ========================================================== --}}
 
+    <div class="my-4">
+        {{ $sessions->links() }}
+    </div>
+
     <div class="card shadow-sm border-0">
         <table class="table initialism table-hover mb-0" id="examUsersTable">
             <thead class="bg-light">
@@ -46,6 +50,10 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    <div class="my-4">
+        {{ $sessions->links() }}
     </div>
 </div>
 @endsection

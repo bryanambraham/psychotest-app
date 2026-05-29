@@ -13,7 +13,7 @@ class ExamManagementController extends Controller
     // Menampilkan daftar semua ujian
     public function index()
     {
-        $exams = Exam::all();
+        $exams = Exam::latest()->paginate(10);
         return view('exams.index', compact('exams'));
     }
 
@@ -167,8 +167,8 @@ class ExamManagementController extends Controller
     {
         // Ambil semua sesi yang sudah selesai atau sedang berlangsung
         $sessions = \App\ExamSession::with(['user', 'exam'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                    ->latest()
+                    ->paginate(10);
 
         return view('admin.exams.results_index', compact('sessions'));
     }

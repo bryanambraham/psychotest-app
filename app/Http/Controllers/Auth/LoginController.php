@@ -1,40 +1,40 @@
 <?php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request; // <-- PASTIKAN BARIS INI DITAMBAHKAN
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
     use AuthenticatesUsers;
 
-    /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
     protected $redirectTo = RouteServiceProvider::HOME;
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    // Fungsi yang kemarin kita tambahkan
+    public function username()
+    {
+        return 'login';
+    }
+
+    // TAMBAHKAN FUNGSI BARU INI DI SINI
+    protected function credentials(Request $request)
+    {
+        $loginInput = $request->input('login');
+
+        // Cek apakah yang diketik user memiliki format email (ada @ dan .com)
+        // Jika iya, cari ke kolom 'email'. Jika tidak, cari ke kolom 'name'.
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
+
+        return [
+            $field => $loginInput,
+            'password' => $request->input('password')
+        ];
     }
 }
