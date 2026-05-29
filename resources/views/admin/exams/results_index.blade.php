@@ -4,8 +4,13 @@
 <div class="container">
     <h3 class="mb-4">Laporan Hasil Ujian Peserta</h3>
 
+    {{-- ========================================================== --}}
+    {{-- MEMANGGIL KOMPONEN SEARCH BAR --}}
+    <x-search-bar placeholder="Masukkan nama, email, atau posisi..." tableId="examUsersTable" />
+    {{-- ========================================================== --}}
+
     <div class="card shadow-sm border-0">
-        <table class="table initialism table-hover mb-0">
+        <table class="table initialism table-hover mb-0" id="examUsersTable">
             <thead class="bg-light">
                 <tr>
                     <th>Nama Peserta</th>

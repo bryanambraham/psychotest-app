@@ -10,8 +10,13 @@
     @if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
     @if(session('error')) <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
+    {{-- ========================================================== --}}
+    {{-- MEMANGGIL KOMPONEN SEARCH BAR --}}
+    <x-search-bar placeholder="Masukkan nama, email, atau posisi..." tableId="usersTable" />
+    {{-- ========================================================== --}}
+
     <div class="card shadow-sm border-0">
-        <table class="table initialism mb-0">
+        <table class="table initialism mb-0" id="usersTable">
             <thead>
                 <tr>
                     <th>Nama</th>

@@ -11,8 +11,14 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+    {{-- ========================================================== --}}
+    {{-- MEMANGGIL KOMPONEN SEARCH BAR --}}
+    <x-search-bar placeholder="Masukkan nama ujian..." tableId="examsTable" />
+    {{-- ========================================================== --}}
+
+
     <div class="card shadow-sm border-0">
-        <table class="table initialism table-hover mb-0">
+        <table class="table initialism table-hover mb-0" id="examsTable">
             <thead class="bg-light">
                 <tr>
                     <th>Nama Ujian</th>
