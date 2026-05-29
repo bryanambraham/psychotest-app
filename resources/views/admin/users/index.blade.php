@@ -11,10 +11,11 @@
     @if(session('error')) <div class="alert alert-danger">{{ session('error') }}</div> @endif
 
     <div class="card shadow-sm border-0">
-        <table class="table mb-0">
+        <table class="table initialism mb-0">
             <thead>
                 <tr>
                     <th>Nama</th>
+                    <th>Posisi</th>
                     <th>Email</th>
                     <th>Role</th>
                     <th>Aksi</th>
@@ -24,6 +25,7 @@
                 @foreach($users as $user)
                 <tr>
                     <td>{{ $user->name }}</td>
+                    <td>{{ $user->position ?? '-' }}</td>
                     <td>{{ $user->email }}</td>
                     <td><span class="badge {{ $user->role == 'admin' ? 'badge-danger' : 'badge-secondary' }}">{{ strtoupper($user->role) }}</span></td>
                     <td>

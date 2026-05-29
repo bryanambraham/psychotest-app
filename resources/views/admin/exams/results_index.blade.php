@@ -5,11 +5,12 @@
     <h3 class="mb-4">Laporan Hasil Ujian Peserta</h3>
 
     <div class="card shadow-sm border-0">
-        <table class="table table-hover mb-0">
+        <table class="table initialism table-hover mb-0">
             <thead class="bg-light">
                 <tr>
                     <th>Nama Peserta</th>
                     <th>Email</th>
+                    <th>Posisi</th>
                     <th>No. Telepon</th>
                     <th>Ujian</th>
                     <th>Status</th>
@@ -22,6 +23,7 @@
                 <tr>
                     <td>{{ $session->user->name }}</td>
                     <td>{{ $session->user->email }}</td>
+                    <td>{{ $session->user->position ?? '-' }}</td>
                     <td>{{ $session->user->phone ?? '-' }}</td>
                     <td>{{ $session->exam->name }}</td>
                     <td>

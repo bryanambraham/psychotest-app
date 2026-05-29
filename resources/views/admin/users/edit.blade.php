@@ -24,8 +24,13 @@
                         </div>
 
                         <div class="form-group">
+                            <label>Posisi</label>
+                            <input type="text" name="position" class="form-control" value="{{ old('position', $user->position) }}">
+                        </div>
+
+                        <div class="form-group">
                             <label>Phone</label>
-                            <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}" required>
+                            <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
                         </div>
 
                         <div class="form-group">

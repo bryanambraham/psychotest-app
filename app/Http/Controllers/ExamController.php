@@ -38,14 +38,16 @@ class ExamController extends Controller
     {
         $request->validate([
             'name'  => 'required|string|max:255',
+            'position' => 'required|string|max:50',
             'phone' => 'required|string|max:30',
             'email' => 'required|string|email|max:255',
         ]);
 
         session()->put('exam_candidate.' . $exam->id, [
-            'name'  => trim($request->name),
-            'phone' => trim($request->phone),
-            'email' => trim(strtolower($request->email)),
+            'name'     => trim(strtolower($request->name)),
+            'position' => trim(strtolower($request->position)),
+            'phone'    => trim(strtolower($request->phone)),
+            'email'    => trim(strtolower($request->email)),
         ]);
 
         return redirect()->route('exam.instructions', $exam);
@@ -99,14 +101,16 @@ class ExamController extends Controller
             $user = User::create([
                 'name'     => $participant['name'],
                 'email'    => $participant['email'],
+                'position' => $participant['position'],
                 'phone'    => $participant['phone'],
                 'password' => Hash::make(Str::random(40)),
                 'role'     => 'user',
             ]);
         } elseif ($user->role === 'user') {
             $user->update([
-                'name'  => $participant['name'],
-                'phone' => $participant['phone'],
+                'name'     => $participant['name'],
+                'position' => $participant['position'],
+                'phone'    => $participant['phone'],
             ]);
         }
 

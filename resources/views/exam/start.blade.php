@@ -62,6 +62,10 @@
                                 <input type="text" name="name" class="form-control form-control-lg" value="{{ old('name', $participant['name'] ?? '') }}" placeholder="Nama peserta" required>
                             </div>
                             <div class="form-group col-md-6">
+                                <label class="font-weight-bold">Posisi</label>
+                                <input type="text" name="position" class="form-control form-control-lg" value="{{ old('position', $participant['position'] ?? '') }}" placeholder="Posisi yang diinginkan" required>
+                            </div>
+                            <div class="form-group col-md-6">
                                 <label class="font-weight-bold">Nomor Telepon</label>
                                 <input type="text" name="phone" class="form-control form-control-lg" value="{{ old('phone', $participant['phone'] ?? '') }}" placeholder="08xxxxxxxxxx" required>
                             </div>

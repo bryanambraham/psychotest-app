@@ -12,7 +12,7 @@
     @endif
 
     <div class="card shadow-sm border-0">
-        <table class="table table-hover mb-0">
+        <table class="table initialism table-hover mb-0">
             <thead class="bg-light">
                 <tr>
                     <th>Nama Ujian</th>
