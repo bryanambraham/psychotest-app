@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container-fluid px-2 px-md-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-12 col-lg-9 col-xl-8">
 
             <div class="card mb-4 shadow-sm border-0">
-                <div class="card-body d-flex justify-content-between align-items-center bg-white rounded">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem;">
                     <div>
-                        <h4 class="mb-0 font-weight-bold">{{ $exam->name }}</h4>
+                        <h4 class="mb-0 font-weight-bold exam-title">{{ $exam->name }}</h4>
                         <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
                     </div>
-                    <div class="text-danger font-weight-bold" style="font-size: 1.5rem;">
+                    <div class="text-danger font-weight-bold timer-display">
                         <span id="timer-display">Memuat...</span>
                     </div>
                 </div>
@@ -39,7 +39,7 @@
                                 </p>
 
                                 <div class="row">
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-12 col-md-6 mb-2">
                                         <div class="p-3 rounded bg-white border border-success h-100">
                                             <h6 class="text-success font-weight-bold mb-2">
                                                 <i class="fas fa-check-circle mr-1"></i> Kolom MOST (Mirip)
@@ -47,7 +47,7 @@
                                             <small class="text-muted">Pilih satu pernyataan yang <strong>Paling Menggambarkan</strong> diri Anda dalam lingkungan kerja/sosial.</small>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-12 col-md-6 mb-2">
                                         <div class="p-3 rounded bg-white border border-danger h-100">
                                             <h6 class="text-danger font-weight-bold mb-2">
                                                 <i class="fas fa-times-circle mr-1"></i> Kolom LEAST (Tidak Mirip)
@@ -233,7 +233,7 @@
                             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                                 <div class="card-body p-4">
                                     <div class="row align-items-center">
-                                        <div class="col-lg-7 text-center text-lg-left d-md-flex align-items-center mb-3 mb-lg-0">
+                                        <div class="col-12 col-lg-7 text-center text-lg-left d-md-flex align-items-center mb-3 mb-lg-0">
                                             <div class="text-primary mr-3 mb-2 mb-md-0">
                                                 <i class="fas fa-folder-open fa-3x"></i>
                                             </div>
@@ -242,7 +242,7 @@
                                                 <p class="small text-muted mb-0">Anda dapat mengunggah **lebih dari 1 file** (Excel, PDF, Word). File akan langsung tersimpan otomatis.</p>
                                             </div>
                                         </div>
-                                        <div class="col-lg-5">
+                                        <div class="col-12 col-lg-5">
                                             <div class="custom-file shadow-sm mb-2">
                                                 <input type="file" class="custom-file-input" id="answer-file-input" accept=".xlsx,.xls,.pdf,.doc,.docx" multiple>
                                                 <label class="custom-file-label text-left font-weight-normal" for="answer-file-input">Pilih satu atau beberapa file...</label>
@@ -947,4 +947,49 @@
         }
         });
 </script>
+
+<style>
+/* ===== RESPONSIVE SHOW.BLADE ===== */
+
+/* Timer & judul di header */
+.exam-title  { font-size: clamp(0.95rem, 3.5vw, 1.35rem); }
+.timer-display { font-size: clamp(1.1rem, 4vw, 1.5rem); }
+
+/* DISC table: scroll horizontal di HP */
+#examUsersTable, .table-responsive { overflow-x: auto; }
+
+/* Tombol submit full-width di HP */
+@media (max-width: 575.98px) {
+    #btn-submit-exam { width: 100%; font-size: 0.95rem; }
+
+    /* Perkecil input di tabel angka */
+    .table-number-cell { font-size: 0.75rem !important; padding: 2px 4px !important; }
+
+    /* Instruksi DISC icon circle lebih kecil */
+    .rounded-circle[style*="40px"] { width: 30px !important; height: 30px !important; font-size: 0.8rem; }
+
+    /* Padding card lebih rapat */
+    .card-body.p-4 { padding: 1rem !important; }
+
+    /* Textarea uraian lebih pendek */
+    .uraian-textarea { rows: 3; font-size: 0.88rem !important; }
+
+    /* Tabel DISC: font lebih kecil */
+    .table td, .table th { font-size: 0.78rem; padding: 0.35rem 0.4rem; }
+
+    /* Radio DISC scale down */
+    input[type=radio][style*="scale(1.5)"] { transform: scale(1.1) !important; }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .table td, .table th { font-size: 0.83rem; }
+    #btn-submit-exam { width: 100%; }
+}
+
+/* Kasus akuntansi: tabel saldo scroll horizontal */
+.table-responsive { -webkit-overflow-scrolling: touch; }
+
+/* Camera status badge wrap */
+#camera-status { word-break: break-word; max-width: 90vw; display: inline-block; }
+</style>
 @endsection

@@ -78,6 +78,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', 'UserController')->middleware('role:admin');
 
     Route::get('/exam-results', 'ExamManagementController@resultsIndex')->name('manage-exams.results')->middleware('role:admin');
+    Route::delete('/exam-results/{id}', 'ExamManagementController@destroyResultsIndex')->name('manage-exams.results.destroy')->middleware('role:admin');
     Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')->name('manage-exams.results.show')->middleware('role:admin');
 
     // Download QR untuk setiap ujian (menghasilkan PNG yang bisa diunduh)

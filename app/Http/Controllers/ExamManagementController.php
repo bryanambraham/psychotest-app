@@ -173,6 +173,15 @@ class ExamManagementController extends Controller
         return view('admin.exams.results_index', compact('sessions'));
     }
 
+    public function destroyResultsIndex($id)
+    {
+        // Ambil semua sesi yang sudah selesai atau sedang berlangsung
+        $sessions = \App\ExamSession::findOrFail($id);
+        $sessions->delete();
+
+        return redirect()->route('manage-exams.results')->with('success', 'Hasil ujian berhasil dihapus.');
+    }
+
     public function resultsShow($session_id)
     {
         $session = \App\ExamSession::with(['user', 'exam.questions', 'proctoringLogs', 'userAnswers'])
