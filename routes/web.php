@@ -48,6 +48,13 @@ Route::get('/exam/finish/{session_id}', 'ExamController@finish')->name('exam.fin
 // Menampilkan halaman awal pengisian data peserta
 Route::get('/exam/{exam}', 'ExamController@show')->name('exam.show');
 
+// Route::get('/exam/{exam}', function ($exam) {
+//     return redirect()->route('exam.instructions', $exam);
+// })->name('exam.show');
+
+Route::get('/verify-data', 'VerifyUserController@create')->name('verify.create');
+Route::post('/verify-data', 'VerifyUserController@store')->name('verify.store');
+
 // Grup Rute yang memerlukan Login
 Route::middleware(['auth'])->group(function () {
 
@@ -81,6 +88,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/exam-results/{id}', 'ExamManagementController@destroyResultsIndex')->name('manage-exams.results.destroy')->middleware('role:admin');
     Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')->name('manage-exams.results.show')->middleware('role:admin');
 
+    // TAMBAHKAN ROUTE EXPORT EXCEL DI SINI
+    Route::get('/exam-results/{session_id}/export', 'ExamManagementController@exportExcel')->name('manage-exams.results.export')->middleware('role:admin');
+    
     // Download QR untuk setiap ujian (menghasilkan PNG yang bisa diunduh)
     Route::get('/manage-exams/{id}/qr', 'ExamManagementController@downloadQr')->name('manage-exams.qr')->middleware('role:admin');
 

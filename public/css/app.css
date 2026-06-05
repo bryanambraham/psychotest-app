@@ -4554,6 +4554,11 @@ input[type=button].btn-block {
   padding: 0.5rem 1rem;
 }
 
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
 .navbar .container,
 .navbar .container-fluid,
 .navbar .container-sm,

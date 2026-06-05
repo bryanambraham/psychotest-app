@@ -6,6 +6,11 @@
         <div class="col-md-10">
             <h3 class="mb-4">Daftar Ujian Anda</h3>
 
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+
             @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div>
             @endif

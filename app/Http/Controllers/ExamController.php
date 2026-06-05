@@ -14,8 +14,29 @@ use Illuminate\Support\Str;
 
 class ExamController extends Controller
 {
+    // public function show(Exam $exam)
+    // {
+    //     $activeSessionId = session()->get('active_exam_session.' . $exam->id);
+
+    //     if ($activeSessionId) {
+    //         $session = ExamSession::find($activeSessionId);
+
+    //         if ($session && $session->status === 'in_progress') {
+    //             return redirect()->route('exam.take', [
+    //                 'exam' => $exam,
+    //                 'session_id' => $session->id,
+    //             ]);
+    //         }
+    //     }
+
+    //     $participant = session()->get('exam_candidate.' . $exam->id);
+
+    //     return view('exam.start', compact('exam', 'participant'));
+    // }
+
     public function show(Exam $exam)
     {
+        // 1. Cek apakah ada sesi ujian yang sedang aktif / belum selesai
         $activeSessionId = session()->get('active_exam_session.' . $exam->id);
 
         if ($activeSessionId) {
@@ -29,9 +50,22 @@ class ExamController extends Controller
             }
         }
 
-        $participant = session()->get('exam_candidate.' . $exam->id);
+        // 2. OTOMATIS BYPASS FORM START.BLADE.PHP
+        // Jika user sudah login, langsung ambil datanya dari Auth
+        if (auth()->check()) {
+            session()->put('exam_candidate.' . $exam->id, [
+                'name'     => auth()->user()->name ?? '',
+                'email'    => auth()->user()->email ?? '',
+                'position' => auth()->user()->position ?? '', // Default jika kosong
+                'phone'    => auth()->user()->phone ?? '', // Default jika kosong
+            ]);
 
-        return view('exam.start', compact('exam', 'participant'));
+            // Langsung arahkan ke halaman instruksi
+            return redirect()->route('exam.instructions', $exam);
+        }
+
+        // 3. Jika kebetulan user belum login tapi nekat buka link ujian, arahkan ke form login
+        return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk mengikuti ujian.');
     }
 
     public function storeParticipant(Request $request, Exam $exam)

@@ -7,19 +7,52 @@
             <h4 class="mb-1">Detail Hasil: {{ $session->user->name }}</h4>
             <div class="text-muted small">{{ $session->user->email }} | {{ $session->user->phone ?? '-' }} | {{ $session->user->position ?? '-' }}</div>
         </div>
-        <a href="{{ route('manage-exams.results') }}" class="btn btn-secondary btn-sm">Kembali</a>
+        <div class="d-flex" style="gap: 10px;">
+            {{-- TOMBOL EXPORT BARU --}}
+            <a href="{{ route('manage-exams.results.export', $session->id) }}" class="btn btn-success btn-sm shadow-sm font-weight-bold">
+                📥 Export ke Excel
+            </a>
+            
+            <a href="{{ route('manage-exams.results') }}" class="btn btn-secondary btn-sm shadow-sm">Kembali</a>
+        </div>
     </div>
 
     <div class="row">
-        <div class="col-md-4">
-            <div class="card shadow-sm mb-4 border-0">
-                <div class="card-header bg-primary text-white">Info Ujian</div>
-                <div class="card-body">
-                    <p><strong>Ujian:</strong> {{ $session->exam->name }}</p>
-                    <p><strong>Tipe:</strong> {{ strtoupper($session->exam->type) }}</p>
-                    <p><strong>Status:</strong> {{ strtoupper($session->status) }}</p>
-                    <p><strong>Waktu Mulai:</strong> {{ $session->created_at }}</p>
-                    <p><strong>Waktu Selesai:</strong> {{ $session->end_time ?? '-' }}</p>
+        <div class="flex flex-col w-full gap-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-primary text-white">Info Ujian</div>
+                    <div class="card-body">
+                        <p><strong>Ujian:</strong> {{ $session->exam->name }}</p>
+                        <p><strong>Tipe:</strong> {{ strtoupper($session->exam->type) }}</p>
+                        <p><strong>Status:</strong> {{ strtoupper($session->status) }}</p>
+                        <p><strong>Waktu Mulai:</strong> {{ $session->created_at }}</p>
+                        <p><strong>Waktu Selesai:</strong> {{ $session->end_time ?? '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-primary text-white">Info Peserta <span class="font-weight-bold">(DIISI HRD)</span></div>
+                    <div class="card-body">
+                        <p><strong>Nama:</strong> {{ $session->user->name }}</p>
+                        <p><strong>Email:</strong> {{ $session->user->email }}</p>
+                        <p><strong>Telepon:</strong> {{ $session->user->phone ?? '-' }}</p>
+                        <p><strong>Posisi:</strong> {{ $session->user->position ?? '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-primary text-white">Info Verifikasi Peserta <span class="font-weight-bold">(DIISI USER)</span></div>
+                    <div class="card-body">
+                        <p><strong>Nama:</strong> {{ $verifyUser->name }}</p>
+                        <p><strong>Email:</strong> {{ $verifyUser->email }}</p>
+                        <p><strong>Telepon:</strong> {{ $verifyUser->phone ?? '-' }}</p>
+                        <p><strong>Posisi:</strong> {{ $verifyUser->position ?? '-' }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,7 +156,7 @@
                                                     </tr>
                                                 @endforeach
 
-                                            @elseif($session->exam->type == 'angka_akuntansi')
+                                            @elseif($session->exam->type == 'angka')
                                                     {{-- ======================================================== --}}
                                                     {{-- TAMPILAN KHUSUS UNTUK SOAL TABEL ANGKA                   --}}
                                                     {{-- ======================================================== --}}
@@ -146,10 +179,23 @@
                                                                 @if(!empty($details))
                                                                     <div class="row" style="margin: 0 -5px;">
                                                                         @foreach($details as $label => $val)
-                                                                            <div class="col-sm-6 p-1">
-                                                                                <div class="border rounded p-2 bg-white shadow-sm d-flex justify-content-between align-items-center">
+                                                                            @php
+                                                                                // Bersihkan inputan dari spasi berlebih
+                                                                                $cleanVal = trim($val);
+                                                                                // Jika isinya murni angka, format menggunakan titik (Ide Sebelumnya)
+                                                                                $displayVal = is_numeric($cleanVal) ? number_format($cleanVal, 0, ',', '.') : $val;
+                                                                            @endphp
+                                                                            
+                                                                            {{-- PERBAIKAN 1: col-12 agar di HP menjadi 1 baris penuh, tidak memaksakan dibagi 2 --}}
+                                                                            <div class="col-12 col-md-6 p-1">
+                                                                                {{-- PERBAIKAN 2: flex-wrap agar kotak bisa turun ke bawah jika tidak muat --}}
+                                                                                <div class="border rounded p-3 bg-white shadow-sm d-flex flex-wrap justify-content-between align-items-center" style="gap: 10px;">
                                                                                     <small class="text-secondary font-weight-bold">{{ $label }}</small>
-                                                                                    <span class="badge badge-success" style="font-size: 0.95rem;">{{ $val }}</span>
+                                                                                    
+                                                                                    {{-- PERBAIKAN 3: white-space: normal & word-break agar angka super panjang melipat ke bawah --}}
+                                                                                    <span class="badge badge-success text-right" style="font-size: 1.05rem; letter-spacing: 0.5px; padding: 0.5em 0.8em; white-space: normal; word-break: break-word; max-width: 100%;">
+                                                                                        {{ $displayVal }}
+                                                                                    </span>
                                                                                 </div>
                                                                             </div>
                                                                         @endforeach
@@ -157,7 +203,7 @@
                                                                     
                                                                 {{-- Fallback jika ada peserta lama yang menjawab pakai format lama (1, 2) --}}
                                                                 @elseif($answerText)
-                                                                    <div class="p-2 bg-light rounded font-weight-bold text-success" style="border-left: 3px solid #28a745; font-size: 1.1rem; letter-spacing: 2px;">
+                                                                    <div class="p-2 bg-light rounded font-weight-bold text-success" style="border-left: 3px solid #28a745; font-size: 1.1rem; letter-spacing: 1px; word-break: break-word;">
                                                                         {{ $answerText }}
                                                                     </div>
                                                                 @else

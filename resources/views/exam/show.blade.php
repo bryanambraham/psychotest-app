@@ -3,8 +3,7 @@
 @section('content')
 <div class="container-fluid px-2 px-md-4">
     <div class="row justify-content-center">
-        <div class="col-12 col-lg-9 col-xl-8">
-
+        <div class="w-full overflow-x-auto">
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem;">
                     <div>
@@ -262,7 +261,7 @@
                     {{-- ========================================== --}}
                     {{-- UI UNTUK SOAL TABEL ANGKA (PENJUMLAHAN) --}}
                     {{-- ========================================== --}}
-                    @elseif($exam->type == 'angka_akuntansi')
+                    @elseif($exam->type == 'angka')
                         <div class="p-4">
                             <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #28a745 !important;">
                                 <div class="card-body bg-light">
@@ -325,7 +324,7 @@
                                                                             class="form-control form-control-sm table-number-cell" 
                                                                             name="answer_{{ $q->number }}_row_{{ $rowIdx }}" 
                                                                             placeholder="..." 
-                                                                            style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #17a2b8;"
+                                                                            style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #17a2b8; min-width: 120px;"
                                                                             data-question="{{ $q->number }}">
                                                                     @else
                                                                         {{-- Render Angka Biasa --}}
@@ -345,7 +344,7 @@
                                                                     class="form-control form-control-sm table-number-cell" 
                                                                     name="answer_{{ $q->number }}_col_{{ $col }}" 
                                                                     placeholder="..." 
-                                                                    style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745;"
+                                                                    style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745; min-width: 120px;"
                                                                     data-question="{{ $q->number }}">
                                                             </td>
                                                         @endfor
@@ -555,6 +554,16 @@
         const tableNumberCells = document.querySelectorAll('.table-number-cell');
         tableNumberCells.forEach(cell => {
             cell.addEventListener('input', function() {
+
+                // === FITUR BARU: Auto Format Ribuan (Titik) ===
+                // 1. Hapus semua karakter selain angka (mencegah user mengetik huruf)
+                let angkaSaja = this.value.replace(/\D/g, '');
+                // 2. Tambahkan titik setiap kelipatan 3 digit
+                let formatTitik = angkaSaja.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                // 3. Kembalikan nilai yang sudah diformat ke dalam input kotak
+                this.value = formatTitik;
+                // ==============================================
+
                 let qNum = this.dataset.question;
                 let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
                 
@@ -845,7 +854,7 @@
             let unanswered = [];
             let isDisc = "{{ $exam->type }}" === 'disc';
             let isuraian = "{{ $exam->type }}" === 'uraian';
-            let isTableNumber = "{{ $exam->type }}" === 'angka_akuntansi';
+            let isTableNumber = "{{ $exam->type }}" === 'angka';
 
             // Ambil semua nomor soal unik yang ada di halaman
             let questionNumbers = [...new Set(Array.from(document.querySelectorAll('.question-block')).map(el => el.dataset.qnum))];
