@@ -28,6 +28,23 @@
                         <p><strong>Status:</strong> {{ strtoupper($session->status) }}</p>
                         <p><strong>Waktu Mulai:</strong> {{ $session->created_at }}</p>
                         <p><strong>Waktu Selesai:</strong> {{ $session->end_time ?? '-' }}</p>
+                        @if($session->score !== null)
+                            <p>
+                                <strong>Nilai Akhir:</strong> 
+                                <span class="badge badge-lg" style="font-size: 1.2em; padding: 0.5em 0.8em;
+                                    @if($session->score >= 80)
+                                        background-color: #28a745;
+                                    @elseif($session->score >= 60)
+                                        background-color: #ffc107;
+                                        color: #000;
+                                    @else
+                                        background-color: #dc3545;
+                                    @endif
+                                ">
+                                    {{ number_format($session->score, 2) }} / 100
+                                </span>
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -93,7 +110,9 @@
                                             <tr>
                                                 <th style="width: 50px;">No</th>
                                                 <th>Pertanyaan / Pernyataan</th>
+                                                <th>Kunci Jawaban</th>
                                                 <th>Jawaban Peserta</th>
+                                                <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -138,6 +157,7 @@
                                                     @php
                                                         $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
                                                         $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
+                                                        $answerKeyValue = $question->answer_key ?? null;
                                                     @endphp
                                                     <tr>
                                                         <td class="text-center align-middle font-weight-bold">{{ $question->number }}</td>
@@ -145,13 +165,23 @@
                                                             <div class="text-dark" style="white-space: pre-wrap; line-height: 1.5;">{{ $question->question_text }}</div>
                                                         </td>
                                                         <td class="align-middle">
+                                                            @if($answerKeyValue)
+                                                                <div style="font-size: 0.85rem; color: #666;">{{ $answerKeyValue }}</div>
+                                                            @else
+                                                                <span class="text-muted small">-</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="align-middle">
                                                             @if($answerText)
-                                                                <div class="p-2 bg-light rounded" style="border-left: 3px solid #17a2b8; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto;">
+                                                                <div class="p-2 bg-light rounded" style="border-left: 3px solid #17a2b8; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto; font-size: 0.9rem;">
                                                                     {{ $answerText }}
                                                                 </div>
                                                             @else
                                                                 <span class="badge badge-secondary">❌ Tidak ada jawaban</span>
                                                             @endif
+                                                        </td>
+                                                        <td class="align-middle text-center">
+                                                            <span class="text-muted small">Manual review</span>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -165,8 +195,14 @@
                                                             $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
                                                             // Ambil data JSON jawaban peserta
                                                             $data = $userAnswer ? $userAnswer->answers : [];
-                                                            $answerText = $data['answer_text'] ?? '';
                                                             $details = $data['details'] ?? [];
+                                                            
+                                                            // Decode answer key
+                                                            $answerKeyValue = $question->answer_key ?? null;
+                                                            $answerKeyData = [];
+                                                            if ($answerKeyValue) {
+                                                                $answerKeyData = @json_decode($answerKeyValue, true) ?: [];
+                                                            }
                                                         @endphp
                                                         <tr>
                                                             <td class="text-center align-middle font-weight-bold">{{ $question->number }}</td>
@@ -175,39 +211,62 @@
                                                                 <small class="text-muted">Peserta diminta menghitung tabel angka secara mendatar & menurun.</small>
                                                             </td>
                                                             <td class="align-middle">
-                                                                {{-- Cek apakah ada data struktur array (Versi Baru) --}}
-                                                                @if(!empty($details))
-                                                                    <div class="row" style="margin: 0 -5px;">
-                                                                        @foreach($details as $label => $val)
-                                                                            @php
-                                                                                // Bersihkan inputan dari spasi berlebih
-                                                                                $cleanVal = trim($val);
-                                                                                // Jika isinya murni angka, format menggunakan titik (Ide Sebelumnya)
-                                                                                $displayVal = is_numeric($cleanVal) ? number_format($cleanVal, 0, ',', '.') : $val;
-                                                                            @endphp
-                                                                            
-                                                                            {{-- PERBAIKAN 1: col-12 agar di HP menjadi 1 baris penuh, tidak memaksakan dibagi 2 --}}
-                                                                            <div class="col-12 col-md-6 p-1">
-                                                                                {{-- PERBAIKAN 2: flex-wrap agar kotak bisa turun ke bawah jika tidak muat --}}
-                                                                                <div class="border rounded p-3 bg-white shadow-sm d-flex flex-wrap justify-content-between align-items-center" style="gap: 10px;">
-                                                                                    <small class="text-secondary font-weight-bold">{{ $label }}</small>
-                                                                                    
-                                                                                    {{-- PERBAIKAN 3: white-space: normal & word-break agar angka super panjang melipat ke bawah --}}
-                                                                                    <span class="badge badge-success text-right" style="font-size: 1.05rem; letter-spacing: 0.5px; padding: 0.5em 0.8em; white-space: normal; word-break: break-word; max-width: 100%;">
-                                                                                        {{ $displayVal }}
-                                                                                    </span>
-                                                                                </div>
+                                                                {{-- Display kunci jawaban --}}
+                                                                @if(!empty($answerKeyData))
+                                                                    <div class="row" style="margin: 0 -5px; font-size: 0.85rem;">
+                                                                        @foreach($answerKeyData as $label => $val)
+                                                                            <div class="col-12 p-1">
+                                                                                <small class="text-muted">{{ $label }}:</small>
+                                                                                <div class="badge badge-warning">{{ $val }}</div>
                                                                             </div>
                                                                         @endforeach
                                                                     </div>
-                                                                    
-                                                                {{-- Fallback jika ada peserta lama yang menjawab pakai format lama (1, 2) --}}
-                                                                @elseif($answerText)
-                                                                    <div class="p-2 bg-light rounded font-weight-bold text-success" style="border-left: 3px solid #28a745; font-size: 1.1rem; letter-spacing: 1px; word-break: break-word;">
-                                                                        {{ $answerText }}
+                                                                @else
+                                                                    <span class="text-muted small">Belum diatur</span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="align-middle">
+                                                                {{-- Display jawaban peserta --}}
+                                                                @if(!empty($details))
+                                                                    <div class="row" style="margin: 0 -5px; font-size: 0.85rem;">
+                                                                        @foreach($details as $label => $val)
+                                                                            <div class="col-12 p-1">
+                                                                                <small class="text-muted">{{ $label }}:</small>
+                                                                                <div class="badge badge-primary">{{ $val }}</div>
+                                                                            </div>
+                                                                        @endforeach
                                                                     </div>
                                                                 @else
-                                                                    <span class="badge badge-secondary">❌ Tidak ada jawaban</span>
+                                                                    <span class="badge badge-secondary">❌ Kosong</span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="align-middle text-center">
+                                                                @if(!empty($answerKeyData) && !empty($details))
+                                                                    @php
+                                                                        $correctItemCount = 0;
+                                                                        $totalItemCount = count($answerKeyData);
+
+                                                                        foreach ($answerKeyData as $label => $expectedValue) {
+                                                                            $actualValue = $details[$label] ?? null;
+                                                                            if ($actualValue) {
+                                                                                $normalizedActual = str_replace(['.', ','], '', strtolower(trim($actualValue)));
+                                                                                $normalizedExpected = str_replace(['.', ','], '', strtolower(trim($expectedValue)));
+                                                                                if ($normalizedActual === $normalizedExpected) {
+                                                                                    $correctItemCount++;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    @endphp
+                                                                    
+                                                                    {{-- Tampilkan detail Benar dan Salah --}}
+                                                                    <div class="d-flex flex-column align-items-center" style="gap: 5px;">
+                                                                        <span class="badge badge-success" style="font-size: 0.9rem;">✅ {{ $correctItemCount }} Benar</span>
+                                                                        @if($totalItemCount - $correctItemCount > 0)
+                                                                            <span class="badge badge-danger" style="font-size: 0.9rem;">❌ {{ $totalItemCount - $correctItemCount }} Salah</span>
+                                                                        @endif
+                                                                    </div>
+                                                                @else
+                                                                    <span class="text-muted small">-</span>
                                                                 @endif
                                                             </td>
                                                         </tr>
@@ -221,6 +280,29 @@
                                                     @php
                                                         $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
                                                         $data = $userAnswer ? $userAnswer->answers : null;
+                                                        $answerKeyValue = $question->answer_key ?? null;
+                                                        
+                                                        // Tentukan apakah jawaban benar (untuk soal yang punya answer key)
+                                                        $isCorrect = false;
+                                                        $userAnswerDisplay = '-';
+                                                        
+                                                        if ($data && $answerKeyValue) {
+                                                            if ($session->exam->type == 'disc') {
+                                                                $userAnswerDisplay = ($data['most'] ?? '-') . ' / ' . ($data['least'] ?? '-');
+                                                            } else {
+                                                                $userAnswerDisplay = $data['selected'] ?? '-';
+                                                                // Cek kecocokan
+                                                                if ($userAnswerDisplay && strtolower(trim($userAnswerDisplay)) === strtolower(trim($answerKeyValue))) {
+                                                                    $isCorrect = true;
+                                                                }
+                                                            }
+                                                        } elseif ($data) {
+                                                            if ($session->exam->type == 'disc') {
+                                                                $userAnswerDisplay = ($data['most'] ?? '-') . ' / ' . ($data['least'] ?? '-');
+                                                            } else {
+                                                                $userAnswerDisplay = $data['selected'] ?? '-';
+                                                            }
+                                                        }
                                                     @endphp
                                                     <tr>
                                                         <td class="text-center">{{ $question->number }}</td>
@@ -234,16 +316,38 @@
                                                                 @endforeach
                                                             </div>
                                                         </td>
+                                                        <td class="align-middle">
+                                                            @if($answerKeyValue)
+                                                                @if($session->exam->type == 'disc')
+                                                                    <span class="text-muted" style="font-size: 0.9rem;">-</span>
+                                                                @else
+                                                                    <span class="badge badge-warning font-weight-bold" style="font-size: 1rem; padding: 0.5em 0.8em;">{{ $answerKeyValue }}</span>
+                                                                @endif
+                                                            @else
+                                                                <span class="text-muted small">Belum diatur</span>
+                                                            @endif
+                                                        </td>
                                                         <td>
                                                             @if($data)
                                                                 @if($session->exam->type == 'disc')
                                                                     <span class="badge badge-success">Most: {{ $data['most'] ?? '-' }}</span>
                                                                     <span class="badge badge-danger">Least: {{ $data['least'] ?? '-' }}</span>
                                                                 @else
-                                                                    <span class="badge badge-primary">Pilihan: {{ $data['selected'] ?? '-' }}</span>
+                                                                    <span class="badge badge-primary">{{ $data['selected'] ?? '-' }}</span>
                                                                 @endif
                                                             @else
-                                                                <span class="badge badge-secondary">Kosong atau Tidak terisi.</span>
+                                                                <span class="badge badge-secondary">❌ Kosong</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="align-middle">
+                                                            @if($answerKeyValue && $session->exam->type != 'disc')
+                                                                @if($isCorrect)
+                                                                    <span class="badge badge-success" style="font-size: 1rem; padding: 0.5em 0.8em;">✅ Benar</span>
+                                                                @else
+                                                                    <span class="badge badge-danger" style="font-size: 1rem; padding: 0.5em 0.8em;">❌ Salah</span>
+                                                                @endif
+                                                            @else
+                                                                <span class="text-muted small">-</span>
                                                             @endif
                                                         </td>
                                                     </tr>

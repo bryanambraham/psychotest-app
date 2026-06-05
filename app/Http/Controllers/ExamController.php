@@ -309,7 +309,8 @@ class ExamController extends Controller
 
     public function finish($session_id)
     {
-        $session = ExamSession::with('exam')->findOrFail($session_id);
+        $session = ExamSession::with(['exam', 'exam.questions', 'userAnswers'])
+            ->findOrFail($session_id);
 
         $activeSessionId = session()->get('active_exam_session.' . $session->exam_id);
         if ((int) $activeSessionId !== (int) $session->id) {
@@ -320,6 +321,9 @@ class ExamController extends Controller
             'status' => 'completed',
             'end_time' => now()
         ]);
+
+        // Hitung score berdasarkan kunci jawaban
+        $session->calculateAndSaveScore();
 
         session()->forget('active_exam_session.' . $session->exam_id);
 

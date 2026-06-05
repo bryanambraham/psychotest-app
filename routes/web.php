@@ -94,4 +94,8 @@ Route::middleware(['auth'])->group(function () {
     // Download QR untuk setiap ujian (menghasilkan PNG yang bisa diunduh)
     Route::get('/manage-exams/{id}/qr', 'ExamManagementController@downloadQr')->name('manage-exams.qr')->middleware('role:admin');
 
+    // Rute untuk mengelola kunci jawaban
+    Route::get('/manage-exams/{id}/answer-keys', 'ExamManagementController@editAnswerKeys')->name('manage-exams.edit-answer-keys')->middleware('role:admin');
+    Route::put('/manage-exams/{id}/answer-keys', 'ExamManagementController@updateAnswerKeys')->name('manage-exams.update-answer-keys')->middleware('role:admin');
+
 });

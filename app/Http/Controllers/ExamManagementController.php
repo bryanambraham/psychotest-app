@@ -364,6 +364,89 @@ class ExamManagementController extends Controller
             ->header('Content-Type', 'application/vnd.ms-excel')
             ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
     }
+
+    // ========================================================
+    // FUNGSI UNTUK MENGELOLA KUNCI JAWABAN
+    // ========================================================
+    
+    /**
+     * Menampilkan form untuk mengedit kunci jawaban
+     */
+    public function editAnswerKeys($id)
+    {
+        $exam = Exam::with('questions')->findOrFail($id);
+        
+        // Filter hanya soal yang bisa memiliki kunci jawaban
+        $editableQuestions = $exam->questions->filter(function($q) {
+            // Logika filter kamu (dikembalikan true semua untuk saat ini)
+            return true;
+        });
+
+        // Looping (Transform) setiap soal untuk mengekstrak teksnya
+        $editableQuestions->transform(function ($q) {
+            // Coba terjemahkan teksnya dari JSON
+            $parsedData = json_decode($q->question_text, true);
+            
+            // Cek apakah datanya benar-benar JSON array dan punya kunci 'question' (Misal: Soal Angka)
+            if (is_array($parsedData) && isset($parsedData['question'])) {
+                // Jika ya, ambil teks pertanyaannya dari dalam JSON
+                $q->kalimat_soal = $parsedData['question'];
+            } else {
+                // Jika bukan JSON (soal PG biasa / uraian), langsung gunakan teks aslinya
+                $q->kalimat_soal = $q->question_text;
+            }
+
+            return $q;
+        });
+
+        // Tidak perlu mengirim $kalimatSoal secara terpisah, karena sudah disuntikkan ke dalam $editableQuestions
+        return view('admin.exams.edit_answer_keys', compact('exam', 'editableQuestions'));
+    }
+    /**
+     * Menyimpan kunci jawaban
+     */
+    public function updateAnswerKeys(Request $request, $id)
+    {
+        $exam = Exam::findOrFail($id);
+        
+        $request->validate([
+            'answer_keys' => 'required|array',
+            'answer_keys.*.question_id' => 'required|exists:questions,id',
+            'answer_keys.*.is_table' => 'required|boolean',
+        ]);
+
+        foreach ($request->answer_keys as $answerData) {
+            $isTableQuestion = (bool) $answerData['is_table'];
+            
+            if ($isTableQuestion && isset($answerData['details'])) {
+                // Untuk soal tabel angka: simpan sebagai JSON dari details array
+                $answerKeyValue = json_encode($answerData['details']);
+            } else {
+                // Untuk soal PG/Uraian: simpan string biasa dari key
+                $answerKeyValue = $answerData['key'] ?? null;
+            }
+
+            Question::where('id', $answerData['question_id'])
+                ->update([
+                    'answer_key' => $answerKeyValue
+                ]);
+        }
+
+        return redirect()->back()->with('success', 'Kunci jawaban berhasil diperbarui.');
+    }
+
+    /**
+     * Menampilkan daftar hasil ujian dengan score
+     */
+    public function resultsIndexWithScore()
+    {
+        $sessions = \App\ExamSession::with(['user', 'exam'])
+                    ->whereNotNull('score')
+                    ->latest()
+                    ->paginate(10);
+
+        return view('admin.exams.results_index_with_score', compact('sessions'));
+    }
 }
 
 

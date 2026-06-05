@@ -28,6 +28,7 @@
                         <th class="text-nowrap d-none d-lg-table-cell">No. Telepon</th>
                         <th class="text-nowrap">Ujian</th>
                         <th class="text-nowrap">Status</th>
+                        <th class="text-nowrap d-none d-sm-table-cell">Nilai</th>
                         <th class="text-nowrap d-none d-sm-table-cell">Waktu Mulai</th>
                         <th class="text-nowrap text-center">Aksi</th>
                     </tr>
@@ -44,6 +45,24 @@
                             <span class="badge {{ $session->status == 'completed' ? 'badge-success' : 'badge-warning' }}">
                                 {{ strtoupper($session->status) }}
                             </span>
+                        </td>
+                        <td class="text-nowrap d-none d-sm-table-cell">
+                            @if($session->score !== null)
+                                <span class="badge badge-lg" style="
+                                    @if($session->score >= 80)
+                                        background-color: #28a745;
+                                    @elseif($session->score >= 60)
+                                        background-color: #ffc107;
+                                        color: #000;
+                                    @else
+                                        background-color: #dc3545;
+                                    @endif
+                                ">
+                                    {{ number_format($session->score, 2) }}
+                                </span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
                         </td>
                         <td class="text-nowrap d-none d-sm-table-cell">
                             {{ $session->created_at->format('d M Y, H:i') }}

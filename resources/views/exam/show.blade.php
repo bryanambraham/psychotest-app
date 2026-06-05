@@ -339,13 +339,20 @@
                                                     {{-- Empty Row untuk Input Jawaban Menurun (Di paling bawah) --}}
                                                     <tr style="background-color: #e3f2fd; border-top: 3px solid #28a745;">
                                                         @for($col = 0; $col < count($tableData['table']['headers']); $col++)
-                                                            <td class="py-2 px-1">
-                                                                <input type="text" 
-                                                                    class="form-control form-control-sm table-number-cell" 
-                                                                    name="answer_{{ $q->number }}_col_{{ $col }}" 
-                                                                    placeholder="..." 
-                                                                    style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745; min-width: 120px;"
-                                                                    data-question="{{ $q->number }}">
+                                                            <td class="py-2 px-1 text-center align-middle">
+                                                                
+                                                                {{-- PERBAIKAN: Jika ini adalah kolom paling kanan, jangan render input! --}}
+                                                                @if($col == count($tableData['table']['headers']) - 1)
+                                                                    <span class="text-muted" style="font-weight: bold;">-</span>
+                                                                @else
+                                                                    <input type="text" 
+                                                                        class="form-control form-control-sm table-number-cell" 
+                                                                        name="answer_{{ $q->number }}_col_{{ $col }}" 
+                                                                        placeholder="..." 
+                                                                        style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745; min-width: 120px;"
+                                                                        data-question="{{ $q->number }}">
+                                                                @endif
+
                                                             </td>
                                                         @endfor
                                                     </tr>

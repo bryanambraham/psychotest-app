@@ -59,6 +59,12 @@
                                 <a href="{{ route('manage-exams.edit', $exam->id) }}"
                                    class="btn btn-sm btn-primary text-nowrap">Kelola</a>
 
+                                <a href="{{ route('manage-exams.edit-answer-keys', $exam->id) }}"
+                                   class="btn btn-sm btn-info text-nowrap" title="Edit Kunci Jawaban">
+                                    <span class="d-none d-lg-inline">Kunci Jawaban</span>
+                                    <span class="d-inline d-lg-none" title="Kunci Jawaban">Kunci</span>
+                                </a>
+
                                 <a href="{{ route('manage-exams.qr', $exam->id) }}"
                                    class="btn btn-sm btn-outline-secondary text-nowrap" title="Download QR">QR</a>
 
