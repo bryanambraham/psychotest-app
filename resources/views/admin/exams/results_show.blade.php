@@ -65,10 +65,10 @@
                 <div class="card shadow-sm mb-4 border-0">
                     <div class="card-header bg-primary text-white">Info Verifikasi Peserta <span class="font-weight-bold">(DIISI USER)</span></div>
                     <div class="card-body">
-                        <p><strong>Nama:</strong> {{ $verifyUser->name }}</p>
-                        <p><strong>Email:</strong> {{ $verifyUser->email }}</p>
-                        <p><strong>Telepon:</strong> {{ $verifyUser->phone ?? '-' }}</p>
-                        <p><strong>Posisi:</strong> {{ $verifyUser->position ?? '-' }}</p>
+                        <p><strong>Nama:</strong> {{ $verifyUser->name ?? $session->user->name }}</p>
+                        <p><strong>Email:</strong> {{ $verifyUser->email ?? $session->user->email }}</p>
+                        <p><strong>Telepon:</strong> {{ $verifyUser->phone ?? $session->user->phone }}</p>
+                        <p><strong>Posisi:</strong> {{ $verifyUser->position ?? $session->user->position }}</p>
                     </div>
                 </div>
             </div>
@@ -116,7 +116,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @if($session->exam->type == 'kasus_akuntansi')
+                                            @if($session->exam->type == 'soal_kasus')
                                                 {{-- ======================================================== --}}
                                                 {{-- TAMPILAN KHUSUS UNTUK DOWNLOAD MULTIPLE FILE JAWABAN     --}}
                                                 {{-- ======================================================== --}}

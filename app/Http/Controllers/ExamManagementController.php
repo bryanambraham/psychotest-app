@@ -29,7 +29,7 @@ class ExamManagementController extends Controller
     {
         $request->validate([
             'name'             => 'required|string|max:255',
-            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pg_akuntansi,kasus_akuntansi,uraian,angka',
+            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pilgan,soal_kasus,uraian,angka',
             'duration_minutes' => 'required|integer|min:1',
             'description'      => 'nullable|string',
             'question_file'    => 'required|mimes:pdf|max:5000',
@@ -315,7 +315,7 @@ class ExamManagementController extends Controller
     //                     } else {
     //                         $answerString = $data['answer_text'] ?? '-';
     //                     }
-    //                 } elseif ($session->exam->type == 'kasus_akuntansi') {
+    //                 } elseif ($session->exam->type == 'soal_kasus') {
     //                     $uploadedFiles = json_decode($session->answer_file, true) ?: [];
     //                     if(!empty($uploadedFiles)){
     //                         $names = array_column($uploadedFiles, 'name');

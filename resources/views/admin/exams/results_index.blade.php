@@ -67,7 +67,7 @@
                         <td class="text-nowrap d-none d-sm-table-cell">
                             {{ $session->created_at->format('d M Y, H:i') }}
                         </td>
-                        <td class="text-center">
+                        <td class="text-center d-flex justify-content-center gap-2">
                             <a href="{{ route('manage-exams.results.show', $session->id) }}"
                                class="btn btn-sm btn-info text-white text-nowrap">
                                 <span class="d-none d-md-inline">Lihat Detail &amp; Foto</span>
@@ -124,5 +124,9 @@
             font-size: 0.82rem;
         }
     }
+
+    /* gap utility fallback for older Bootstrap 4 */
+    .gap-1 { gap: 0.25rem; }
+    .gap-2 { gap: 0.5rem; }
 </style>
 @endsection

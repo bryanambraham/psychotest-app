@@ -100,7 +100,7 @@
                             } else {
                                 $answerString = $data['answer_text'] ?? '-';
                             }
-                        } elseif ($session->exam->type == 'kasus_akuntansi') {
+                        } elseif ($session->exam->type == 'soal_kasus') {
                             $uploadedFiles = json_decode($session->answer_file, true) ?: [];
                             if(!empty($uploadedFiles)){
                                 $names = array_column($uploadedFiles, 'name');

@@ -19,9 +19,9 @@
                                 <label>Tipe Psikotes</label>
                                 <select name="type" class="form-control">
                                     <option value="disc">Soal DISC</option>
-                                    <option value="vak">Soal VAK</option>
-                                    <option value="pg_akuntansi">Soal PG Akuntansi</option>
-                                    <option value="kasus_akuntansi">Soal Kasus Akuntansi</option>
+                                    <!-- <option value="vak">Soal VAK</option> -->
+                                    <option value="pilgan">Soal PG</option>
+                                    <option value="soal_kasus">Soal Kasus</option>
                                     <option value="angka">Soal Angka</option>
                                     <!-- <option value="uraian">Soal Uraian</option> -->
                                     <!-- <option value="mbti">MBTI</option>

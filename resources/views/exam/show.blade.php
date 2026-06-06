@@ -94,7 +94,7 @@
                             </tbody>
                         </table>
 
-                    @elseif($exam->type == 'kasus_akuntansi')
+                    @elseif($exam->type == 'soal_kasus')
                         {{-- ======================================================== --}}
                         {{-- UI PREMIUM STACKED & SMART PARSER FOR KASUS AKUNTANSI    --}}
                         {{-- ======================================================== --}}
@@ -700,7 +700,7 @@
         }
 
 
-        const isKasus = "{{ $exam->type }}" === 'kasus_akuntansi';
+        const isKasus = "{{ $exam->type }}" === 'soal_kasus';
             let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
 
             if (isKasus) {
