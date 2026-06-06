@@ -34,6 +34,7 @@
                         <th class="text-nowrap">Nama</th>
                         <th class="text-nowrap d-none d-md-table-cell">Posisi</th>
                         <th class="text-nowrap d-none d-sm-table-cell">Email</th>
+                        <th class="text-nowrap">Password</th>
                         <th class="text-nowrap">Role</th>
                         <th class="text-nowrap text-center">Aksi</th>
                     </tr>
@@ -50,6 +51,16 @@
                         <td class="d-none d-md-table-cell">{{ $user->position ?? '-' }}</td>
                         <td class="d-none d-sm-table-cell text-break" style="max-width: 180px;">
                             {{ $user->email }}
+                        </td>
+                        <td class="text-break" style="max-width: 180px;">
+                            @php
+                                try{
+                                    $decrypted_password = \Illuminate\Support\Facades\Crypt::decryptString($user->password);
+                                }catch(\Illuminate\Contracts\Encryption\DecryptException $e){
+                                    $decrypted_password = 'Gagal dekripsi';
+                                }
+                            @endphp
+                            {{ $decrypted_password }}
                         </td>
                         <td>
                             <span class="badge {{ $user->role == 'admin' ? 'badge-danger' : 'badge-secondary' }}">

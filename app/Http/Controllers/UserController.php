@@ -38,7 +38,7 @@ class UserController extends Controller
             'email' => strtolower($request->email),
             'position' => strtolower($request->position),
             'phone' => strtolower($request->phone),
-            'password' => Hash::make($request->password),
+            'password' => \Illuminate\Support\Facades\Crypt::encryptString($request->password),
             'role'     => $request->role,
         ]);
 
@@ -76,7 +76,7 @@ class UserController extends Controller
         // Update password hanya jika diisi
         if ($request->filled('password')) {
             $request->validate(['password' => 'string|min:8|confirmed']);
-            $data['password'] = Hash::make($request->password);
+            $data['password'] = \Illuminate\Support\Facades\Crypt::encryptString($request->password);
         }
 
         $user->update($data);
