@@ -20,7 +20,6 @@ Route::get('/register', function () {
     return redirect('/login');
 });
 
-
 // Rute Dashboard Utama setelah Login
 Route::get('/home', 'HomeController@index')->name('home');
 

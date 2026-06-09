@@ -14,10 +14,52 @@
 
                     {{-- Header --}}
                     <div class="mb-4">
-                        <span class="badge badge-warning mb-2">INSTRUKSI</span>
                         <h3 class="font-weight-bold mb-2 fs-responsive">Persiapan Pengerjaan</h3>
                         <p class="text-muted mb-0 small">Data peserta sudah tersimpan. Saat Anda menekan tombol mulai, timer akan langsung berjalan dan halaman soal akan dibuka.</p>
                     </div>
+
+                    @if ($exam->type == 'pilgan')
+                        <div class="mb-4">
+                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
+                        </div>
+                    @elseif($exam->type == 'tes_kraeplin')
+                        <div class="mb-4">
+                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <p class="font-weight-bold text-red-600 mb-0 medium">Pada soal yang akan kamu kerjakan ini, ada sejumlah soal menghitung sederhana yang dapat dilakukan setiap orang  
+dengan latar belakang pendidikan sekolah dasar. Anda diminta untuk mengerjakan dengan cepat
+dan tepat. Untuk itu Anda perlu memperhatikan bahwa Tanda Tambah (  +  ) mempunyai arti 
+pembagian (  :  ), Tanda Bagi (  :  ) mempunyai arti pengurangan (  -  ), Tanda Kurang (  -  ) 
+mempunyai arti perkalian (  x  ), dan Tanda Kali (  x  ) mempunyai arti penambahan (  +  ).
+Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian
+                            </p>
+                        </div>
+                    @elseif($exam->type == 'angka')
+                        <div class="mb-4">
+                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Anda akan diminta untuk menjumlahkan angka-angka yang tertera secara mendatar dan menurun.</p>
+                        </div>  
+                    @elseif($exam->type == 'uraian')
+                        <div class="mb-4">
+                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
+                        </div>  
+                    @elseif($exam->type == 'disc')
+                        <div class="mb-4">
+                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <ul class="font-weight-bold text-red-600 mb-0 medium">
+                                <li>Pilih	1	(satu)	huruf	yang	Paling	Mirip	kepribadian	Anda	dan	letakkan	jawabannya	di	kotak	"Mirip".</li>
+                                <li>Pilih	1	(satu)	huruf	yang	Paling	Tidak	Mirip	kepribadian	Anda	dan	letakkan	jawabannya	di	kotak	"Tidak	Mirip"</li>
+                                <li>Jadi,	di	setiap	kotak	hanya	akan	ada	1	Paling	Mirip	dan	1	Paling	Tidak	Mirip</li>
+                            </ul>
+                        </div>  
+                    @elseif($exam->type == 'soal_kasus')
+                        <div class="mb-4">
+                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Telah kami sediakan soal kasus yang akan anda kerjakan, simak baik-baik soal tersebut dan jawablah pertanyaan atau perintah yang tertera.</p>
+                        </div>                 
+                    @endif
+
 
                     {{-- Participant Info Cards --}}
                     <div class="row mb-4">

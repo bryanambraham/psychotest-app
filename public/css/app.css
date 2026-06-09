@@ -459,6 +459,11 @@ small,
   font-weight: 400;
 }
 
+.medium {
+  font-size: 1em;
+  font-weight: 600;
+}
+
 mark,
 .mark {
   padding: 0.2em;
@@ -10793,6 +10798,10 @@ a.text-danger:focus {
 
 .text-light {
   color: #f8f9fa !important;
+}
+
+.text-red-600 {
+  color: #e53e3e !important;
 }
 
 a.text-light:hover,

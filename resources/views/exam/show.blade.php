@@ -22,7 +22,6 @@
                     {{-- ========================================== --}}
                     {{-- UI KHUSUS UNTUK UJIAN DISC (DARI DB)       --}}
                     {{-- ========================================== --}}
-
                     @if($exam->type == 'disc')
                         <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
                             <div class="card-body bg-light">
@@ -965,12 +964,12 @@
                     }
                 } 
                 else if (isuraian) {
-                    // Untuk uraian: Cek apakah textarea sudah diisi
-                    let textarea = document.querySelector(`textarea[name="answer_${qNum}"]`);
-                    if (!textarea || !textarea.value.trim()) {
+                    // Cek elemen berdasarkan attribut name, tidak peduli dia input atau textarea
+                    let inputEl = document.querySelector(`[name="answer_${qNum}"]`);
+                    if (!inputEl || !inputEl.value.trim()) {
                         unanswered.push(qNum);
                     }
-                } 
+                }
                 else {
                     // Untuk Standar (MBTI/VAK): Cek apakah radio button sudah dipilih
                     let selected = document.querySelector(`input[name="answer_${qNum}"]:checked`);
