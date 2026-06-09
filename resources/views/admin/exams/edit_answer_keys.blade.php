@@ -79,7 +79,12 @@
                                             <small class="text-muted"><strong>Opsi Jawaban:</strong></small>
                                             <ul class="mb-0 pl-3" style="font-size: 0.9rem;">
                                                 @foreach ($question->options as $key => $value)
-                                                    <li>{{ strtoupper($key) }}. {{ $value }}</li>
+                                                    @php
+                                                        // Format baru: {"type":"text","value":"Beruang"}
+                                                        // Format lama: "Beruang"
+                                                        $optText = is_array($value) ? ($value['value'] ?? strtoupper($key)) : $value;
+                                                    @endphp
+                                                    <li>{{ strtoupper($key) }}. {{ $optText }}</li>
                                                 @endforeach
                                             </ul>
                                         </div>

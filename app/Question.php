@@ -14,5 +14,8 @@ class Question extends Model
         return $this->belongsTo(Exam::class, 'exam_id');
     }
 
-    protected $casts = ['options' => 'array'];
+    protected $casts = [
+        'options' => 'array',
+        'has_image_options' => 'boolean',
+    ];
 }

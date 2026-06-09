@@ -311,7 +311,10 @@
                                                             <div class="small text-muted mt-2">
                                                                 @foreach($question->options as $key => $val)
                                                                     <div class="mb-1">
-                                                                        <strong>{{ strtoupper($key) }}.</strong> {{ $val }}
+                                                                    @php
+                                                                        $optText = is_array($val) ? ($val['value'] ?? strtoupper($key)) : $val;
+                                                                    @endphp
+                                                                    <li>{{ strtoupper($key) }}. {{ $optText }}</li>
                                                                     </div>
                                                                 @endforeach
                                                             </div>

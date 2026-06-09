@@ -75,21 +75,51 @@
                             </thead>
                             <tbody>
                                 @foreach($exam->questions as $q)
-                                    <tr class="bg-dark text-white">
-                                        <td colspan="3" class="font-weight-bold small">Soal No. {{ $q->number }}</td>
-                                    </tr>
-                                    {{-- Looping options dari JSON database --}}
-                                    @foreach($q->options as $key => $text)
-                                        <tr class="question-block" data-qnum="{{ $q->number }}">
-                                            <td>{{ strtoupper($key) }}. {{ $text }}</td>
-                                            <td class="text-center align-middle">
-                                                <input type="radio" name="most_{{ $q->number }}" value="{{ strtoupper($key) }}" class="disc-radio" data-type="most" style="transform: scale(1.5);">
-                                            </td>
-                                            <td class="text-center align-middle">
-                                                <input type="radio" name="least_{{ $q->number }}" value="{{ strtoupper($key) }}" class="disc-radio" data-type="least" style="transform: scale(1.5);">
-                                            </td>
-                                        </tr>
-                                    @endforeach
+                                @php
+                                    $hasImageOpts    = $q->has_image_options ?? false;
+                                    $questionImage   = $q->question_image ?? null;
+                                @endphp
+                                <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $q->number }}">
+                                    <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
+
+                                    @if($hasImageOpts && $questionImage)
+                                        {{-- Soal Bergambar: tampilkan 1 gambar utuh soal --}}
+                                        <img src="{{ $questionImage }}"
+                                            alt="Soal {{ $q->number }}"
+                                            class="img-fluid d-block mb-3"
+                                            style="max-width:100%; border:1px solid #e9ecef; border-radius:6px; background:#fff;">
+                                        <div class="mt-2">
+                                            @foreach(['A','B','C','D','E'] as $letter)
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input std-radio" type="radio"
+                                                        name="answer_{{ $q->number }}"
+                                                        value="{{ $letter }}">
+                                                    <label class="form-check-label" style="cursor:pointer; font-weight:600;">
+                                                        {{ $letter }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                    @else
+                                        {{-- Soal Teks biasa --}}
+                                        <p>{!! $q->question_text !!}</p>
+                                        @foreach($q->options as $key => $opt)
+                                            @php
+                                                $letter = strtoupper($key);
+                                                $text   = is_array($opt) ? ($opt['value'] ?? '') : $opt;
+                                            @endphp
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input std-radio" type="radio"
+                                                    name="answer_{{ $q->number }}"
+                                                    value="{{ $letter }}">
+                                                <label class="form-check-label" style="cursor:pointer;">
+                                                    {{ $letter }}. {{ $text }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
                                 @endforeach
                             </tbody>
                         </table>
@@ -439,18 +469,50 @@
                                 }
                             </style>
                             @foreach($exam->questions as $q)
+                                @php
+                                    $hasImageOpts  = $q->has_image_options ?? false;
+                                    $questionImage = $q->question_image ?? null;
+                                @endphp
                                 <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $q->number }}">
                                     <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
-                                    <p>{{ $q->question_text }}</p>
 
-                                    @foreach($q->options as $key => $text)
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ strtoupper($key) }}">
-                                            <label class="form-check-label" style="cursor: pointer;">
-                                                {{ strtoupper($key) }}. {{ $text }}
-                                            </label>
+                                    @if($hasImageOpts && $questionImage)
+                                        {{-- Soal Bergambar: 1 gambar utuh soal + pilihan A-E --}}
+                                        <img src="{{ $questionImage }}"
+                                            alt="Soal {{ $q->number }}"
+                                            class="img-fluid d-block mb-3"
+                                            style="max-width:100%; border:1px solid #e9ecef; border-radius:6px; background:#fff;">
+                                        <div class="mt-2">
+                                            @foreach(['A','B','C','D','E'] as $letter)
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input std-radio" type="radio"
+                                                        name="answer_{{ $q->number }}"
+                                                        value="{{ $letter }}">
+                                                    <label class="form-check-label" style="cursor:pointer; font-weight:600;">
+                                                        {{ $letter }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
                                         </div>
-                                    @endforeach
+
+                                    @else
+                                        {{-- Soal Teks biasa --}}
+                                        <p>{!! $q->question_text !!}</p>
+                                        @foreach($q->options as $key => $opt)
+                                            @php
+                                                $letter = strtoupper($key);
+                                                $text   = is_array($opt) ? ($opt['value'] ?? '') : $opt;
+                                            @endphp
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input std-radio" type="radio"
+                                                    name="answer_{{ $q->number }}"
+                                                    value="{{ $letter }}">
+                                                <label class="form-check-label" style="cursor:pointer;">
+                                                    {{ $letter }}. {{ $text }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -908,6 +970,26 @@
             return unanswered;
         }
 
+        // ==========================================
+        // FUNGSI: Pilih opsi gambar (klik gambar)
+        // ==========================================
+        window.selectImageOption = function(imgEl, qNum, letter) {
+            // Reset semua gambar di soal ini
+            document.querySelectorAll(`[data-qnum="${qNum}"] .img-option`).forEach(img => {
+                img.style.borderColor = '#dee2e6';
+                img.style.boxShadow = 'none';
+            });
+            // Highlight gambar yang dipilih
+            imgEl.style.borderColor = '#28a745';
+            imgEl.style.boxShadow = '0 0 0 3px rgba(40,167,69,0.25)';
+            // Set radio button tersembunyi & trigger save
+            let radio = document.getElementById(`opt_${qNum}_${letter}`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        };
+
         btnSubmit.addEventListener('click', function() {
             // 1. Jalankan Validasi
             let missingAnswers = checkCompletion();
@@ -1004,6 +1086,22 @@
 
 /* Kasus akuntansi: tabel saldo scroll horizontal */
 .table-responsive { -webkit-overflow-scrolling: touch; }
+
+/* ── Opsi Gambar (soal IQ bergambar) ── */
+.img-option {
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 6px;
+    background: #fff;
+}
+.img-option:hover {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+}
+@media (max-width: 575.98px) {
+    .img-option { max-width: 80px !important; max-height: 70px !important; }
+}
 
 /* Camera status badge wrap */
 #camera-status { word-break: break-word; max-width: 90vw; display: inline-block; }

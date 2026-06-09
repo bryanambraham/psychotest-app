@@ -29,10 +29,10 @@ class ExamManagementController extends Controller
     {
         $request->validate([
             'name'             => 'required|string|max:255',
-            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pilgan,soal_kasus,uraian,angka',
+            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pilgan,soal_kasus,uraian,angka,tes_kraeplin',
             'duration_minutes' => 'required|integer|min:1',
             'description'      => 'nullable|string',
-            'question_file'    => 'required|mimes:pdf|max:5000',
+            'question_file'    => 'required|mimes:pdf|max:10000',
         ]);
 
         $exam = Exam::create([
@@ -46,7 +46,7 @@ class ExamManagementController extends Controller
             $file = $request->file('question_file');
 
             try {
-                $response = \Illuminate\Support\Facades\Http::attach(
+                $response = \Illuminate\Support\Facades\Http::timeout(120)->attach(
                     'file',
                     file_get_contents($file),
                     $file->getClientOriginalName()
@@ -77,10 +77,12 @@ class ExamManagementController extends Controller
                         }
 
                         Question::create([
-                            'exam_id'       => $exam->id,
-                            'number'        => (int) $number,
-                            'question_text' => $questionText,
-                            'options'       => $options,
+                            'exam_id'           => $exam->id,
+                            'number'            => (int) $number,
+                            'question_text'     => $questionText,
+                            'options'           => $options,
+                            'has_image_options' => $q['has_image_options'] ?? false,
+                            'question_image' => $q['question_image'] ?? null,
                         ]);
                     }
 
@@ -448,5 +450,3 @@ class ExamManagementController extends Controller
         return view('admin.exams.results_index_with_score', compact('sessions'));
     }
 }
-
-
