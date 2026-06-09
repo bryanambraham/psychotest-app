@@ -449,4 +449,20 @@ class ExamManagementController extends Controller
 
         return view('admin.exams.results_index_with_score', compact('sessions'));
     }
+
+    public function toggleSiteClosed()
+    {
+        // Ambil status saat ini
+        $isClosed = \Illuminate\Support\Facades\Cache::get('site_closed_mode', false);
+
+        if ($isClosed) {
+            // Jika sedang tutup, maka BUKA
+            \Illuminate\Support\Facades\Cache::put('site_closed_mode', false);
+            return redirect()->back()->with('success', 'Website sekarang NORMAL (Bisa diakses publik).');
+        } else {
+            // Jika sedang buka, maka TUTUP
+            \Illuminate\Support\Facades\Cache::put('site_closed_mode', true);
+            return redirect()->back()->with('error', 'Website sekarang CLOSED (Terkunci untuk publik).');
+        }
+    }
 }

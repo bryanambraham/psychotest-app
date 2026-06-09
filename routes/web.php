@@ -20,6 +20,7 @@ Route::get('/register', function () {
     return redirect('/login');
 });
 
+
 // Rute Dashboard Utama setelah Login
 Route::get('/home', 'HomeController@index')->name('home');
 
@@ -56,7 +57,7 @@ Route::post('/verify-data', 'VerifyUserController@store')->name('verify.store');
 
 // Grup Rute yang memerlukan Login
 Route::middleware(['auth'])->group(function () {
-
+    Route::post('/admin/toggle-site-closed', 'ExamManagementController@toggleSiteClosed')->name('admin.toggle-site-closed');
     /* --------------------------------------------------------------------------
     | Sisi Admin (Manajemen Ujian & Peserta)
     |--------------------------------------------------------------------------

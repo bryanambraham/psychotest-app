@@ -60,6 +60,21 @@
                                         </a>
                                     </div>
                                 </li>
+
+                                <form action="{{ route('admin.toggle-site-closed') }}" method="POST" class="d-inline ml-4">
+                                    @csrf
+                                    @if(\Illuminate\Support\Facades\Cache::get('site_closed_mode', false))
+                                        {{-- Jika sedang tutup, tombol berwarna Hijau untuk membuka --}}
+                                        <button type="submit" class="btn btn-success font-weight-bold shadow-sm">
+                                            <i class="fas fa-unlock"></i> Website Sedang CLOSED (Klik untuk Buka)
+                                        </button>
+                                    @else
+                                        {{-- Jika sedang normal, tombol berwarna Merah untuk menutup --}}
+                                        <button type="submit" class="btn btn-danger font-weight-bold shadow-sm" onclick="return confirm('Yakin ingin menutup website dari publik?')">
+                                            <i class="fas fa-lock"></i> Kunci Website (Set to Closed)
+                                        </button>
+                                    @endif
+                                </form>
                             @endif
                         @endauth
                     </ul>
