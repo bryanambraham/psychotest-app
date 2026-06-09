@@ -75,51 +75,54 @@
                             </thead>
                             <tbody>
                                 @foreach($exam->questions as $q)
-                                @php
-                                    $hasImageOpts    = $q->has_image_options ?? false;
-                                    $questionImage   = $q->question_image ?? null;
-                                @endphp
-                                <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $q->number }}">
-                                    <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
-
-                                    @if($hasImageOpts && $questionImage)
-                                        {{-- Soal Bergambar: tampilkan 1 gambar utuh soal --}}
-                                        <img src="{{ $questionImage }}"
-                                            alt="Soal {{ $q->number }}"
-                                            class="img-fluid d-block mb-3"
-                                            style="max-width:100%; border:1px solid #e9ecef; border-radius:6px; background:#fff;">
-                                        <div class="mt-2">
-                                            @foreach(['A','B','C','D','E'] as $letter)
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input std-radio" type="radio"
-                                                        name="answer_{{ $q->number }}"
-                                                        value="{{ $letter }}">
-                                                    <label class="form-check-label" style="cursor:pointer; font-weight:600;">
-                                                        {{ $letter }}
-                                                    </label>
+                                    @php
+                                        // Ambil jawaban peserta dari DB jika ada (agar saat refresh halaman tidak hilang)
+                                        $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
+                                        $mostAnswer = $userAnswer ? ($userAnswer->answers['most'] ?? '') : '';
+                                        $leastAnswer = $userAnswer ? ($userAnswer->answers['least'] ?? '') : '';
+                                    @endphp
+                                    <tr class="question-block bg-white" data-qnum="{{ $q->number }}">
+                                        <td class="p-3">
+                                            <h6 class="font-weight-bold text-primary mb-3">{{ $q->question_text }}</h6>
+                                            @foreach($q->options as $key => $opt)
+                                                @php
+                                                    $letter = strtoupper($key);
+                                                    $text   = is_array($opt) ? ($opt['value'] ?? '') : $opt;
+                                                @endphp
+                                                <div class="mb-2 text-dark" style="font-size: 0.95rem; display: flex; align-items: center; height: 24px;">
+                                                    <span class="font-weight-bold mr-2">{{ $letter }}.</span> {{ $text }}
                                                 </div>
                                             @endforeach
-                                        </div>
+                                        </td>
+                                        
+                                        {{-- Kolom Radio MOST --}}
+                                        <td class="text-center p-3 align-middle border-left">
+                                            @foreach(['A','B','C','D'] as $letter)
+                                                <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 24px;">
+                                                    <input class="disc-radio" type="radio" 
+                                                           name="most_{{ $q->number }}" 
+                                                           value="{{ $letter }}" 
+                                                           data-type="most"
+                                                           style="transform: scale(1.5); cursor: pointer;"
+                                                           {{ $mostAnswer === $letter ? 'checked' : '' }}>
+                                                </div>
+                                            @endforeach
+                                        </td>
 
-                                    @else
-                                        {{-- Soal Teks biasa --}}
-                                        <p>{!! $q->question_text !!}</p>
-                                        @foreach($q->options as $key => $opt)
-                                            @php
-                                                $letter = strtoupper($key);
-                                                $text   = is_array($opt) ? ($opt['value'] ?? '') : $opt;
-                                            @endphp
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input std-radio" type="radio"
-                                                    name="answer_{{ $q->number }}"
-                                                    value="{{ $letter }}">
-                                                <label class="form-check-label" style="cursor:pointer;">
-                                                    {{ $letter }}. {{ $text }}
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    @endif
-                                </div>
+                                        {{-- Kolom Radio LEAST --}}
+                                        <td class="text-center p-3 align-middle border-left">
+                                            @foreach(['A','B','C','D'] as $letter)
+                                                <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 24px;">
+                                                    <input class="disc-radio" type="radio" 
+                                                           name="least_{{ $q->number }}" 
+                                                           value="{{ $letter }}" 
+                                                           data-type="least"
+                                                           style="transform: scale(1.5); cursor: pointer;"
+                                                           {{ $leastAnswer === $letter ? 'checked' : '' }}>
+                                                </div>
+                                            @endforeach
+                                        </td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -403,10 +406,10 @@
                             @endforeach
                         </div>
 
-                    {{-- ========================================== --}}
-                    {{-- UI UNTUK SOAL BERNOMOR (ESSAY/URAIAN)  --}}
-                    {{-- ========================================== --}}
-                    @elseif($exam->type == 'uraian')
+                    {{-- =============================================== --}}
+                    {{-- UI UNTUK SOAL BERNOMOR (ESSAY/URAIAN/KRAEPLIN)  --}}
+                    {{-- =============================================== --}}
+                    @elseif($exam->type == 'uraian' || $exam->type == 'tes_kraeplin')
                         <div class="p-4">
                             <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #17a2b8 !important;">
                                 <div class="card-body bg-light">
@@ -433,11 +436,21 @@
                                         <span class="badge badge-info mr-2">No. {{ $q->number }}</span>
                                     </h5>
                                     <div class="card border-0 bg-light mb-3 p-3">
+                                        {{-- TAMBAHKAN KODE INI UNTUK MUNCULIN GAMBAR TABEL KRAEPLIN SOAL 41 --}}
+                                        @if($q->question_image)
+                                            <img src="{{ $q->question_image }}" class="img-fluid d-block mb-3" style="max-width:100%; border:1px solid #dee2e6; border-radius:6px; background:#fff;">
+                                        @endif
                                         <p class="mb-0 text-dark" style="line-height: 1.6; white-space: pre-line;">{{ $q->question_text }}</p>
                                     </div>
                                     <div class="form-group">
                                         <label class="font-weight-bold text-secondary mb-2">Jawaban Anda:</label>
-                                        <textarea class="form-control uraian-textarea" name="answer_{{ $q->number }}" rows="4" placeholder="Ketik jawaban Anda di sini..." style="font-size: 0.95rem; border-radius: 6px;">{{ $answerText }}</textarea>
+                                        @if($exam->type == 'tes_kraeplin')
+                                            {{-- Kotak input 1 baris khusus angka untuk Kraeplin --}}
+                                            <input type="text" class="form-control uraian-textarea" name="answer_{{ $q->number }}" placeholder="Ketik angka..." value="{{ $answerText }}" style="font-size: 1.1rem; border-radius: 6px; font-weight: bold; width: 100%; max-width: 300px;">
+                                        @else
+                                            {{-- Kotak textarea besar untuk Uraian/Essay biasa --}}
+                                            <textarea class="form-control uraian-textarea" name="answer_{{ $q->number }}" rows="4" placeholder="Ketik jawaban Anda di sini..." style="font-size: 0.95rem; border-radius: 6px;">{{ $answerText }}</textarea>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
@@ -922,7 +935,7 @@
 
             let unanswered = [];
             let isDisc = "{{ $exam->type }}" === 'disc';
-            let isuraian = "{{ $exam->type }}" === 'uraian';
+            let isuraian = "{{ $exam->type }}" === 'uraian' || "{{ $exam->type }}" === 'tes_kraeplin';
             let isTableNumber = "{{ $exam->type }}" === 'angka';
 
             // Ambil semua nomor soal unik yang ada di halaman

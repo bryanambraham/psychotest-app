@@ -149,7 +149,7 @@
                                                     </td>
                                                 </tr>
 
-                                            @elseif($session->exam->type == 'uraian')
+                                            @elseif($session->exam->type == 'uraian' || $session->exam->type == 'tes_kraeplin')
                                                 {{-- ======================================================== --}}
                                                 {{-- TAMPILAN KHUSUS UNTUK SOAL URAIAN (ESSAY)                --}}
                                                 {{-- ======================================================== --}}
