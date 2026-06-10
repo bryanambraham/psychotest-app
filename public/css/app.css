@@ -10863,6 +10863,28 @@ a.text-dark:focus {
   visibility: hidden !important;
 }
 
+/* Pengaturan gambar logo */
+.logo-image {
+  height: 50px;         /* Atur tinggi maksimal logo sesuai kebutuhan */
+  width: auto;          /* Lebar otomatis berubah agar gambar tidak gepeng */
+  object-fit: contain;  /* Memastikan gambar proporsional di dalam area */
+  transition: transform 0.3s ease; /* Efek halus saat disorot */
+}
+
+/* Efek saat logo disorot (hover) */
+.logo-image:hover {
+  transform: scale(1.05); /* Logo membesar sedikit saat disorot */
+  opacity: 0.9;
+}
+
+/* Menata ukuran gambar logo agar rapi di navbar */
+.logo-navbar {
+    height: 12h;          /* Atur tinggi logo agar pas dengan navbar (rekomendasi: 35px - 45px) */
+    width: 18vw;           /* Lebar otomatis menyesuaikan proporsi gambar agar tidak gepeng */
+    /* display: inline-block; Memastikan elemen berperi laku seperti blok inline */
+    vertical-align: middle;/* Menyejajarkan logo di tengah secara vertikal jika ada teks di sebelahnya */
+}
+
 @media print {
   *,
   *::before,

@@ -25,7 +25,7 @@
         <nav class="navbar navbar-expand-md navbar-light bg-white">
             <div class="container">
                 <a class="navbar-brand font-weight-bold" href="{{ url('/') }}">
-                    {{ config('app.name', 'Psychotest') }}
+                    <img class="logo-navbar" src="{{ asset('logo_gl_trans.png') }}" alt="{{ env('APP_NAME') }}">
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
                     <span class="navbar-toggler-icon"></span>
