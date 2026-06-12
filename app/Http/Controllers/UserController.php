@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +34,7 @@ class UserController extends Controller
             'role'     => 'required|in:admin,user',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => strtolower($request->name),
             'email' => strtolower($request->email),
             'position' => strtolower($request->position),
@@ -41,6 +42,8 @@ class UserController extends Controller
             'password' => \Illuminate\Support\Facades\Crypt::encryptString($request->password),
             'role'     => $request->role,
         ]);
+
+        ActivityLogger::logCreate($user, $user->id, $user, "User di POST: {$user->name}, email: {$user->email}, dan NoTelp: {$user->phone}.");
 
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
@@ -81,6 +84,9 @@ class UserController extends Controller
 
         $user->update($data);
 
+        ActivityLogger::logUpdate($user, $user->id, $user, "User di UPDATE: {$user->name}, email: {$user->email}, dan NoTelp: {$user->phone}.");
+
+
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
 
@@ -95,6 +101,9 @@ class UserController extends Controller
         }
 
         $user->delete();
+
+        ActivityLogger::logDelete($user, $user->id, $user, "User dengan nama: {$user->name}, di DELETE.");
+
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 }

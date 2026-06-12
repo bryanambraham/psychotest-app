@@ -8,6 +8,7 @@ use App\VerifyUser;
 use Illuminate\Http\Request;
 use App\Exam;
 use Illuminate\Support\Facades\Http;
+use App\Services\ActivityLogger;
 
 class ExamManagementController extends Controller
 {
@@ -35,12 +36,16 @@ class ExamManagementController extends Controller
             'question_file'    => 'required|mimes:pdf|max:10000',
         ]);
 
+        $data = $request->all();
+
         $exam = Exam::create([
             'name'             => $request->name,
             'type'             => $request->type,
             'duration_minutes' => $request->duration_minutes,
             'description'      => $request->description,
         ]);
+        
+        ActivityLogger::logCreate($exam, $exam->id, $data, "Ujian baru di POST dengan judul: {$exam->name}, tipe: {$exam->type}, dan berdurasi: {$exam->duration_minutes} menit.");
 
         if ($request->hasFile('question_file')) {
             $file = $request->file('question_file');
@@ -87,7 +92,7 @@ class ExamManagementController extends Controller
                     }
 
                     return redirect()->route('manage-exams.index')
-                        ->with('success', "Ujian berhasil dibuat dan " . count($questions) . " soal otomatis diimpor.");
+                        ->with('success', "Ujian berhasil di POST dan " . count($questions) . " soal otomatis diimpor.");
 
                 } else {
                     return redirect()->back()->with('error', 'Python gagal memproses PDF. Pastikan format PDF benar.');
@@ -157,6 +162,9 @@ class ExamManagementController extends Controller
         'duration_minutes' => $request->input('duration_minutes', $exam->duration_minutes),
     ]);
 
+
+    ActivityLogger::logUpdate($exam, $exam->id, $exam, "Ujian dengan judul di UPDATE: {$exam->name}, tipe: {$exam->type}, dan berdurasi: {$exam->duration_minutes} menit.");
+    
     $exam->refresh();
 
     // // Ambil semua nama user yang terdaftar di ujian ini
@@ -179,8 +187,11 @@ class ExamManagementController extends Controller
     public function destroyResultsIndex($id)
     {
         // Ambil semua sesi yang sudah selesai atau sedang berlangsung
-        $sessions = \App\ExamSession::findOrFail($id);
+        $sessions = \App\ExamSession::with(['user'])->findOrFail($id);
         $sessions->delete();
+
+        ActivityLogger::logUpdate($sessions, $sessions->id, $sessions, "Hasil Ujian {$sessions->user->name} untuk posisi {$sessions->user->position}, di DELETE");
+
 
         return redirect()->route('manage-exams.results')->with('success', 'Hasil ujian berhasil dihapus.');
     }
@@ -230,6 +241,8 @@ class ExamManagementController extends Controller
     public function destroy($id){
         $exam = Exam::findOrFail($id);
         $exam->delete();
+
+        ActivityLogger::logDelete($exam, $exam->id, $exam, "Ujian dengan judul: {$exam->name}, di DELETE.");
     
         return redirect()->route('manage-exams.index')->with('success', 'Ujian berhasil dihapus.');
     }
@@ -409,32 +422,40 @@ class ExamManagementController extends Controller
      */
     public function updateAnswerKeys(Request $request, $id)
     {
-        $exam = Exam::findOrFail($id);
-        
+        // 1. Validasi Input
         $request->validate([
-            'answer_keys' => 'required|array',
+            'answer_keys'               => 'required|array',
             'answer_keys.*.question_id' => 'required|exists:questions,id',
-            'answer_keys.*.is_table' => 'required|boolean',
+            'answer_keys.*.is_table'    => 'required|boolean',
+            'answer_keys.*.details'     => 'required_if:answer_keys.*.is_table,true|array',
+            'answer_keys.*.key'         => 'required_if:answer_keys.*.is_table,false|string',
         ]);
 
-        foreach ($request->answer_keys as $answerData) {
-            $isTableQuestion = (bool) $answerData['is_table'];
-            
-            if ($isTableQuestion && isset($answerData['details'])) {
-                // Untuk soal tabel angka: simpan sebagai JSON dari details array
-                $answerKeyValue = json_encode($answerData['details']);
-            } else {
-                // Untuk soal PG/Uraian: simpan string biasa dari key
-                $answerKeyValue = $answerData['key'] ?? null;
-            }
+        // 2. Ambil Data Ujian
+        $exam = Exam::findOrFail($id);
 
-            Question::where('id', $answerData['question_id'])
-                ->update([
-                    'answer_key' => $answerKeyValue
-                ]);
+        // 3. Proses Update Kunci Jawaban
+        foreach ($request->answer_keys as $answerData) {
+            // Tentukan format penyimpanan berdasarkan tipe soal
+            $answerKeyValue = $answerData['is_table'] 
+                ? json_encode($answerData['details']) 
+                : ($answerData['key'] ?? null);
+
+            // Update data pertanyaan terkait
+            $question = Question::where('exam_id', $exam->id)
+                ->where('id', $answerData['question_id'])
+                ->firstOrFail();
+
+            $question->update([
+                'answer_key' => $answerKeyValue
+            ]);
+
+            // 4. Catat Log Aktivitas
+            ActivityLogger::logUpdate($question, $question, $request->all(), "Kunci Jawaban untuk ujian: {$exam->name}, telah di UPDATE");
         }
 
-        return redirect()->back()->with('success', 'Kunci jawaban berhasil diperbarui.');
+        // 5. Kembali ke Halaman Sebelumnya
+        return redirect()->back()->with('success', 'Kunci jawaban berhasil diperbarui');
     }
 
     /**

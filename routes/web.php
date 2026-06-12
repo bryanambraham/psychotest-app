@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -97,5 +98,7 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk mengelola kunci jawaban
     Route::get('/manage-exams/{id}/answer-keys', 'ExamManagementController@editAnswerKeys')->name('manage-exams.edit-answer-keys')->middleware('role:admin');
     Route::put('/manage-exams/{id}/answer-keys', 'ExamManagementController@updateAnswerKeys')->name('manage-exams.update-answer-keys')->middleware('role:admin');
+
+    Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
 
 });

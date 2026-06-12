@@ -14,6 +14,11 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
     {{-- ===== SEARCH BAR ===== --}}
     <x-search-bar placeholder="Masukkan nama ujian..." tableId="examsTable" />
 

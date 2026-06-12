@@ -1,7 +1,17 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container-fluid px-3 px-md-4">
+
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
 
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
