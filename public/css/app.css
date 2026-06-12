@@ -10924,7 +10924,7 @@ a.text-dark:focus {
 
 /* Menata ukuran gambar logo agar rapi di navbar */
 .logo-navbar {
-    height: 10vh;          /* Atur tinggi logo agar pas dengan navbar (rekomendasi: 35px - 45px) */
+    height: 10h;          /* Atur tinggi logo agar pas dengan navbar (rekomendasi: 35px - 45px) */
     width: 16vw;           /* Lebar otomatis menyesuaikan proporsi gambar agar tidak gepeng */
     /* display: inline-block; Memastikan elemen berperi laku seperti blok inline */
     vertical-align: middle;/* Menyejajarkan logo di tengah secara vertikal jika ada teks di sebelahnya */
