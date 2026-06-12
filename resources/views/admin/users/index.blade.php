@@ -6,7 +6,7 @@
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h4 class="mb-0 fs-responsive">Manajemen User</h4>
-        <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">+ Tambah User</a>
+        <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm medium">+ Tambah User</a>
     </div>
 
     {{-- ===== ALERTS ===== --}}
@@ -43,12 +43,12 @@
                     @foreach($users as $user)
                     <tr>
                         <td>
-                            <div class="fw-semibold">{{ $user->name }}</div>
+                            <div class="fw-semibold">{{ Str::title($user->name) }}</div>
                             {{-- Email & posisi tampil di bawah nama pada layar xs --}}
-                            <div class="d-block d-sm-none text-muted small">{{ $user->email }}</div>
-                            <div class="d-block d-md-none text-muted small">{{ $user->position ?? '-' }}</div>
+                            <div class="d-block d-sm-none text-muted small">{{ Str::title($user->email) }}</div>
+                            <div class="d-block d-md-none text-muted small">{{ Str::title($user->position) ?? '-' }}</div>
                         </td>
-                        <td class="d-none d-md-table-cell">{{ $user->position ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{{ Str::title($user->position) ?? '-' }}</td>
                         <td class="d-none d-sm-table-cell text-break" style="max-width: 180px;">
                             {{ $user->email }}
                         </td>

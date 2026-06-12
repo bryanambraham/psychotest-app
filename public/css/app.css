@@ -64,15 +64,17 @@ section {
   display: block;
 }
 
+
+
 body {
   margin: 0;
   font-family: "Nunito", sans-serif;
-  font-size: 0.9rem;
-  font-weight: 400;
+  font-size: 1em !important;
   line-height: 1.6;
   color: #212529;
   text-align: left;
   background-color: #f8fafc;
+  font-weight: bold !important;
 }
 
 [tabindex="-1"]:focus:not(:focus-visible) {
@@ -457,6 +459,10 @@ small,
 .small {
   font-size: 0.875em;
   font-weight: 400;
+}
+.medium {
+    font-size: 1em !important;
+    font-weight: 600 !important;
 }
 
 .medium {
@@ -2692,6 +2698,18 @@ fieldset:disabled a.btn {
   border-color: #3490dc;
 }
 
+.btn-yellow {
+  color: #fff;
+  background-color: #ffed4a;
+  border-color: #ffed4a;
+}
+
+.btn-yellow:hover {
+  color: #fff;
+  background-color: rgb(255, 237.4240883978, 164.82);
+  border-color: rgb(255, 233.112, 120.38);
+}
+
 .btn-primary:hover {
   color: #fff;
   background-color: rgb(34.375, 124.7321428571, 199.375);
@@ -3334,10 +3352,20 @@ fieldset:disabled a.btn {
 
 .btn-sm,
 .btn-group-sm > .btn {
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.75rem;
   font-size: 0.7875rem;
+  font-weight: 600;
   line-height: 1.5;
   border-radius: 0.2rem;
+}
+
+.btn-md,
+.btn-group-md > .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.6;
+  border-radius: 0.25rem;
 }
 
 .btn-block {
@@ -10746,6 +10774,23 @@ button.bg-dark:focus {
   color: #3490dc !important;
 }
 
+.text-yellow {
+  color: #F1D400 !important;
+}
+
+.text-blue-gl{
+    color: #0947D6 !important;
+}
+
+.bg-yellow {
+  background-color: #F1D400 !important;
+}
+
+.badge-yellow {
+  color: #fff !important;
+  background-color: #F1D400 !important;
+}
+
 a.text-primary:hover,
 a.text-primary:focus {
   color: rgb(28.75, 104.3214285714, 166.75) !important;
@@ -10879,8 +10924,8 @@ a.text-dark:focus {
 
 /* Menata ukuran gambar logo agar rapi di navbar */
 .logo-navbar {
-    height: 12h;          /* Atur tinggi logo agar pas dengan navbar (rekomendasi: 35px - 45px) */
-    width: 18vw;           /* Lebar otomatis menyesuaikan proporsi gambar agar tidak gepeng */
+    height: 10vh;          /* Atur tinggi logo agar pas dengan navbar (rekomendasi: 35px - 45px) */
+    width: 16vw;           /* Lebar otomatis menyesuaikan proporsi gambar agar tidak gepeng */
     /* display: inline-block; Memastikan elemen berperi laku seperti blok inline */
     vertical-align: middle;/* Menyejajarkan logo di tengah secara vertikal jika ada teks di sebelahnya */
 }

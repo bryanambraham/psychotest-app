@@ -12,7 +12,7 @@
             <a href="{{ route('manage-exams.results.export', $session->id) }}" class="btn btn-success btn-sm shadow-sm font-weight-bold">
                 📥 Export ke Excel
             </a>
-            
+
             <a href="{{ route('manage-exams.results') }}" class="btn btn-secondary btn-sm shadow-sm">Kembali</a>
         </div>
     </div>
@@ -24,13 +24,13 @@
                     <div class="card-header bg-primary text-white">Info Ujian</div>
                     <div class="card-body">
                         <p><strong>Ujian:</strong> {{ $session->exam->name }}</p>
-                        <p><strong>Tipe:</strong> {{ strtoupper($session->exam->type) }}</p>
+                        {{-- <p><strong>Tipe:</strong> {{ strtoupper($session->exam->type) }}</p> --}}
                         <p><strong>Status:</strong> {{ strtoupper($session->status) }}</p>
                         <p><strong>Waktu Mulai:</strong> {{ $session->created_at }}</p>
                         <p><strong>Waktu Selesai:</strong> {{ $session->end_time ?? '-' }}</p>
                         @if($session->score !== null)
                             <p>
-                                <strong>Nilai Akhir:</strong> 
+                                <strong>Nilai Akhir:</strong>
                                 <span class="badge badge-lg" style="font-size: 1.2em; padding: 0.5em 0.8em;
                                     @if($session->score >= 80)
                                         background-color: #28a745;
@@ -196,7 +196,7 @@
                                                             // Ambil data JSON jawaban peserta
                                                             $data = $userAnswer ? $userAnswer->answers : [];
                                                             $details = $data['details'] ?? [];
-                                                            
+
                                                             // Decode answer key
                                                             $answerKeyValue = $question->answer_key ?? null;
                                                             $answerKeyData = [];
@@ -257,7 +257,7 @@
                                                                             }
                                                                         }
                                                                     @endphp
-                                                                    
+
                                                                     {{-- Tampilkan detail Benar dan Salah --}}
                                                                     <div class="d-flex flex-column align-items-center" style="gap: 5px;">
                                                                         <span class="badge badge-success" style="font-size: 0.9rem;">✅ {{ $correctItemCount }} Benar</span>
@@ -281,11 +281,11 @@
                                                         $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
                                                         $data = $userAnswer ? $userAnswer->answers : null;
                                                         $answerKeyValue = $question->answer_key ?? null;
-                                                        
+
                                                         // Tentukan apakah jawaban benar (untuk soal yang punya answer key)
                                                         $isCorrect = false;
                                                         $userAnswerDisplay = '-';
-                                                        
+
                                                         if ($data && $answerKeyValue) {
                                                             if ($session->exam->type == 'disc') {
                                                                 $userAnswerDisplay = ($data['most'] ?? '-') . ' / ' . ($data['least'] ?? '-');

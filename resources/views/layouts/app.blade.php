@@ -16,13 +16,13 @@
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
     <style>
-        body { 
-            background-image: url('{{ asset('background.jpg') }}'); 
+        body {
+            background-image: url('{{ asset('background.jpg') }}');
             background-size: cover; /* Agar gambar memenuhi layar */
             background-position: center center; /* Posisi gambar di tengah */
             background-repeat: no-repeat; /* Agar gambar tidak berulang */
             background-attachment: fixed; /* Agar gambar tetap di tempat saat halaman di-scroll */
-            background-color: #f8f9fa; 
+            background-color: #f8f9fa;
         }
         .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.04); }
     </style>
@@ -44,7 +44,7 @@
                         @auth
                             <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('home') }}">
-                                    <i class="fas fa-home mr-1"></i> Home
+                                    <i class="fas fa-home mr-1"></i> Beranda
                                 </a>
                             </li>
 
@@ -84,7 +84,7 @@
                                 </form>
                             @endif
 
-                            @if(auth()->user()->name ==  strtolower(config('app.admin_name'))) 
+                            @if(auth()->user()->name ==  strtolower(config('app.admin_name')))
                                 <a class="mx-3 btn btn-success font-weight-bold shadow-sm" href="{{ route('activity-log.index') }}">Activity Log</a>
                             @endif
                         @endauth

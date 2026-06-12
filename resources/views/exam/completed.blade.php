@@ -21,6 +21,9 @@
                         Terima kasih, <strong>{{ $session->user->name }}</strong>.<br class="d-sm-none">
                         Jawaban Anda untuk <strong>{{ $exam->name }}</strong> sudah tersimpan.
                     </p>
+                    <p class="text-muted mb-0">
+                        Silahkan kembali ke beranda untuk menyelesaikan soal selanjutnya.
+                    </p>
 
                 </div>
             </div>

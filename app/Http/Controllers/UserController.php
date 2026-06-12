@@ -37,10 +37,10 @@ class UserController extends Controller
         ]);
 
         $user = User::create([
-            'name' => strtolower($request->name),
-            'email' => strtolower($request->email),
-            'position' => strtolower($request->position),
-            'phone' => strtolower($request->phone),
+            'name' => $request->name,
+            'email' => $request->email,
+            'position' => $request->position,
+            'phone' => $request->phone,
             'password' => \Illuminate\Support\Facades\Crypt::encryptString($request->password),
             'role'     => $request->role,
         ]);
@@ -71,10 +71,10 @@ class UserController extends Controller
         ]);
 
         $data = [
-            'name' => strtolower($request->name),
-            'email' => strtolower($request->email),
-            'position' => strtolower($request->position),
-            'phone' => strtolower($request->phone),
+            'name' => $request->name,
+            'email' => $request->email,
+            'position' => $request->position,
+            'phone' => $request->phone,
             'role' => $request->role,
         ];
 

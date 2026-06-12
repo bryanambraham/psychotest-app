@@ -39,7 +39,7 @@
                         <div class="col-6 col-md-6 mb-3 mb-md-0">
                             <div class="p-3 border rounded h-100 bg-light">
                                 <div class="small text-muted">Tipe</div>
-                                <div class="h5 mb-0 text-uppercase">{{ $exam->type }}</div>
+                                {{-- <div class="h5 mb-0 text-uppercase">{{ $exam->type }}</div> --}}
                             </div>
                         </div>
                     </div>

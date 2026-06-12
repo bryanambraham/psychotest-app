@@ -82,11 +82,13 @@
                                         class="form-control" placeholder="Contoh: Ujian Tengah Semester" disabled required>
                                 </div>
 
-                                <div class="col-md-4 mb-3">
+                                {{-- <div class="col-md-4 mb-3">
                                     <label for="type" class="form-label">Tipe Ujian</label>
                                     <input type="text" name="type" id="type" value="{{ old('type', $exam->type) }}"
-                                        class="form-control" placeholder="Contoh: Pilihan Ganda" disabled required>
-                                </div>
+                                        class="form-control" placeholder="Contoh: Pilihan Ganda" disabled readonly required>
+                                </div> --}}
+
+                                <input type="hidden" name="type" id="type" value="{{ old('type', $exam->type) }}">
 
                                 <div class="col-md-4 mb-3">
                                     <label for="duration_minutes" class="form-label">Durasi (Menit)</label>

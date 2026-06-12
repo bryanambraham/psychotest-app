@@ -8,7 +8,6 @@ use App\VerifyUser;
 use Illuminate\Http\Request;
 use App\Exam;
 use Illuminate\Support\Facades\Http;
-use App\Services\ActivityLogger;
 
 class ExamManagementController extends Controller
 {
@@ -36,16 +35,12 @@ class ExamManagementController extends Controller
             'question_file'    => 'required|mimes:pdf|max:10000',
         ]);
 
-        $data = $request->all();
-
         $exam = Exam::create([
             'name'             => $request->name,
             'type'             => $request->type,
             'duration_minutes' => $request->duration_minutes,
             'description'      => $request->description,
         ]);
-        
-        ActivityLogger::logCreate($exam, $exam->id, $data, "Ujian baru di POST dengan judul: {$exam->name}, tipe: {$exam->type}, dan berdurasi: {$exam->duration_minutes} menit.");
 
         if ($request->hasFile('question_file')) {
             $file = $request->file('question_file');
@@ -65,7 +60,7 @@ class ExamManagementController extends Controller
                     foreach ($questions as $index => $q) {
                         if ($pdfType === 'disc') {
                             $boxNumber    = $q['box'] ?? ($index + 1);
-                            $questionText = "Box " . $boxNumber;
+                            $questionText = $boxNumber;
                             $options      = $q['options'] ?? [];
                             $number       = $boxNumber;
                         } else {
@@ -75,7 +70,7 @@ class ExamManagementController extends Controller
                             } else {
                                 $questionText = $q['question'] ?? '';
                             }
-                            
+
                             // Pengambilan nomor soal yang aman dari angka di dalam teks soal
                             $number = preg_match('/^(\d+)/', trim($q['question'] ?? ''), $matches) ? $matches[1] : ($index + 1);
                             $options      = $q['options'] ?? [];
@@ -92,7 +87,7 @@ class ExamManagementController extends Controller
                     }
 
                     return redirect()->route('manage-exams.index')
-                        ->with('success', "Ujian berhasil di POST dan " . count($questions) . " soal otomatis diimpor.");
+                        ->with('success', "Ujian berhasil dibuat dan " . count($questions) . " soal otomatis diimpor.");
 
                 } else {
                     return redirect()->back()->with('error', 'Python gagal memproses PDF. Pastikan format PDF benar.');
@@ -162,9 +157,6 @@ class ExamManagementController extends Controller
         'duration_minutes' => $request->input('duration_minutes', $exam->duration_minutes),
     ]);
 
-
-    ActivityLogger::logUpdate($exam, $exam->id, $exam, "Ujian dengan judul di UPDATE: {$exam->name}, tipe: {$exam->type}, dan berdurasi: {$exam->duration_minutes} menit.");
-    
     $exam->refresh();
 
     // // Ambil semua nama user yang terdaftar di ujian ini
@@ -187,11 +179,8 @@ class ExamManagementController extends Controller
     public function destroyResultsIndex($id)
     {
         // Ambil semua sesi yang sudah selesai atau sedang berlangsung
-        $sessions = \App\ExamSession::with(['user'])->findOrFail($id);
+        $sessions = \App\ExamSession::findOrFail($id);
         $sessions->delete();
-
-        ActivityLogger::logUpdate($sessions, $sessions->id, $sessions, "Hasil Ujian {$sessions->user->name} untuk posisi {$sessions->user->position}, di DELETE");
-
 
         return redirect()->route('manage-exams.results')->with('success', 'Hasil ujian berhasil dihapus.');
     }
@@ -242,8 +231,6 @@ class ExamManagementController extends Controller
         $exam = Exam::findOrFail($id);
         $exam->delete();
 
-        ActivityLogger::logDelete($exam, $exam->id, $exam, "Ujian dengan judul: {$exam->name}, di DELETE.");
-    
         return redirect()->route('manage-exams.index')->with('success', 'Ujian berhasil dihapus.');
     }
 
@@ -254,7 +241,7 @@ class ExamManagementController extends Controller
     // {
     //     $session = \App\ExamSession::with(['user', 'exam.questions', 'userAnswers'])
     //                 ->findOrFail($session_id);
-                    
+
     //     // Mengambil data murni dari hasil Verifikasi User
     //     $verifyUser = \App\VerifyUser::where('email', $session->user->email)->first();
 
@@ -277,7 +264,7 @@ class ExamManagementController extends Controller
 
     //     $callback = function() use($session, $vName, $vEmail, $vPhone, $vPos) {
     //         $file = fopen('php://output', 'w');
-            
+
     //         // Tambahkan BOM agar Microsoft Excel mendeteksi teks ini sebagai UTF-8 secara otomatis
     //         fputs($file, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 
@@ -290,7 +277,7 @@ class ExamManagementController extends Controller
     //         fputcsv($file, ['Telepon', $vPhone]);
     //         fputcsv($file, ['Posisi Dilamar', $vPos]);
     //         fputcsv($file, ['']); // Baris kosong pembatas
-            
+
     //         // --- 2. TULIS HEADER DATA UJIAN ---
     //         fputcsv($file, ['=======================================']);
     //         fputcsv($file, ['INFO UJIAN']);
@@ -346,7 +333,7 @@ class ExamManagementController extends Controller
 
     //             // Hapus kode HTML/JSON panjang dari soal agar Excel tidak rusak
     //             $qText = $session->exam->type == 'angka' ? 'Soal Penjumlahan Tabel Angka' : strip_tags($question->question_text);
-                
+
     //             fputcsv($file, [$question->number, $qText, $answerString]);
     //         }
 
@@ -363,7 +350,7 @@ class ExamManagementController extends Controller
     {
         $session = \App\ExamSession::with(['user', 'exam.questions', 'userAnswers'])
                     ->findOrFail($session_id);
-                    
+
         $verifyUser = \App\VerifyUser::where('email', $session->user->email)->first();
 
         $vName  = $verifyUser ? $verifyUser->name : $session->user->name;
@@ -383,14 +370,14 @@ class ExamManagementController extends Controller
     // ========================================================
     // FUNGSI UNTUK MENGELOLA KUNCI JAWABAN
     // ========================================================
-    
+
     /**
      * Menampilkan form untuk mengedit kunci jawaban
      */
     public function editAnswerKeys($id)
     {
         $exam = Exam::with('questions')->findOrFail($id);
-        
+
         // Filter hanya soal yang bisa memiliki kunci jawaban
         $editableQuestions = $exam->questions->filter(function($q) {
             // Logika filter kamu (dikembalikan true semua untuk saat ini)
@@ -401,7 +388,7 @@ class ExamManagementController extends Controller
         $editableQuestions->transform(function ($q) {
             // Coba terjemahkan teksnya dari JSON
             $parsedData = json_decode($q->question_text, true);
-            
+
             // Cek apakah datanya benar-benar JSON array dan punya kunci 'question' (Misal: Soal Angka)
             if (is_array($parsedData) && isset($parsedData['question'])) {
                 // Jika ya, ambil teks pertanyaannya dari dalam JSON
@@ -422,40 +409,32 @@ class ExamManagementController extends Controller
      */
     public function updateAnswerKeys(Request $request, $id)
     {
-        // 1. Validasi Input
-        $request->validate([
-            'answer_keys'               => 'required|array',
-            'answer_keys.*.question_id' => 'required|exists:questions,id',
-            'answer_keys.*.is_table'    => 'required|boolean',
-            'answer_keys.*.details'     => 'required_if:answer_keys.*.is_table,true|array',
-            'answer_keys.*.key'         => 'required_if:answer_keys.*.is_table,false|string',
-        ]);
-
-        // 2. Ambil Data Ujian
         $exam = Exam::findOrFail($id);
 
-        // 3. Proses Update Kunci Jawaban
+        $request->validate([
+            'answer_keys' => 'required|array',
+            'answer_keys.*.question_id' => 'required|exists:questions,id',
+            'answer_keys.*.is_table' => 'required|boolean',
+        ]);
+
         foreach ($request->answer_keys as $answerData) {
-            // Tentukan format penyimpanan berdasarkan tipe soal
-            $answerKeyValue = $answerData['is_table'] 
-                ? json_encode($answerData['details']) 
-                : ($answerData['key'] ?? null);
+            $isTableQuestion = (bool) $answerData['is_table'];
 
-            // Update data pertanyaan terkait
-            $question = Question::where('exam_id', $exam->id)
-                ->where('id', $answerData['question_id'])
-                ->firstOrFail();
+            if ($isTableQuestion && isset($answerData['details'])) {
+                // Untuk soal tabel angka: simpan sebagai JSON dari details array
+                $answerKeyValue = json_encode($answerData['details']);
+            } else {
+                // Untuk soal PG/Uraian: simpan string biasa dari key
+                $answerKeyValue = $answerData['key'] ?? null;
+            }
 
-            $question->update([
-                'answer_key' => $answerKeyValue
-            ]);
-
-            // 4. Catat Log Aktivitas
-            ActivityLogger::logUpdate($question, $question, $request->all(), "Kunci Jawaban untuk ujian: {$exam->name}, telah di UPDATE");
+            Question::where('id', $answerData['question_id'])
+                ->update([
+                    'answer_key' => $answerKeyValue
+                ]);
         }
 
-        // 5. Kembali ke Halaman Sebelumnya
-        return redirect()->back()->with('success', 'Kunci jawaban berhasil diperbarui');
+        return redirect()->back()->with('success', 'Kunci jawaban berhasil diperbarui.');
     }
 
     /**
@@ -469,21 +448,5 @@ class ExamManagementController extends Controller
                     ->paginate(10);
 
         return view('admin.exams.results_index_with_score', compact('sessions'));
-    }
-
-    public function toggleSiteClosed()
-    {
-        // Ambil status saat ini
-        $isClosed = \Illuminate\Support\Facades\Cache::get('site_closed_mode', false);
-
-        if ($isClosed) {
-            // Jika sedang tutup, maka BUKA
-            \Illuminate\Support\Facades\Cache::put('site_closed_mode', false);
-            return redirect()->back()->with('success', 'Website sekarang NORMAL (Bisa diakses publik).');
-        } else {
-            // Jika sedang buka, maka TUTUP
-            \Illuminate\Support\Facades\Cache::put('site_closed_mode', true);
-            return redirect()->back()->with('error', 'Website sekarang CLOSED (Terkunci untuk publik).');
-        }
     }
 }

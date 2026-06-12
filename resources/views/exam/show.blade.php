@@ -8,7 +8,7 @@
                 <div class="card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem;">
                     <div>
                         <h4 class="mb-0 font-weight-bold exam-title">{{ $exam->name }}</h4>
-                        <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
+                        {{-- <span class="badge badge-info">{{ strtoupper($exam->type) }}</span> --}}
                     </div>
                     <div class="text-danger font-weight-bold timer-display">
                         <span id="timer-display">Memuat...</span>
@@ -93,14 +93,14 @@
                                                 </div>
                                             @endforeach
                                         </td>
-                                        
+
                                         {{-- Kolom Radio MOST --}}
                                         <td class="text-center p-3 align-middle border-left">
                                             @foreach(['A','B','C','D'] as $letter)
                                                 <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 24px;">
-                                                    <input class="disc-radio" type="radio" 
-                                                           name="most_{{ $q->number }}" 
-                                                           value="{{ $letter }}" 
+                                                    <input class="disc-radio" type="radio"
+                                                           name="most_{{ $q->number }}"
+                                                           value="{{ $letter }}"
                                                            data-type="most"
                                                            style="transform: scale(1.5); cursor: pointer;"
                                                            {{ $mostAnswer === $letter ? 'checked' : '' }}>
@@ -112,9 +112,9 @@
                                         <td class="text-center p-3 align-middle border-left">
                                             @foreach(['A','B','C','D'] as $letter)
                                                 <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 24px;">
-                                                    <input class="disc-radio" type="radio" 
-                                                           name="least_{{ $q->number }}" 
-                                                           value="{{ $letter }}" 
+                                                    <input class="disc-radio" type="radio"
+                                                           name="least_{{ $q->number }}"
+                                                           value="{{ $letter }}"
                                                            data-type="least"
                                                            style="transform: scale(1.5); cursor: pointer;"
                                                            {{ $leastAnswer === $letter ? 'checked' : '' }}>
@@ -314,7 +314,7 @@
                                 @php
                                     $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
                                     $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
-                                    
+
                                     // Parse table data jika ada
                                     $tableData = json_decode($q->question_text, true);
                                     $isStructuredTable = is_array($tableData) && isset($tableData['table']);
@@ -323,14 +323,14 @@
                                     <h5 class="font-weight-bold mb-3 text-dark">
                                         <span class="badge badge-success mr-2">Soal {{ $q->number }}</span>
                                     </h5>
-                                    
+
                                     {{-- Tampilkan instruksi --}}
                                     @if($isStructuredTable && isset($tableData['question']))
                                         <div class="card border-0 bg-light mb-3 p-3" style="border-left: 3px solid #28a745;">
                                             <p class="mb-0 text-dark font-weight-bold">{{ $tableData['question'] }}</p>
                                         </div>
                                     @endif
-                                    
+
                                     {{-- Render Tabel Structured --}}
                                     @if($isStructuredTable && isset($tableData['table']['headers']) && isset($tableData['table']['rows']))
                                         <div class="table-responsive mb-3">
@@ -348,14 +348,14 @@
                                                         <tr style="background-color: {{ $rowIdx % 2 == 0 ? '#ffffff' : '#f8f9fa' }};">
                                                             @foreach($row as $colIdx => $cellValue)
                                                                 <td class="py-2 px-1 align-middle" style="font-family: 'Courier New', monospace; font-weight: 500;">
-                                                                    
+
                                                                     {{-- Cek apakah ini adalah kolom paling kanan (Kolom 9) --}}
                                                                     @if($colIdx == count($row) - 1)
                                                                         {{-- Render Kotak Input untuk Penjumlahan Mendatar --}}
-                                                                        <input type="text" 
-                                                                            class="form-control form-control-sm table-number-cell" 
-                                                                            name="answer_{{ $q->number }}_row_{{ $rowIdx }}" 
-                                                                            placeholder="..." 
+                                                                        <input type="text"
+                                                                            class="form-control form-control-sm table-number-cell"
+                                                                            name="answer_{{ $q->number }}_row_{{ $rowIdx }}"
+                                                                            placeholder="..."
                                                                             style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #17a2b8; min-width: 120px;"
                                                                             data-question="{{ $q->number }}">
                                                                     @else
@@ -367,20 +367,20 @@
                                                             @endforeach
                                                         </tr>
                                                     @endforeach
-                                                    
+
                                                     {{-- Empty Row untuk Input Jawaban Menurun (Di paling bawah) --}}
                                                     <tr style="background-color: #e3f2fd; border-top: 3px solid #28a745;">
                                                         @for($col = 0; $col < count($tableData['table']['headers']); $col++)
                                                             <td class="py-2 px-1 text-center align-middle">
-                                                                
+
                                                                 {{-- PERBAIKAN: Jika ini adalah kolom paling kanan, jangan render input! --}}
                                                                 @if($col == count($tableData['table']['headers']) - 1)
                                                                     <span class="text-muted" style="font-weight: bold;">-</span>
                                                                 @else
-                                                                    <input type="text" 
-                                                                        class="form-control form-control-sm table-number-cell" 
-                                                                        name="answer_{{ $q->number }}_col_{{ $col }}" 
-                                                                        placeholder="..." 
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm table-number-cell"
+                                                                        name="answer_{{ $q->number }}_col_{{ $col }}"
+                                                                        placeholder="..."
                                                                         style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745; min-width: 120px;"
                                                                         data-question="{{ $q->number }}">
                                                                 @endif
@@ -647,38 +647,38 @@
 
                 let qNum = this.dataset.question;
                 let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
-                
+
                 let cells = block.querySelectorAll('.table-number-cell');
                 let allValues = [];
                 let detailsObj = {}; // Wadah baru untuk menyimpan posisi baris/kolom
-                
+
                 cells.forEach(c => {
                     let val = c.value.trim();
                     if(val !== '') {
                         allValues.push(val);
-                        
+
                         // Ekstrak nama input (contoh: answer_1_row_0 atau answer_1_col_2)
                         let nameParts = c.name.split('_');
                         if(nameParts.length >= 4) {
                             let type = nameParts[2]; // 'row' atau 'col'
                             let index = parseInt(nameParts[3]) + 1; // +1 agar visualnya mulai dari 1, bukan 0
-                            
+
                             let label = type === 'row' ? `Mendatar (Baris ${index})` : `Menurun (Kolom ${index})`;
                             detailsObj[label] = val;
                         }
                     }
                 });
-                
+
                 let combinedValue = allValues.join(', ');
-                
+
                 // Update input final fallback (jika masih ada)
                 let finalInput = block.querySelector('.table-number-input');
                 if (finalInput) {
                     finalInput.value = combinedValue;
                 }
-                
+
                 // SIMPAN KE DB DENGAN FORMAT STRUKTUR JSON YANG BARU
-                saveAnswerAjax(qNum, { 
+                saveAnswerAjax(qNum, {
                     answer_text: combinedValue,
                     details: detailsObj // Kirim detail posisi ke server
                 });
@@ -951,18 +951,18 @@
                     if (!mostSelected || !leastSelected) {
                         unanswered.push(qNum);
                     }
-                } 
+                }
                 else if (isTableNumber) {
                     // LOGIKA BARU KHUSUS TABEL ANGKA
                     // Cek semua kotak kecil di dalam tabel
                     let cells = block.querySelectorAll('.table-number-cell');
                     // Cek apakah minimal ada 1 kotak yang sudah diisi angka oleh peserta
                     let hasAnswer = Array.from(cells).some(c => c.value.trim() !== '');
-                    
+
                     if (!hasAnswer) {
                         unanswered.push(qNum);
                     }
-                } 
+                }
                 else if (isuraian) {
                     // Cek elemen berdasarkan attribut name, tidak peduli dia input atau textarea
                     let inputEl = document.querySelector(`[name="answer_${qNum}"]`);

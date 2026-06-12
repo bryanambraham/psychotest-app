@@ -107,7 +107,7 @@
                                                 if ($question->answer_key) {
                                                     $answerKeyData = json_decode($question->answer_key, true) ?: [];
                                                 }
-                                                
+
                                                 // Tentukan jumlah baris dan kolom dari struktur table
                                                 $rowCount = isset($tableData['table']['rows']) ? count($tableData['table']['rows']) : 0;
                                                 $colCount = isset($tableData['table']['headers']) ? count($tableData['table']['headers']) : 0;
@@ -117,9 +117,9 @@
                                                 {{-- Inputs untuk Mendatar (Baris) --}}
                                                 @for($i = 1; $i <= $rowCount; $i++)
                                                     <div class="col-md-6 mb-2">
-                                                        <input type="text" 
-                                                            class="form-control form-control-sm" 
-                                                            name="answer_keys[{{ $loop->index }}][details][Mendatar (Baris {{ $i }})]" 
+                                                        <input type="text"
+                                                            class="form-control form-control-sm"
+                                                            name="answer_keys[{{ $loop->index }}][details][Mendatar (Baris {{ $i }})]"
                                                             placeholder="Jawaban Mendatar Baris {{ $i }}"
                                                             value="{{ $answerKeyData['Mendatar (Baris ' . $i . ')'] ?? '' }}"
                                                             style="font-weight: 600;">
@@ -130,9 +130,9 @@
                                                 {{-- Tambahkan - 1 di sini agar kolom ke-9 diabaikan --}}
                                                 @for($i = 1; $i <= $colCount - 1; $i++)
                                                     <div class="col-md-6 mb-2">
-                                                        <input type="text" 
-                                                            class="form-control form-control-sm" 
-                                                            name="answer_keys[{{ $loop->index }}][details][Menurun (Kolom {{ $i }})]" 
+                                                        <input type="text"
+                                                            class="form-control form-control-sm"
+                                                            name="answer_keys[{{ $loop->index }}][details][Menurun (Kolom {{ $i }})]"
                                                             placeholder="Jawaban Menurun Kolom {{ $i }}"
                                                             value="{{ $answerKeyData['Menurun (Kolom ' . $i . ')'] ?? '' }}"
                                                             style="font-weight: 600;">
@@ -146,9 +146,9 @@
                                             <label class="font-weight-bold text-primary">Kunci Jawaban</label>
                                             <input type="hidden" name="answer_keys[{{ $loop->index }}][question_id]" value="{{ $question->id }}">
                                             <input type="hidden" name="answer_keys[{{ $loop->index }}][is_table]" value="0">
-                                            <input type="text" 
-                                                name="answer_keys[{{ $loop->index }}][key]" 
-                                                class="form-control form-control-sm" 
+                                            <input type="text"
+                                                name="answer_keys[{{ $loop->index }}][key]"
+                                                class="form-control form-control-sm"
                                                 value="{{ $question->answer_key ?? '' }}"
                                                 placeholder="Masukkan jawaban yang benar (misal: A, B, C, atau angka)"
                                                 style="font-weight: 600;">
@@ -176,10 +176,10 @@
                 </div>
                 <div class="card-body">
                     <ul>
-                        <li><strong>Tipe Ujian:</strong> {{ strtoupper($exam->type) }}</li>
+                        {{-- <li><strong>Tipe Ujian:</strong> {{ strtoupper($exam->type) }}</li> --}}
                         <li><strong>Jumlah Soal:</strong> {{ $editableQuestions->count() }}</li>
                         <li><strong>Durasi:</strong> {{ $exam->duration_minutes }} menit</li>
-                        <li><strong>Catatan:</strong> 
+                        <li><strong>Catatan:</strong>
                             <ul>
                                 <li>Untuk soal <strong>PG</strong>: Isikan jawaban benar (A, B, C, D, dll)</li>
                                 <li>Untuk soal <strong>Angka</strong>: Isikan semua jawaban mendatar dan menurun dengan format seperti yang diterima peserta</li>

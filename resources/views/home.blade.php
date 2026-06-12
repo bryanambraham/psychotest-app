@@ -43,7 +43,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h5 class="font-weight-bold mb-1">{{ $exam->name }}</h5>
-                                        <span class="badge badge-pill badge-info">{{ strtoupper($exam->type) }}</span>
+                                        {{-- <span class="badge badge-pill badge-info">{{ strtoupper($exam->type) }}</span> --}}
                                     </div>
                                     <div class="text-muted small text-right">
                                         <i class="far fa-clock"></i> {{ $exam->duration_minutes }} Menit

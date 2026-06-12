@@ -6,7 +6,7 @@
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <h3 class="mb-0 fs-responsive">Daftar Materi Psikotes</h3>
-        <a href="{{ route('manage-exams.create') }}" class="btn btn-primary btn-sm">+ Tambah Ujian</a>
+        <a href="{{ route('manage-exams.create') }}" class="btn btn-primary btn-md">+ Tambah Ujian</a>
     </div>
 
     {{-- ===== ALERT ===== --}}
@@ -34,7 +34,7 @@
                 <thead class="bg-light">
                     <tr>
                         <th class="text-nowrap">Nama Ujian</th>
-                        <th class="text-nowrap d-none d-sm-table-cell">Tipe</th>
+                        {{-- <th class="text-nowrap d-none d-sm-table-cell">Tipe</th> --}}
                         <th class="text-nowrap d-none d-md-table-cell">Durasi</th>
                         <th class="text-center text-nowrap">Aksi</th>
                     </tr>
@@ -46,13 +46,13 @@
                             <div class="fw-bold">{{ $exam->name }}</div>
                             {{-- Tipe & durasi muncul di bawah nama di layar xs --}}
                             <div class="d-flex flex-wrap gap-1 mt-1 d-sm-none">
-                                <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
+                                {{-- <span class="badge badge-info">{{ strtoupper($exam->type) }}</span> --}}
                                 <small class="text-muted">{{ $exam->duration_minutes }} Menit</small>
                             </div>
                         </td>
-                        <td class="d-none d-sm-table-cell">
+                        {{-- <td class="d-none d-sm-table-cell">
                             <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
-                        </td>
+                        </td> --}}
                         <td class="d-none d-md-table-cell text-nowrap">
                             {{ $exam->duration_minutes }} Menit
                         </td>
