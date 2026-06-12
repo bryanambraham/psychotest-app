@@ -77,7 +77,7 @@
                                 </form>
                             @endif
 
-                            @if(auth()->user()->name ==  strtolower(env('ADMIN_NAME'))) 
+                            @if(auth()->user()->name ==  strtolower(config('app.admin_name'))) 
                                 <a class="mx-3 btn btn-success font-weight-bold shadow-sm" href="{{ route('activity-log.index') }}">Activity Log</a>
                             @endif
                         @endauth

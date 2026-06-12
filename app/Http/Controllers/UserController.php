@@ -12,7 +12,9 @@ class UserController extends Controller
     // Tampilkan daftar semua user
     public function index()
     {
-        $users = User::latest()->paginate(10);
+        $users = User::latest()
+        ->where('name', 'not like', strtolower(config('app.admin_name')))
+        ->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
