@@ -16,13 +16,20 @@
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
     <style>
-        body { background-color: #f8f9fa; }
+        body { 
+            background-image: url('{{ asset('background.jpg') }}'); 
+            background-size: cover; /* Agar gambar memenuhi layar */
+            background-position: center center; /* Posisi gambar di tengah */
+            background-repeat: no-repeat; /* Agar gambar tidak berulang */
+            background-attachment: fixed; /* Agar gambar tetap di tempat saat halaman di-scroll */
+            background-color: #f8f9fa; 
+        }
         .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.04); }
     </style>
 </head>
 <body>
     <div id="app">
-        <nav class="navbar navbar-expand-md navbar-light bg-white">
+        <nav class="navbar navbar-expand-md navbar-light">
             <div class="container">
                 <a class="navbar-brand font-weight-bold" href="{{ url('/') }}">
                     <img class="logo-navbar" src="{{ asset('logo_gl_trans.png') }}" alt="{{ env('APP_NAME') }}">
