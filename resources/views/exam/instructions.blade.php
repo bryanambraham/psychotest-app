@@ -14,18 +14,18 @@
 
                     {{-- Header --}}
                     <div class="mb-4">
-                        <h3 class="font-weight-bold mb-2 fs-responsive">Persiapan Pengerjaan</h3>
+                        <h3 class="font-weight-bold mb-2 fs-responsive">{{$exam->name}}</h3>
                         <p class="text-muted mb-0 small">Data peserta sudah tersimpan. Saat Anda menekan tombol mulai, timer akan langsung berjalan dan halaman soal akan dibuka.</p>
                     </div>
 
                     @if ($exam->type == 'pilgan')
                         <div class="mb-4">
-                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
                             <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
                         </div>
                     @elseif($exam->type == 'tes_kraeplin')
                         <div class="mb-4">
-                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
                             <p class="font-weight-bold text-red-600 mb-0 medium">Pada soal yang akan kamu kerjakan ini, ada sejumlah soal menghitung sederhana yang dapat dilakukan setiap orang  
 dengan latar belakang pendidikan sekolah dasar. Anda diminta untuk mengerjakan dengan cepat
 dan tepat. Untuk itu Anda perlu memperhatikan bahwa Tanda Tambah (  +  ) mempunyai arti 
@@ -36,17 +36,17 @@ Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian
                         </div>
                     @elseif($exam->type == 'angka')
                         <div class="mb-4">
-                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
                             <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Anda akan diminta untuk menjumlahkan angka-angka yang tertera secara mendatar dan menurun.</p>
                         </div>  
                     @elseif($exam->type == 'uraian')
                         <div class="mb-4">
-                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
                             <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
                         </div>  
                     @elseif($exam->type == 'disc')
                         <div class="mb-4">
-                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
                             <ul class="font-weight-bold text-red-600 mb-0 medium">
                                 <li>Pilih	1	(satu)	huruf	yang	Paling	Mirip	kepribadian	Anda	dan	letakkan	jawabannya	di	kotak	"Mirip".</li>
                                 <li>Pilih	1	(satu)	huruf	yang	Paling	Tidak	Mirip	kepribadian	Anda	dan	letakkan	jawabannya	di	kotak	"Tidak	Mirip"</li>
@@ -55,14 +55,14 @@ Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian
                         </div>  
                     @elseif($exam->type == 'soal_kasus')
                         <div class="mb-4">
-                            <span class="badge badge-danger mb-2">INSTRUKSI</span>
+                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
                             <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Telah kami sediakan soal kasus yang akan anda kerjakan, simak baik-baik soal tersebut dan jawablah pertanyaan atau perintah yang tertera.</p>
                         </div>                 
                     @endif
 
 
                     {{-- Participant Info Cards --}}
-                    <div class="row mb-4">
+                    <!-- <div class="row mb-4">
                         <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                             <div class="p-3 border rounded bg-light h-100">
                                 <div class="small text-muted">Nama</div>
@@ -81,16 +81,16 @@ Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian
                                 <div class="font-weight-bold text-break" style="font-size: 0.85rem;">{{ $participant['email'] }}</div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     {{-- Alert Tips --}}
-                    <div class="alert alert-info border-0">
+                    <!-- <div class="alert alert-info border-0">
                         <ul class="mb-0 pl-3">
                             <li>Pastikan koneksi internet stabil.</li>
                             <li>Siapkan perangkat yang akan digunakan sampai ujian selesai.</li>
                             <li>Timer dimulai tepat setelah halaman soal terbuka.</li>
                         </ul>
-                    </div>
+                    </div> -->
 
                     {{-- Submit --}}
                     <form method="POST" action="{{ route('exam.begin', $exam) }}"

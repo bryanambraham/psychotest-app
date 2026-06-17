@@ -5,7 +5,7 @@
 
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <h4 class="mb-0 fs-responsive">Manajemen User</h4>
+        <h4 class="mb-0 fs-responsive font-weight-bold">Manajemen User</h4>
         <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">+ Tambah User</a>
     </div>
 

@@ -15,7 +15,7 @@
 
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <h3 class="mb-0 fs-responsive">Laporan Hasil Ujian Peserta</h3>
+        <h3 class="mb-0 fs-responsive font-weight-bold">Laporan Hasil Ujian Peserta</h3>
     </div>
 
     {{-- ===== SEARCH BAR ===== --}}

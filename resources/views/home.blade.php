@@ -4,7 +4,15 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <h3 class="mb-4">Daftar Ujian Anda</h3>
+            <h3 class="mb-4 font-weight-bold">Daftar Ujian Anda</h3>
+
+            <p> Berikut adalah beberapa tes yang harus dikerjakan, setiap tes akan ada batasan waktu, dimohon manfaatkan waktu sebaik mungkin.
+                Perhatikan!
+                Wajib menyalakan kamera.
+                Pastikan koneksi internet stabil.
+                Pastikan perangkat dapat digunakan hingga ujian selesai.
+                Setiap tes yang yang sudah dimulai harus diselesaikan hingga selesai
+            </p>
 
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
@@ -43,7 +51,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h5 class="font-weight-bold mb-1">{{ $exam->name }}</h5>
-                                        <span class="badge badge-pill badge-info">{{ strtoupper($exam->type) }}</span>
+                                        <!-- <span class="badge badge-pill badge-info">{{ strtoupper($exam->type) }}</span> -->
                                     </div>
                                     <div class="text-muted small text-right">
                                         <i class="far fa-clock"></i> {{ $exam->duration_minutes }} Menit

@@ -5,7 +5,7 @@
 
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <h3 class="mb-0 fs-responsive">Daftar Materi Psikotes</h3>
+        <h3 class="mb-0 fs-responsive font-weight-bold">Daftar Materi Psikotes</h3>
         <a href="{{ route('manage-exams.create') }}" class="btn btn-primary btn-sm">+ Tambah Ujian</a>
     </div>
 
