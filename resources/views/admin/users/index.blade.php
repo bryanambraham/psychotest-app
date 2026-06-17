@@ -6,7 +6,12 @@
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h4 class="mb-0 fs-responsive font-weight-bold">Manajemen User</h4>
-        <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">+ Tambah User</a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
+                ⬇️ Import CSV
+            </button>
+            <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">+ Tambah User</a>
+        </div>
     </div>
 
     {{-- ===== ALERTS ===== --}}
@@ -32,8 +37,9 @@
                 <thead class="bg-light">
                     <tr>
                         <th class="text-nowrap">Nama</th>
-                        <th class="text-nowrap d-none d-md-table-cell">Posisi</th>
                         <th class="text-nowrap d-none d-sm-table-cell">Email</th>
+                        <th class="text-nowrap d-none d-md-table-cell">Posisi</th>
+                        <th class="text-nowrap d-none d-md-table-cell">Phone</th>
                         <th class="text-nowrap">Password</th>
                         <th class="text-nowrap">Role</th>
                         <th class="text-nowrap text-center">Aksi</th>
@@ -46,12 +52,14 @@
                             <div class="fw-semibold">{{ $user->name }}</div>
                             {{-- Email & posisi tampil di bawah nama pada layar xs --}}
                             <div class="d-block d-sm-none text-muted small">{{ $user->email }}</div>
-                            <div class="d-block d-md-none text-muted small">{{ $user->position ?? '-' }}</div>
+                            <div class="d-block d-md-none text-muted small">Posisi: {{ $user->position ?? '-' }}</div>
+                            <div class="d-block d-md-none text-muted small">Phone: {{ $user->phone ?? '-' }}</div>
                         </td>
-                        <td class="d-none d-md-table-cell">{{ $user->position ?? '-' }}</td>
                         <td class="d-none d-sm-table-cell text-break" style="max-width: 180px;">
                             {{ $user->email }}
                         </td>
+                        <td class="d-none d-sm-table-cell text-break" style="max-width: 180px;">{{ $user->position ?? '-' }}</td>
+                        <td class="d-none d-sm-table-cell text-break" style="max-width: 180px;">{{ $user->phone ?? '-' }}</td>
                         <td class="text-break" style="max-width: 180px;">
                             @php
                                 try{
@@ -88,6 +96,38 @@
     {{-- ===== PAGINATION BOTTOM ===== --}}
     <div class="my-3">
         {{ $users->links() }}
+    </div>
+</div>
+
+{{-- ===== MODAL IMPORT CSV ===== --}}
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import Data User</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('users.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label for="file">Pilih File (.csv)</label>
+                        <input type="file" name="file" id="file" class="form-control" accept=".csv" required>
+                    </div>
+                    <div class="alert alert-info small">
+                        <strong>Format CSV yang didukung:</strong><br>
+                        Pastikan file CSV memiliki urutan kolom (Header opsional tetapi urutan baris data harus mengikuti ini): <br>
+                        <code>Name | Email | Position | Phone | Password | Role</code>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success">Import Sekarang</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

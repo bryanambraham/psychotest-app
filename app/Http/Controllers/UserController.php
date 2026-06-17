@@ -108,4 +108,60 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
+
+    // Import user dari file CSV
+    public function import(Request $request)
+    {
+        // Validasi file
+        $request->validate([
+            'file' => 'required|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $handle = fopen($file->getPathname(), "r");
+
+        // Deteksi pemisah (delimiter) apakah koma (,) atau titik koma (;)
+        $firstLine = fgets($handle);
+        $delimiter = strpos($firstLine, ';') !== false ? ';' : ',';
+        rewind($handle); // Kembalikan pointer ke baris awal file
+
+        $header = true;
+
+        // Gunakan delimiter yang sudah dideteksi
+        while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+            if ($header) {
+                $header = false; // Lewati baris pertama (Header CSV)
+                continue;
+            }
+
+            // Pastikan array punya indeks ke-1 (Email) dan bersihkan spasi
+            $email = isset($row[1]) ? strtolower(trim($row[1])) : '';
+
+            // Jika email tidak kosong dan belum terdaftar di database
+            if (!empty($email) && !User::where('email', $email)->exists()) {
+                // Tampung dulu nilainya agar pengecekan lebih rapi
+                $position = trim($row[2] ?? '');
+                $phone    = trim($row[3] ?? '');
+                $password = trim($row[4] ?? '');
+                $role     = trim($row[5] ?? '');
+
+                $user = User::create([
+                    'name'     => isset($row[0]) ? strtolower(trim($row[0])) : '',
+                    'email'    => $email,
+                    // Cek jika nilainya bukan string kosong, jika kosong set jadi null
+                    'position' => $position !== '' ? strtolower($position) : null,
+                    'phone'    => $phone !== '' ? strtolower($phone) : null,
+                    'password' => \Illuminate\Support\Facades\Crypt::encryptString($password !== '' ? $password : 'password123'),
+                    'role'     => in_array(strtolower($role), ['admin', 'user']) ? strtolower($role) : 'user',
+                ]);
+
+                // Catat di Activity Logger
+                ActivityLogger::logCreate($user, $user->id, $user, "User di IMPORT: {$user->name}, email: {$user->email}, dan NoTelp: {$user->phone}.");
+            }
+        }
+        
+        fclose($handle);
+
+        return redirect()->route('users.index')->with('success', 'Data user berhasil di-import dari CSV.');
+    }
 }

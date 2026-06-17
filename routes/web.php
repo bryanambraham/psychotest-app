@@ -84,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Resource route untuk User (index, create, store, edit, update, destroy)
     Route::resource('users', 'UserController')->middleware('role:admin');
+    Route::post('/users/import', [App\Http\Controllers\UserController::class, 'import'])->name('users.import');
 
     Route::get('/exam-results', 'ExamManagementController@resultsIndex')->name('manage-exams.results')->middleware('role:admin');
     Route::delete('/exam-results/{id}', 'ExamManagementController@destroyResultsIndex')->name('manage-exams.results.destroy')->middleware('role:admin');

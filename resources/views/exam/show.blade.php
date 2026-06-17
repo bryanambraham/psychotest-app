@@ -8,7 +8,7 @@
                 <div class="card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem;">
                     <div>
                         <h4 class="mb-0 font-weight-bold exam-title">{{ $exam->name }}</h4>
-                        <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
+                        <!-- <span class="badge badge-info">{{ strtoupper($exam->type) }}</span> -->
                     </div>
                     <div class="text-danger font-weight-bold timer-display">
                         <span id="timer-display">Memuat...</span>
@@ -263,7 +263,7 @@
 
                             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
                                 <div class="card-body p-4">
-                                    <div class="row align-items-center">
+                                    <!-- <div class="row align-items-center">
                                         <div class="col-12 col-lg-7 text-center text-lg-left d-md-flex align-items-center mb-3 mb-lg-0">
                                             <div class="text-primary mr-3 mb-2 mb-md-0">
                                                 <i class="fas fa-folder-open fa-3x"></i>
@@ -280,13 +280,24 @@
                                             </div>
                                             <div id="upload-alert" class="alert small p-2 text-center mb-0" style="display: none; border-radius: 6px;"></div>
                                         </div>
-                                    </div>
+                                    </div> -->
 
                                     <div id="uploaded-files-box" class="mt-3 p-3 bg-light rounded border" style="display: none;">
                                         <h6 class="small font-weight-bold text-secondary mb-2"><i class="fas fa-paperclip mr-1"></i> File Terunggah:</h6>
                                         <div id="uploaded-files-list" class="d-flex flex-wrap" style="gap: 10px;"></div>
                                     </div>
                                 </div>
+
+                                <div class="card border-0 shadow-sm mb-4 align-items-center" style="border-radius: 12px;">
+                                    <div class="card-body p-4">
+                                        <h5 class="font-weight-bold mb-3 text-dark">Tabel Jurnal</h5>
+                                        <p class="small text-muted mb-3">Isi tabel di bawah ini. Anda bisa klik kanan untuk menambah/menghapus baris.</p>
+                                        
+                                        <div id="jurnal-table" data-qnum="{{ $q->number }}"></div>
+
+                                        <input type="hidden" name="answers" id="answers">
+                                    </div>
+                                </div>                                
                             </div>
                         </div>
 
@@ -786,11 +797,15 @@
 
                 // 1. FUNGSI UNTUK MERENDER BADGE FILE + TOMBOL CANCEL
                 function renderFileList(files) {
+                    // TAMBAHKAN BARIS INI: Cegah error jika elemen HTML sedang di-comment
+                    if (!filesBox || !fileLabel || !filesList || !uploadAlert || !fileInput) return;
+
                     if (!files || files.length === 0) {
                         filesBox.style.display = 'none';
                         fileLabel.innerHTML = "Pilih satu atau beberapa file...";
                         return;
                     }
+                    
                     filesBox.style.display = 'block';
                     filesList.innerHTML = '';
 
@@ -866,55 +881,57 @@
                 // Render pertama kali saat halaman dibuka
                 renderFileList(uploadedFilesArray);
 
-                // 3. LOGIKA UPLOAD (Sudah Diperbaiki Sistem Error Handling & Header)
-                fileInput.addEventListener('change', function() {
-                    if (this.files.length === 0) return;
+                if(fileInput){
+                    // 3. LOGIKA UPLOAD (Sudah Diperbaiki Sistem Error Handling & Header)
+                    fileInput.addEventListener('change', function() {
+                        if (this.files.length === 0) return;
 
-                    let formData = new FormData();
-                    formData.append('exam_session_id', examSessionId);
-                    for (let i = 0; i < this.files.length; i++) {
-                        formData.append('answer_files[]', this.files[i]);
-                    }
-
-                    uploadAlert.style.display = 'block';
-                    uploadAlert.className = 'alert alert-info small p-2';
-                    uploadAlert.innerHTML = '⏳ Sedang mengunggah berkas...';
-
-                    fetch("{{ route('exam.upload-file') }}", {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json' // WAKIB: Biar Laravel return JSON kalau error, bukan redirect HTML
-                        },
-                        body: formData
-                    })
-                    .then(async res => {
-                        // Jika server merespon dengan status error (422, 500, dll)
-                        if (!res.ok) {
-                            const errorData = await res.json();
-                            throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
+                        let formData = new FormData();
+                        formData.append('exam_session_id', examSessionId);
+                        for (let i = 0; i < this.files.length; i++) {
+                            formData.append('answer_files[]', this.files[i]);
                         }
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'success') {
-                            uploadAlert.className = 'alert alert-success small p-2';
-                            uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
-                            uploadedFilesArray = data.files;
-                            renderFileList(uploadedFilesArray);
-                            fileLabel.innerHTML = `${data.files.length} file terpilih...`;
-                        } else {
+
+                        uploadAlert.style.display = 'block';
+                        uploadAlert.className = 'alert alert-info small p-2';
+                        uploadAlert.innerHTML = '⏳ Sedang mengunggah berkas...';
+
+                        fetch("{{ route('exam.upload-file') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json' // WAKIB: Biar Laravel return JSON kalau error, bukan redirect HTML
+                            },
+                            body: formData
+                        })
+                        .then(async res => {
+                            // Jika server merespon dengan status error (422, 500, dll)
+                            if (!res.ok) {
+                                const errorData = await res.json();
+                                throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                uploadAlert.className = 'alert alert-success small p-2';
+                                uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
+                                uploadedFilesArray = data.files;
+                                renderFileList(uploadedFilesArray);
+                                fileLabel.innerHTML = `${data.files.length} file terpilih...`;
+                            } else {
+                                uploadAlert.className = 'alert alert-danger small p-2';
+                                uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
+                            }
+                        })
+                        .catch(err => {
+                            // Tangkap error di sini agar alert tidak stuck loading terus
                             uploadAlert.className = 'alert alert-danger small p-2';
-                            uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
-                        }
-                    })
-                    .catch(err => {
-                        // Tangkap error di sini agar alert tidak stuck loading terus
-                        uploadAlert.className = 'alert alert-danger small p-2';
-                        uploadAlert.innerHTML = '❌ ' + err.message;
-                        console.error(err);
+                            uploadAlert.innerHTML = '❌ ' + err.message;
+                            console.error(err);
+                        });
                     });
-                });
+                }
             }
 
         // ==========================================
@@ -925,9 +942,27 @@
         // Fungsi untuk mengecek apakah semua soal sudah terisi
         function checkCompletion() {
             if (isKasus) {
-                // Jika semua file dihapus (kosong), gembok submit akan otomatis aktif kembali
-                if (!uploadedFilesArray || uploadedFilesArray.length === 0) {
-                    return ['Anda belum mengunggah file lembar jawaban apa pun'];
+                let hasFile = uploadedFilesArray && uploadedFilesArray.length > 0;
+                let hasTableData = false;
+
+                // Cek apakah tabel Jspreadsheet ada isinya
+                if (typeof tableInstance !== 'undefined') {
+                    let tableData = tableInstance.getData();
+                    // Cek semua baris dan kolom, jika ada 1 saja yang tidak kosong, berarti sudah diisi
+                    for (let i = 0; i < tableData.length; i++) {
+                        for (let j = 0; j < tableData[i].length; j++) {
+                            if (tableData[i][j] !== null && tableData[i][j] !== '') {
+                                hasTableData = true;
+                                break;
+                            }
+                        }
+                        if (hasTableData) break;
+                    }
+                }
+
+                // Jika tidak ada file DAN tabel Jurnal kosong, lempar error khusus
+                if (!hasFile && !hasTableData) {
+                    return ['kasus_kosong'];
                 }
                 return [];
             }
@@ -1007,15 +1042,23 @@
             let missingAnswers = checkCompletion();
 
             if (missingAnswers.length > 0) {
-                // Jika ada yang kosong, tampilkan peringatan dan batalkan submit
+                // Atur pesan teks default untuk soal biasa
+                let warningText = `Anda belum menjawab soal nomor: ${missingAnswers.join(', ')}. Silakan lengkapi semua jawaban sebelum mengumpulkan.`;
+
+                // Jika errornya berasal dari Soal Kasus (file kosong & tabel kosong)
+                if (isKasus && missingAnswers[0] === 'kasus_kosong') {
+                    warningText = "Anda belum mengisi Tabel Jurnal Umum atau mengunggah file lembar jawaban. Silakan lengkapi salah satunya sebelum mengumpulkan.";
+                }
+
+                // Tampilkan peringatan dan batalkan submit
                 Swal.fire({
                     title: 'Belum Lengkap!',
-                    text: `Anda belum menjawab soal nomor: ${missingAnswers.join(', ')}. Silakan lengkapi semua jawaban sebelum mengumpulkan.`,
+                    text: warningText,
                     icon: 'error',
                     confirmButtonColor: '#d33',
                     confirmButtonText: 'Oke, Saya Lengkapi'
                 });
-                return; // Berhenti di sini, jangan lanjut ke konfirmasi yakin/tidak
+                return; // Berhenti di sini
             }
 
             // 2. Jika sudah lengkap, tampilkan konfirmasi yakin/tidak
@@ -1055,7 +1098,58 @@
                 window.location.href = url.replace('PLACEHOLDER', examSessionId);
             }, 500);
         }
-        });
+        
+        // ==========================================
+        // 6. LOGIKA TABEL JURNAL (JSPREADSHEET)
+        // ==========================================
+        const jurnalContainer = document.getElementById('jurnal-table');
+        
+        if (jurnalContainer) {
+            let qNum = jurnalContainer.dataset.qnum;
+
+                var tableInstance = jspreadsheet(jurnalContainer, {
+                data: [
+                    ['', '', '', '', ''], 
+                    ['', '', '', '', ''],
+                ],
+                columns: [
+                    { type: 'calendar', title: 'Tanggal', width: 120, options: { format: 'DD/MM/YYYY' } },
+                    { type: 'text', title: 'Keterangan', width: 250 },
+                    { type: 'text', title: 'Ref', width: 80 },
+                    { type: 'text', title: 'Debit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
+                    { type: 'text', title: 'Kredit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
+                ],
+                minDimensions: [5, 5],
+                allowInsertRow: true,
+                allowManualInsertRow: true,
+                allowDeleteRow: true,
+                
+                // UBAH BAGIAN INI MENJADI TRUE AGAR BISA DITAMBAH/DIHAPUS
+                allowInsertColumn: true, 
+                allowManualInsertColumn: true,
+                allowDeleteColumn: true,
+                
+                wordWrap: true,
+                
+                // EVENT ONCHANGE: Terpanggil setiap sel diedit atau baris ditambah/dihapus
+                onchange: function(instance, cell, x, y, value) {
+                    // Ambil seluruh data tabel bentuk Array
+                    let tableData = tableInstance.getData();
+                    
+                    // Simpan ke database secara otomatis lewat AJAX
+                    saveAnswerAjax(qNum, tableData);
+                },
+                oninsertrow: function() {
+                    let tableData = tableInstance.getData();
+                    saveAnswerAjax(qNum, tableData);
+                },
+                ondeleterow: function() {
+                    let tableData = tableInstance.getData();
+                    saveAnswerAjax(qNum, tableData);
+                }
+            });
+        }
+    });
 </script>
 
 <style>

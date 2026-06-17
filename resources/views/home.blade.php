@@ -6,13 +6,16 @@
         <div class="col-md-10">
             <h3 class="mb-4 font-weight-bold">Daftar Ujian Anda</h3>
 
-            <p> Berikut adalah beberapa tes yang harus dikerjakan, setiap tes akan ada batasan waktu, dimohon manfaatkan waktu sebaik mungkin.
-                Perhatikan!
-                Wajib menyalakan kamera.
-                Pastikan koneksi internet stabil.
-                Pastikan perangkat dapat digunakan hingga ujian selesai.
-                Setiap tes yang yang sudah dimulai harus diselesaikan hingga selesai
-            </p>
+            <div>
+                <p style="font-size: 1.2rem;"> Berikut adalah beberapa tes yang harus dikerjakan, setiap tes akan ada batasan waktu, dimohon manfaatkan waktu sebaik mungkin.</p>
+                <p style="color: #e3342f;">Perhatikan!</p>
+                <ul style="margin-top: -15px; color: #e3342f;">
+                    <li>Wajib menyalakan kamera.</li>
+                    <li>Pastikan koneksi internet stabil.</li>
+                    <li>Pastikan perangkat dapat digunakan hingga ujian selesai.</li>
+                    <li>Setiap tes yang sudah dimulai harus diselesaikan hingga selesai</li>
+                </ul>
+            </div>
 
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>

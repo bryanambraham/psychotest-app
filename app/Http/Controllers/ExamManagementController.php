@@ -65,7 +65,7 @@ class ExamManagementController extends Controller
                     foreach ($questions as $index => $q) {
                         if ($pdfType === 'disc') {
                             $boxNumber    = $q['box'] ?? ($index + 1);
-                            $questionText = "Box " . $boxNumber;
+                            $questionText = $boxNumber;
                             $options      = $q['options'] ?? [];
                             $number       = $boxNumber;
                         } else {

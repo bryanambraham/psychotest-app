@@ -18,13 +18,15 @@
     </div>
 
     <div class="row">
-        <div class="flex flex-col w-full gap-4">
-            <div class="col-md-12">
-                <div class="card shadow-sm mb-4 border-0">
+        <div class="row mb-4">
+            
+            {{-- Kolom 1: Info Ujian --}}
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-primary text-white">Info Ujian</div>
                     <div class="card-body">
                         <p><strong>Ujian:</strong> {{ $session->exam->name }}</p>
-                        <p><strong>Tipe:</strong> {{ strtoupper($session->exam->type) }}</p>
+                        <!-- <p><strong>Tipe:</strong> {{ strtoupper($session->exam->type) }}</p> -->
                         <p><strong>Status:</strong> {{ strtoupper($session->status) }}</p>
                         <p><strong>Waktu Mulai:</strong> {{ $session->created_at }}</p>
                         <p><strong>Waktu Selesai:</strong> {{ $session->end_time ?? '-' }}</p>
@@ -49,8 +51,9 @@
                 </div>
             </div>
 
-            <div class="col-md-12">
-                <div class="card shadow-sm mb-4 border-0">
+            {{-- Kolom 2: Info Peserta --}}
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-primary text-white">Info Peserta <span class="font-weight-bold">(DIISI HRD)</span></div>
                     <div class="card-body">
                         <p><strong>Nama:</strong> {{ $session->user->name }}</p>
@@ -61,8 +64,9 @@
                 </div>
             </div>
 
-            <div class="col-md-12">
-                <div class="card shadow-sm mb-4 border-0">
+            {{-- Kolom 3: Info Verifikasi --}}
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-primary text-white">Info Verifikasi Peserta <span class="font-weight-bold">(DIISI USER)</span></div>
                     <div class="card-body">
                         <p><strong>Nama:</strong> {{ $verifyUser->name ?? $session->user->name }}</p>
@@ -72,9 +76,10 @@
                     </div>
                 </div>
             </div>
+
         </div>
 
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-dark text-white d-flex justify-content-between">
                     <span>📸 Bukti Kamera (Random Snapshots)</span>
@@ -118,20 +123,22 @@
                                         <tbody>
                                             @if($session->exam->type == 'soal_kasus')
                                                 {{-- ======================================================== --}}
-                                                {{-- TAMPILAN KHUSUS UNTUK DOWNLOAD MULTIPLE FILE JAWABAN     --}}
+                                                {{-- TAMPILAN KHUSUS UNTUK SOAL KASUS (FILE & TABEL JURNAL)   --}}
                                                 {{-- ======================================================== --}}
                                                 @php
                                                     $uploadedFiles = json_decode($session->answer_file, true) ?: [];
                                                 @endphp
+                                                
+                                                {{-- ROW 1: MENAMPILKAN FILE UPLOAD --}}
                                                 <tr>
-                                                    <td class="text-center align-middle">1</td>
+                                                    <td class="text-center align-middle">-</td>
                                                     <td class="align-middle">
-                                                        <span class="font-weight-bold text-dark d-block">📄 Pertanyaan bisa diliat dari File Soal</span>
-                                                        <small class="text-muted">Seluruh instruksi siklus akuntansi dikerjakan peserta melalui lembar kerja eksternal.</small>
+                                                        <span class="font-weight-bold text-dark d-block">📄 File Lembar Jawaban</span>
+                                                        <small class="text-muted">File Excel/PDF/Word yang diunggah oleh peserta.</small>
                                                     </td>
+                                                    <td class="align-middle text-center"><span class="text-muted small">-</span></td>
                                                     <td class="align-middle">
                                                         @if(!empty($uploadedFiles))
-                                                            <div class="font-weight-bold small text-secondary mb-2">📥 Klik untuk mengunduh jawaban peserta:</div>
                                                             <div class="d-flex flex-column" style="gap: 8px;">
                                                                 @foreach($uploadedFiles as $file)
                                                                     <a href="{{ asset($file['path']) }}" target="_blank"
@@ -144,11 +151,82 @@
                                                                 @endforeach
                                                             </div>
                                                         @else
-                                                            <span class="badge badge-danger p-2">❌ Kosong / Peserta tidak mengunggah file apa pun.</span>
+                                                            <span class="badge badge-secondary p-2">Peserta tidak mengunggah file apa pun.</span>
                                                         @endif
+                                                    </td>
+                                                    <td class="align-middle text-center">
+                                                        <span class="text-muted small">Manual review</span>
                                                     </td>
                                                 </tr>
 
+                                                {{-- ROW 2: MENAMPILKAN JAWABAN DARI TABEL JURNAL UMUM --}}
+                                                @foreach($session->exam->questions as $question)
+                                                    @php
+                                                        $userAnswer = $session->userAnswers->where('question_number', $question->number)->first();
+                                                        $tableData = $userAnswer ? $userAnswer->answers : [];
+                                                        
+                                                        // Filter baris yang benar-benar diisi saja (abaikan baris kosong)
+                                                        $filteredTableData = [];
+                                                        if(is_array($tableData)) {
+                                                            foreach($tableData as $row) {
+                                                                $isEmpty = true;
+                                                                if(is_array($row)) {
+                                                                    foreach($row as $cell) {
+                                                                        if($cell !== null && $cell !== '') {
+                                                                            $isEmpty = false;
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                }
+                                                                if(!$isEmpty) {
+                                                                    $filteredTableData[] = $row;
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="text-center align-middle font-weight-bold">{{ $question->number }}</td>
+                                                        <td class="align-middle">
+                                                            <span class="font-weight-bold text-dark d-block">📝 Jurnal Umum (Input Aplikasi)</span>
+                                                            <small class="text-muted">Hasil ketikan peserta di tabel interaktif.</small>
+                                                        </td>
+                                                        <td class="align-middle text-center"><span class="text-muted small">-</span></td>
+                                                        <td class="align-middle">
+                                                            @if(!empty($filteredTableData))
+                                                                <div class="table-responsive bg-white rounded border">
+                                                                    <table class="table table-sm table-striped mb-0" style="font-size: 0.85rem;">
+                                                                        <thead class="bg-light">
+                                                                            <tr>
+                                                                                <th class="py-1 text-center">Tanggal</th>
+                                                                                <th class="py-1">Keterangan</th>
+                                                                                <th class="py-1 text-center">Ref</th>
+                                                                                <th class="py-1 text-right">Debit</th>
+                                                                                <th class="py-1 text-right">Kredit</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach($filteredTableData as $row)
+                                                                                <tr>
+                                                                                    <td class="py-1 text-center">{{ $row[0] ?? '' }}</td>
+                                                                                    <td class="py-1">{{ $row[1] ?? '' }}</td>
+                                                                                    <td class="py-1 text-center">{{ $row[2] ?? '' }}</td>
+                                                                                    <td class="py-1 text-right">{{ $row[3] ?? '' }}</td>
+                                                                                    <td class="py-1 text-right">{{ $row[4] ?? '' }}</td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            @else
+                                                                <span class="badge badge-secondary p-2">Tabel tidak diisi</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="align-middle text-center">
+                                                            <span class="text-muted small">Manual review</span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                                
                                             @elseif($session->exam->type == 'uraian' || $session->exam->type == 'tes_kraeplin')
                                                 {{-- ======================================================== --}}
                                                 {{-- TAMPILAN KHUSUS UNTUK SOAL URAIAN (ESSAY)                --}}

@@ -46,7 +46,7 @@
                             <div class="fw-bold">{{ $exam->name }}</div>
                             {{-- Tipe & durasi muncul di bawah nama di layar xs --}}
                             <div class="d-flex flex-wrap gap-1 mt-1 d-sm-none">
-                                <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
+                                <!-- <span class="badge badge-info">{{ strtoupper($exam->type) }}</span> -->
                                 <small class="text-muted">{{ $exam->duration_minutes }} Menit</small>
                             </div>
                         </td>
