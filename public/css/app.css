@@ -2901,6 +2901,10 @@ fieldset:disabled a.btn {
   border-color: #e3342f;
 }
 
+.text-blue-gl {
+  color: #000080;
+}
+
 .btn-danger:hover {
   color: #fff;
   background-color: rgb(207.7796610169, 32.9650423729, 27.9703389831);

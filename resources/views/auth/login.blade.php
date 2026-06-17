@@ -12,10 +12,11 @@
 
 <div class="container">
     <div class="row justify-content-center">
+
         <div class="col-md-8">
+            <h2 class="text-blue-gl my-3"><strong>Selamat Datang di Rekrutmen GrandLucky Superstore</strong></h2>
             <div class="card">
                 <div class="card-header"> <span>Silahkan </span> <strong>{{ __('Login') }}</strong> <span> dengan <strong> Akun</strong> yang <strong> diberikan!</strong></span></div>
-
                 <div class="card-body">
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
