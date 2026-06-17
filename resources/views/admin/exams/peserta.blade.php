@@ -83,10 +83,20 @@
                                 </div>
 
                                 <div class="col-md-4 mb-3">
+                                    <label for="name" class="form-label">Deskripsi Ujian</label>
+                                    <input type="text" name="description" id="description" value="{{ old('name', $exam->description) }}"
+                                        class="form-control" placeholder="Contoh: Ujian ini adalah..." disabled required>
+                                </div>
+
+                                <!-- <div class="col-md-4 mb-3">
                                     <label for="type" class="form-label">Tipe Ujian</label>
                                     <input type="text" name="type" id="type" value="{{ old('type', $exam->type) }}"
                                         class="form-control" placeholder="Contoh: Pilihan Ganda" disabled required>
-                                </div>
+                                </div> -->
+
+                                    <input type="hidden" name="type" id="type" value="{{ old('type', $exam->type) }}"
+                                        class="form-control" placeholder="Contoh: Pilihan Ganda" disabled required>
+                               
 
                                 <div class="col-md-4 mb-3">
                                     <label for="duration_minutes" class="form-label">Durasi (Menit)</label>

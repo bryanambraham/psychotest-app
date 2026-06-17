@@ -176,7 +176,7 @@
                 </div>
                 <div class="card-body">
                     <ul>
-                        <li><strong>Tipe Ujian:</strong> {{ strtoupper($exam->type) }}</li>
+                        <!-- <li><strong>Tipe Ujian:</strong> {{ strtoupper($exam->type) }}</li> -->
                         <li><strong>Jumlah Soal:</strong> {{ $editableQuestions->count() }}</li>
                         <li><strong>Durasi:</strong> {{ $exam->duration_minutes }} menit</li>
                         <li><strong>Catatan:</strong> 

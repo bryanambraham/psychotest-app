@@ -428,7 +428,8 @@
                                                                     <span class="badge badge-danger" style="font-size: 1rem; padding: 0.5em 0.8em;">❌ Salah</span>
                                                                 @endif
                                                             @else
-                                                                <span class="text-muted small">-</span>
+                                                                <span class="text-muted small">Manual Review</span>
+                                                                
                                                             @endif
                                                         </td>
                                                     </tr>

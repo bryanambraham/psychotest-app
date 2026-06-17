@@ -25,7 +25,7 @@
                     <div class="mb-4">
                         <span class="badge badge-info mb-2">PSIKOTEST</span>
                         <h3 class="font-weight-bold mb-2 fs-responsive">{{ $exam->name }}</h3>
-                        <p class="text-muted mb-0 small">Isi data peserta terlebih dahulu. Timer baru dimulai setelah Anda menekan tombol mulai pada halaman soal.</p>
+                        <p class="text-muted mb-0 small">Timer baru dimulai setelah Anda menekan tombol mulai pada halaman soal.</p>
                     </div>
 
                     {{-- Info Cards --}}
@@ -36,12 +36,12 @@
                                 <div class="h5 mb-0">{{ $exam->duration_minutes }} menit</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-6 mb-3 mb-md-0">
+                        <!-- <div class="col-6 col-md-6 mb-3 mb-md-0">
                             <div class="p-3 border rounded h-100 bg-light">
                                 <div class="small text-muted">Tipe</div>
                                 <div class="h5 mb-0 text-uppercase">{{ $exam->type }}</div>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
 
                     @if(!empty($exam->description))

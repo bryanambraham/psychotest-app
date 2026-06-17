@@ -34,7 +34,7 @@
                 <thead class="bg-light">
                     <tr>
                         <th class="text-nowrap">Nama Ujian</th>
-                        <th class="text-nowrap d-none d-sm-table-cell">Tipe</th>
+                        <!-- <th class="text-nowrap d-none d-sm-table-cell">Tipe</th> -->
                         <th class="text-nowrap d-none d-md-table-cell">Durasi</th>
                         <th class="text-center text-nowrap">Aksi</th>
                     </tr>
@@ -50,9 +50,9 @@
                                 <small class="text-muted">{{ $exam->duration_minutes }} Menit</small>
                             </div>
                         </td>
-                        <td class="d-none d-sm-table-cell">
+                        <!-- <td class="d-none d-sm-table-cell">
                             <span class="badge badge-info">{{ strtoupper($exam->type) }}</span>
-                        </td>
+                        </td> -->
                         <td class="d-none d-md-table-cell text-nowrap">
                             {{ $exam->duration_minutes }} Menit
                         </td>

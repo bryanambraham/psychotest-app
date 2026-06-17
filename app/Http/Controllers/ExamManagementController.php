@@ -159,6 +159,7 @@ class ExamManagementController extends Controller
     $exam->update([
         'name' => $request->input('name', $exam->name),
         'type' => $request->input('type', $exam->type),
+        'description' => $request->input('description', $exam->description),
         'duration_minutes' => $request->input('duration_minutes', $exam->duration_minutes),
     ]);
 
@@ -171,7 +172,7 @@ class ExamManagementController extends Controller
     // $userNames = $exam->users()->pluck('name')->implode(', ');
 
 
-    return redirect()->back()->with('success', 'Daftar peserta ' . ' berhasil diperbarui.');
+    return redirect()->back()->with('success', 'Data Ujian / Daftar peserta ' . ' berhasil diperbarui.');
     }
 
     public function resultsIndex()

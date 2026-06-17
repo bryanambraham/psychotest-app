@@ -15,13 +15,13 @@
                     {{-- Header --}}
                     <div class="mb-4">
                         <h3 class="font-weight-bold mb-2 fs-responsive">{{$exam->name}}</h3>
-                        <p class="text-muted mb-0 small">Data peserta sudah tersimpan. Saat Anda menekan tombol mulai, timer akan langsung berjalan dan halaman soal akan dibuka.</p>
+                        <p class="text-muted mb-0 small">{{$exam->description}}</p>
                     </div>
 
                     @if ($exam->type == 'pilgan')
                         <div class="mb-4">
                             <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
+                            <p class="font-weight-bold text-red-600 mb-0 medium">Pilih hanya 1 (satu ) jawaban yang paling mewakili diri anda dalam berperilaku</p>
                         </div>
                     @elseif($exam->type == 'tes_kraeplin')
                         <div class="mb-4">
