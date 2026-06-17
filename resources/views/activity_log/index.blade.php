@@ -35,6 +35,12 @@
 
     {{-- Header Section --}}
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 pb-2 border-bottom">
+        
+        <form action="{{ route('activity-log.destroy') }}" method="POST" class="d-inline">
+            @csrf @method('DELETE')
+            <button type="submit" class="btn btn-sm btn-danger text-nowrap"
+                    onclick="return confirm('Yakin clear semua log?')">Clear Log</button>
+        </form>
         <div>
             <h2 class="font-weight-bold text-dark mb-1" style="letter-spacing: 0.5px;">Activity Log</h2>
             <p class="text-muted small mb-0">Pantau seluruh aktivitas perubahan data di dalam sistem.</p>

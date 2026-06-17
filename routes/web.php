@@ -101,5 +101,5 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/manage-exams/{id}/answer-keys', 'ExamManagementController@updateAnswerKeys')->name('manage-exams.update-answer-keys')->middleware('role:admin');
 
     Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
-
+    Route::delete('/activity-log/destroy', [ActivityLogController::class, 'destroy'])->name('activity-log.destroy');
 });
