@@ -177,7 +177,34 @@ class ExamManagementController extends Controller
 
     public function resultsIndex()
     {
-        // Ambil semua sesi yang sudah selesai atau sedang berlangsung
+        // ========================================================
+        // 1. RAZIA OTOMATIS: Tutup ujian yang ditinggalkan peserta
+        // ========================================================
+        $inProgressSessions = \App\ExamSession::with('exam')->where('status', 'in_progress')->get();
+
+        foreach ($inProgressSessions as $session) {
+            if ($session->exam) {
+                // Hitung batas waktu ujian seharusnya (Waktu Mulai + Durasi)
+                $endTime = \Carbon\Carbon::parse($session->start_time)->addMinutes($session->exam->duration_minutes);
+                
+                // Jika waktu sekarang sudah melewati batas akhir ujian
+                if (\Carbon\Carbon::now()->greaterThanOrEqualTo($endTime)) {
+                    // Paksa tutup sesi dan hitung nilainya
+                    $session->update([
+                        'status'   => 'completed', // atau 'timeout'
+                        'end_time' => $endTime
+                    ]);
+                    
+                    // Hitung nilai (Aman karena logika penilaian sudah kita buat kebal error)
+                    $session->calculateAndSaveScore();
+                }
+            }
+        }
+
+        // ========================================================
+        // 2. TAMPILKAN DATA SEPERTI BIASA
+        // ========================================================
+        // Ambil semua sesi yang sudah di-update
         $sessions = \App\ExamSession::with(['user', 'exam'])
                     ->latest()
                     ->paginate(10);
@@ -464,6 +491,30 @@ class ExamManagementController extends Controller
      */
     public function resultsIndexWithScore()
     {
+        // ========================================================
+        // 1. RAZIA OTOMATIS: Tutup ujian yang ditinggalkan peserta
+        // ========================================================
+        $inProgressSessions = \App\ExamSession::with('exam')->where('status', 'in_progress')->get();
+
+        foreach ($inProgressSessions as $session) {
+            if ($session->exam) {
+                // Hitung batas waktu ujian seharusnya (Waktu Mulai + Durasi)
+                $endTime = \Carbon\Carbon::parse($session->start_time)->addMinutes($session->exam->duration_minutes);
+                
+                // Jika waktu sekarang sudah melewati batas akhir ujian
+                if (\Carbon\Carbon::now()->greaterThanOrEqualTo($endTime)) {
+                    // Paksa tutup sesi dan hitung nilainya
+                    $session->update([
+                        'status'   => 'completed', // atau 'timeout'
+                        'end_time' => $endTime
+                    ]);
+                    
+                    // Hitung nilai (Aman karena logika penilaian sudah kita buat kebal error)
+                    $session->calculateAndSaveScore();
+                }
+            }
+        }
+
         $sessions = \App\ExamSession::with(['user', 'exam'])
                     ->whereNotNull('score')
                     ->latest()
