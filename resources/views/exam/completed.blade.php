@@ -22,6 +22,8 @@
                         Jawaban Anda untuk <strong>{{ $exam->name }}</strong> sudah tersimpan.
                     </p>
 
+                    <a href="{{ route('home') }}" class="btn btn-primary btn-sm">Kembali ke Beranda</a>
+
                 </div>
             </div>
         </div>

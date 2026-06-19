@@ -102,11 +102,52 @@
                             }
                         } elseif ($session->exam->type == 'soal_kasus') {
                             $uploadedFiles = json_decode($session->answer_file, true) ?: [];
-                            if(!empty($uploadedFiles)){
+
+                            if (!empty($uploadedFiles)) {
                                 $names = array_column($uploadedFiles, 'name');
                                 $answerString = "File Diupload: " . implode(", ", $names);
                             } else {
-                                $answerString = "❌ Tidak mengunggah file.";
+                                $tableData = $data ?: [];
+                                $filteredTableData = [];
+                                if (is_array($tableData)) {
+                                    foreach ($tableData as $row) {
+                                        $isEmpty = true;
+                                        if (is_array($row)) {
+                                            foreach ($row as $cell) {
+                                                if ($cell !== null && $cell !== '') {
+                                                    $isEmpty = false;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if (!$isEmpty) {
+                                            $filteredTableData[] = $row;
+                                        }
+                                    }
+                                }
+
+                                if (!empty($filteredTableData)) {
+                                    $rowsHtml = '';
+                                    foreach ($filteredTableData as $row) {
+                                        $rowsHtml .= '<tr>'
+                                            . '<td style="vertical-align:top;">' . date('d-m-Y', strtotime($row[0]) ?? '') . '</td>'
+                                            . '<td style="vertical-align:top;">' . ($row[1] ?? '') . '</td>'
+                                            . '<td style="vertical-align:top;">' . ($row[2] ?? '') . '</td>'
+                                            . '<td style="vertical-align:top; text-align:right;">' . ($row[3] ?? '') . '</td>'
+                                            . '<td style="vertical-align:top; text-align:right;">' . ($row[4] ?? '') . '</td>'
+                                            . '</tr>';
+                                    }
+
+                                    $answerString = '<table border="1" cellpadding="3" cellspacing="0" '
+                                        . 'style="border-collapse:collapse; width:100%; vertical-align:top;">'
+                                        . '<tr style="font-weight:bold;background-color:#f2f2f2;">'
+                                        . '<td>Tanggal</td><td>Keterangan</td><td>Ref</td><td>Debit</td><td>Kredit</td>'
+                                        . '</tr>'
+                                        . $rowsHtml
+                                        . '</table>';
+                                } else {
+                                    $answerString = '❌ Tidak mengunggah file & tabel jurnal kosong.';
+                                }
                             }
                         } else {
                             $answerString = $data['selected'] ?? '-';

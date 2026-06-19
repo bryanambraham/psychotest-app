@@ -207,7 +207,7 @@
                                                                         <tbody>
                                                                             @foreach($filteredTableData as $row)
                                                                                 <tr>
-                                                                                    <td class="py-1 text-center">{{ $row[0] ?? '' }}</td>
+                                                                                    <td class="py-1 text-center">{{ $row[0] ? date('d-m-Y', strtotime($row[0])) : '' }}</td>
                                                                                     <td class="py-1">{{ $row[1] ?? '' }}</td>
                                                                                     <td class="py-1 text-center">{{ $row[2] ?? '' }}</td>
                                                                                     <td class="py-1 text-right">{{ $row[3] ?? '' }}</td>

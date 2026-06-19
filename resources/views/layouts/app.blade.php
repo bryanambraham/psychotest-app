@@ -46,7 +46,7 @@
                         @auth
                             <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('home') }}">
-                                    <i class="fas fa-home mr-1"></i> Home
+                                    <i class="fas fa-home mr-1"></i> Beranda
                                 </a>
                             </li>
 
