@@ -31,6 +31,7 @@
                                     <!-- <option value="vak">Soal VAK</option> -->
                                     <option value="pilgan">Soal PG</option>
                                     <option value="soal_kasus">Soal Kasus</option>
+                                    <option value="cfit">Soal CFIT</option>
                                     <option value="tes_kraeplin">Soal Kraeplin</option>
                                     <option value="angka">Soal Angka</option>
                                     <!-- <option value="uraian">Soal Uraian</option> -->

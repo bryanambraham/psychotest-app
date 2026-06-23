@@ -78,12 +78,18 @@ class VerifyUserController extends Controller
     {
         $user = VerifyUser::findOrFail($id);
 
-        // Mencegah admin menghapus dirinya sendiri
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
-        }
+        // // Mencegah admin menghapus dirinya sendiri
+        // if ($user->id === auth()->id()) {
+        //     return back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+        // }
 
         $user->delete();
-        return redirect()->route('verify_users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('verify_users.index')->with('success', 'Verifasi user dengan nama: ' . $user->name . 'berhasil dihapus.');
+    }
+
+    public function destroyAll(){
+        VerifyUser::truncate();
+
+        return redirect()->route('verify_users.index')->with('success', 'Semua verifikasi user berhasil dihapus.');
     }
 }

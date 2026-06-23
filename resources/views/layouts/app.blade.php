@@ -63,6 +63,9 @@
                                         <a class="dropdown-item" href="{{ route('users.index') }}">
                                             <i class="fas fa-users mr-2 text-muted"></i> Kelola User
                                         </a>
+                                        <a class="dropdown-item" href="{{ route('verify_users.index') }}">
+                                            <i class="fas fa-users mr-2 text-muted"></i> Kelola Verifikasi User
+                                        </a>
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="{{ route('manage-exams.results') }}">
                                             <i class="fas fa-chart-bar mr-2 text-muted"></i> Hasil Ujian

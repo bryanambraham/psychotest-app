@@ -302,6 +302,35 @@
                         </div>
 
                     {{-- ========================================== --}}
+                    {{-- UI UNTUK SOAL CFIT) --}}
+                    {{-- ========================================== --}}
+                    @elseif($exam->type == 'cfit')
+                        @foreach($exam->questions as $q)
+                            <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
+                                <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
+                                
+                                {{-- Render Gambar CFIT yang sudah di-generate --}}
+                                @if($q->question_image)
+                                    <img src="{{ asset($q->question_image) }}" class="img-fluid mb-3 border rounded shadow-sm" alt="Soal CFIT">
+                                @endif
+
+                                {{-- Render Opsi Pilihan A, B, C, D... --}}
+                                <div class="row px-3">
+                                    @foreach($q->options as $key => $val)
+                                        <div class="col-4 col-md-2 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ strtoupper($key) }}" style="transform: scale(1.3);">
+                                                <label class="form-check-label ml-2 font-weight-bold" style="cursor: pointer; font-size: 1.1rem;">
+                                                    Pilihan {{ strtoupper($key) }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach                    
+
+                    {{-- ========================================== --}}
                     {{-- UI UNTUK SOAL TABEL ANGKA (PENJUMLAHAN) --}}
                     {{-- ========================================== --}}
                     @elseif($exam->type == 'angka')

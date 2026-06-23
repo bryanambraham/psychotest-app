@@ -30,7 +30,7 @@ class ExamManagementController extends Controller
     {
         $request->validate([
             'name'             => 'required|string|max:255',
-            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pilgan,soal_kasus,uraian,angka,tes_kraeplin',
+            'type'             => 'required|in:mbti,disc,vak,epps,papi,big_five,pilgan,soal_kasus,uraian,angka,tes_kraeplin,cfit',
             'duration_minutes' => 'required|integer|min:1',
             'description'      => 'nullable|string',
             'question_file'    => 'required|mimes:pdf|max:10000',
@@ -63,12 +63,41 @@ class ExamManagementController extends Controller
                     $questions = $result['data'] ?? [];
 
                     foreach ($questions as $index => $q) {
+                        // Variabel default untuk gambar
+                        $questionImage = $q['question_image'] ?? null;
+
                         if ($pdfType === 'disc') {
                             $boxNumber    = $q['box'] ?? ($index + 1);
                             $questionText = $boxNumber;
                             $options      = $q['options'] ?? [];
                             $number       = $boxNumber;
-                        } else {
+                        } 
+                        // ==========================================
+                        // LOGIKA KHUSUS CFIT (KONVERSI BASE64 KE JPG)
+                        // ==========================================
+                        elseif ($request->type === 'cfit' || $pdfType === 'cfit') {
+                            $questionText = $q['question_text'] ?? 'Perhatikan pola gambar berikut dan pilih opsi yang tepat.';
+                            $number       = $q['number'] ?? ($index + 1);
+                            $options      = $q['options'] ?? [];
+                            
+                            // Jika Python mengirimkan gambar halaman dalam bentuk Base64
+                            if (isset($q['image_base64'])) {
+                                $imageName = 'cfit_' . time() . '_' . uniqid() . '.jpg';
+                                $targetFolder = public_path('uploads/cfit');
+                                
+                                // Buat folder otomatis jika belum ada
+                                if (!file_exists($targetFolder)) {
+                                    mkdir($targetFolder, 0775, true);
+                                }
+                                
+                                // Decode base64 dan simpan menjadi file gambar fisik (.jpg)
+                                file_put_contents($targetFolder . '/' . $imageName, base64_decode($q['image_base64']));
+                                
+                                // Masukkan path gambar agar tersimpan di kolom 'question_image'
+                                $questionImage = 'uploads/cfit/' . $imageName;
+                            }
+                        } 
+                        else {
                             // Untuk angka, simpan seluruh struktur sebagai JSON
                             if ($pdfType === 'angka' && isset($q['table'])) {
                                 $questionText = json_encode($q);
@@ -81,13 +110,14 @@ class ExamManagementController extends Controller
                             $options      = $q['options'] ?? [];
                         }
 
+                        // Simpan Soal ke Database
                         Question::create([
                             'exam_id'           => $exam->id,
                             'number'            => (int) $number,
                             'question_text'     => $questionText,
                             'options'           => $options,
                             'has_image_options' => $q['has_image_options'] ?? false,
-                            'question_image' => $q['question_image'] ?? null,
+                            'question_image'    => $questionImage, // Path cfit otomatis masuk ke sini
                         ]);
                     }
 

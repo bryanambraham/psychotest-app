@@ -53,8 +53,11 @@ Route::get('/exam/{exam}', 'ExamController@show')->name('exam.show');
 //     return redirect()->route('exam.instructions', $exam);
 // })->name('exam.show');
 
+Route::get('/verify-user', 'VerifyUserController@index')->name('verify_users.index');
 Route::get('/verify-data', 'VerifyUserController@create')->name('verify.create');
 Route::post('/verify-data', 'VerifyUserController@store')->name('verify.store');
+Route::delete('/verify-data/{id}', 'VerifyUserController@destroy')->name('verify_user.destroy');
+Route::delete('/verify-data/destroy/all', 'VerifyUserController@destroyAll')->name('verify_user_all.destroy');
 
 // Grup Rute yang memerlukan Login
 Route::middleware(['auth'])->group(function () {
