@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Services\ActivityLogger;
 
 class ExamController extends Controller
 {
@@ -162,6 +163,8 @@ class ExamController extends Controller
         if (!$session->start_time) {
             $session->update(['start_time' => Carbon::now()]);
         }
+
+        ActivityLogger::logCreate($session, $session->id, $session->start_time, "User {$session->user->name} telah mulai mengerjakan ujian {$session->exam->name}, Start Time: {$session->start_time}.");
 
         session()->put('active_exam_session.' . $exam->id, $session->id);
         session()->forget('exam_candidate.' . $exam->id);
@@ -321,6 +324,8 @@ class ExamController extends Controller
             'status' => 'completed',
             'end_time' => now()
         ]);
+
+        ActivityLogger::logCreate($session, $session->id, $session->user->name, "User {$session->user->name} telah berhasil mengerjakan ujian {$session->exam->name}, pada pukul : {$session->end_time}.");
 
         // Hitung score berdasarkan kunci jawaban
         $session->calculateAndSaveScore();
