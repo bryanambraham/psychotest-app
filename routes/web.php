@@ -103,6 +103,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/manage-exams/{id}/answer-keys', 'ExamManagementController@editAnswerKeys')->name('manage-exams.edit-answer-keys')->middleware('role:admin');
     Route::put('/manage-exams/{id}/answer-keys', 'ExamManagementController@updateAnswerKeys')->name('manage-exams.update-answer-keys')->middleware('role:admin');
 
+    Route::get('/manage-exam/instruction/{exam}', 'ExamManagementController@editInstruction')->name('manage-exams.edit-instructions')->middleware('role:admin');
+   
+    Route::post('/manage-exams/{id}/update-instructions', 'ExamManagementController@updateInstructions')
+        ->name('manage-exams.update-instructions');
+
+    
+
     Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
     Route::delete('/activity-log/destroy', [ActivityLogController::class, 'destroy'])->name('activity-log.destroy');
 });

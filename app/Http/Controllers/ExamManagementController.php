@@ -568,4 +568,37 @@ class ExamManagementController extends Controller
             return redirect()->back()->with('error', 'Website sekarang CLOSED (Terkunci untuk publik).');
         }
     }
+
+    public function updateInstructions(Request $request, $id)
+    {
+        $exam = Exam::findOrFail($id);
+        
+        $instructions = [];
+        if ($request->has('instruction_items')) {
+            foreach ($request->instruction_items as $item) {
+                // Jika ada file gambar
+                if (isset($item['file'])){
+                    $destinationPath = 'instruction-exam';
+                    $file = $item['file'];
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+                    $filename = 'instruction' . $item['number'] . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path($destinationPath), $filename);
+                    $instructions[$item['number']] = ['type' => 'image', 'content' => asset($destinationPath . '/' . $filename)];
+                } else {
+                    // Jika hanya teks
+                    $instructions[$item['number']] = ['type' => 'text', 'content' => $item['text']];
+                }
+            }
+        }
+        
+        $exam->update(['instructions' => json_encode($instructions)]);
+        return redirect()->back()->with('success', 'Instruksi berhasil disimpan');
+    }
+
+    public function editInstruction(Exam $exam){
+        
+        return view('admin.exams.edit_instructions', compact('exam'));
+    }
 }

@@ -8,7 +8,6 @@
                 <div class="card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem;">
                     <div>
                         <h4 class="mb-0 font-weight-bold exam-title">{{ $exam->name }}</h4>
-                        <!-- <span class="badge badge-info">{{ strtoupper($exam->type) }}</span> -->
                     </div>
                     <div class="text-danger font-weight-bold timer-display">
                         <span id="timer-display">Memuat...</span>
@@ -66,9 +65,7 @@
 
                         <div class="pembatas"></div>
                         <style>
-                            .pembatas {
-                                margin: 3rem 0;
-                            }
+                            .pembatas { margin: 3rem 0; }
                         </style>
 
                         <table class="table table-hover table-striped mb-0">
@@ -82,7 +79,7 @@
                             <tbody>
                                 @foreach($exam->questions as $q)
                                     @php
-                                        // Ambil jawaban peserta dari DB jika ada (agar saat refresh halaman tidak hilang)
+                                        // Ambil jawaban peserta dari DB jika ada
                                         $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
                                         $mostAnswer = $userAnswer ? ($userAnswer->answers['most'] ?? '') : '';
                                         $leastAnswer = $userAnswer ? ($userAnswer->answers['least'] ?? '') : '';
@@ -121,7 +118,6 @@
                                             @endforeach
                                         </td>
                                         
-                                        {{-- Kolom Radio MOST --}}
                                         <td class="text-center p-3 align-middle border-left">
                                             @foreach(['A','B','C','D'] as $letter)
                                                 <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 24px;">
@@ -135,7 +131,6 @@
                                             @endforeach
                                         </td>
 
-                                        {{-- Kolom Radio LEAST --}}
                                         <td class="text-center p-3 align-middle border-left">
                                             @foreach(['A','B','C','D'] as $letter)
                                                 <div class="mb-2 d-flex justify-content-center align-items-center" style="height: 24px;">
@@ -153,228 +148,50 @@
                             </tbody>
                         </table>
 
-                    @elseif($exam->type == 'soal_kasus')
-                        {{-- ======================================================== --}}
-                        {{-- UI PREMIUM STACKED & SMART PARSER FOR KASUS AKUNTANSI    --}}
-                        {{-- ======================================================== --}}
-                        <div class="p-4 bg-light text-dark">
-                            <div class="card border-0 shadow-sm bg-white" style="border-radius: 12px; border-top: 6px solid #1a73e8 !important;">
-                                <div class="card-body p-4 p-md-5">
-
-                                    @foreach($exam->questions as $q)
-                                        @php
-                                            $fullText = $q->question_text;
-
-                                            // 1. Potong bagian Instruksi Kerja / Tugas (Paling Bawah)
-                                            $instructionSplit = preg_split('/Tugas\s*[\/|:]\s*Instruksi Kerja:/i', $fullText);
-                                            $mainBody = $instructionSplit[0];
-                                            $instructionsText = $instructionSplit[1] ?? '';
-
-                                            // 2. Potong bagian Transaksi
-                                            $transactionSplit = preg_split('/Transaksi selama[^:]*:/i', $mainBody);
-                                            $upperBody = $transactionSplit[0];
-                                            $transactionsText = $transactionSplit[1] ?? '';
-
-                                            // 3. Potong Judul + Intro dari Tabel Saldo
-                                            $tableHeaderPattern = '/Nama Perkiraan\s*[\/|:]\s*Akun\s+Saldo Berjalan\s*\(Rp\)/i';
-                                            $tableSplit = preg_split($tableHeaderPattern, $upperBody);
-                                            $introText = $tableSplit[0] ?? '';
-                                            $tableRowsText = $tableSplit[1] ?? '';
-
-                                            // --- LOGIKA BARU: EKSTRAK JUDUL & PENGANTAR SECARA DINAMIS DARI PDF ---
-                                            $introLines = array_values(array_filter(array_map('trim', explode("\n", $introText))));
-                                            $dynamicTitle = $introLines[0] ?? 'SOAL KASUS AKUNTANSI';
-                                            $dynamicParagraph = implode(" ", array_slice($introLines, 1));
-
-                                            // --- PARSING TABEL SALDO ---
-                                            $tableRows = [];
-                                            foreach (explode("\n", $tableRowsText) as $line) {
-                                                $line = trim($line);
-                                                if (empty($line)) continue;
-                                                if (preg_match('/^(.*?)\s+(\(?\d+(?:\.\d+)*\)?)$/', $line, $matches)) {
-                                                    $tableRows[] = [
-                                                        'account' => trim($matches[1]),
-                                                        'balance' => trim($matches[2])
-                                                    ];
-                                                }
-                                            }
-
-                                            // --- PARSING DAFTAR TRANSAKSI ---
-                                            $transactions = [];
-                                            foreach (explode("\n", $transactionsText) as $line) {
-                                                $line = trim($line);
-                                                if (empty($line)) continue;
-                                                if (preg_match('/^\d+[\.\)]\s+(.*)$/', $line, $matches)) {
-                                                    $transactions[] = $matches[1];
-                                                } else if (!empty($transactions)) {
-                                                    $transactions[count($transactions) - 1] .= " " . $line;
-                                                }
-                                            }
-
-                                            // --- PARSING DAFTAR INSTRUKSI ---
-                                            $instructions = [];
-                                            foreach (explode("\n", $instructionsText) as $line) {
-                                                $line = trim($line);
-                                                if (empty($line)) continue;
-                                                if (preg_match('/^\d+[\.\)]\s+(.*)$/', $line, $matches)) {
-                                                    $instructions[] = $matches[1];
-                                                } else if (!empty($instructions)) {
-                                                    $instructions[count($instructions) - 1] .= " " . $line;
-                                                }
-                                            }
-                                        @endphp
-
-                                        @if(!empty($tableRows) && !empty($transactions))
-
-                                            <div class="border-bottom pb-2 mb-4">
-                                                <h4 class="font-weight-bold text-dark mb-1" style="letter-spacing: 0.5px;">
-                                                    {{ $dynamicTitle }}
-                                                </h4>
-                                                <p class="text-secondary mb-0">Mata Ujian: {{ $exam->name }}</p>
-                                            </div>
-
-                                            <p class="text-dark mb-4" style="font-size: 1.05rem; line-height: 1.6;">
-                                                {{ $dynamicParagraph }}
-                                            </p>
-
-                                            <div class="table-responsive mb-4 shadow-sm rounded border">
-                                                <table class="table table-bordered table-hover mb-0" style="font-size: 1rem;">
-                                                    <thead class="bg-light text-dark font-weight-bold">
-                                                        <tr>
-                                                            <th style="width: 60%;" class="py-3 px-4">Nama Perkiraan / Akun</th>
-                                                            <th style="width: 40%;" class="py-3 px-4 text-left">Saldo Berjalan (Rp)</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach($tableRows as $row)
-                                                            <tr>
-                                                                <td class="py-2.5 px-4 text-secondary font-weight-normal">{{ $row['account'] }}</td>
-                                                                <td class="py-2.5 px-4 text-dark font-weight-bold text-left">{{ $row['balance'] }}</td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            <h6 class="font-weight-bold text-dark mb-3" style="font-size: 1.05rem;">Transaksi selama periode ini:</h6>
-                                            <ol class="text-dark pl-4 mb-5" style="font-size: 1rem; line-height: 1.85;">
-                                                @foreach($transactions as $tx)
-                                                    <li class="mb-2 pl-2 text-secondary font-weight-normal">
-                                                        <span class="text-dark">{{ $tx }}</span>
-                                                    </li>
-                                                @endforeach
-                                            </ol>
-
-                                            <div class="p-4 rounded border-success" style="background-color: #f4faf6; border: 1px solid #c3e6cb !important; border-left: 5px solid #28a745 !important;">
-                                                <h6 class="font-weight-bold text-success mb-3" style="font-size: 1.05rem;">
-                                                    <i class="fas fa-clipboard-list mr-2"></i>Tugas / Instruksi Kerja:
-                                                </h6>
-                                                <ol class="text-dark pl-4 mb-0" style="font-size: 0.95rem; line-height: 1.75;">
-                                                    @foreach($instructions as $inst)
-                                                        <li class="mb-2 text-success font-weight-bold">
-                                                            <span class="text-dark font-weight-normal">{{ $inst }}</span>
-                                                        </li>
-                                                    @endforeach
-                                                </ol>
-                                            </div>
-
-                                        @else
-                                            <div class="text-dark p-4 bg-light border rounded" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-line;">
-                                                {{ $fullText }}
-                                            </div>
-                                        @endif
-
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                                <div class="card-body p-4">
-                                    <!-- <div class="row align-items-center">
-                                        <div class="col-12 col-lg-7 text-center text-lg-left d-md-flex align-items-center mb-3 mb-lg-0">
-                                            <div class="text-primary mr-3 mb-2 mb-md-0">
-                                                <i class="fas fa-folder-open fa-3x"></i>
-                                            </div>
-                                            <div>
-                                                <h5 class="font-weight-bold mb-1 text-dark">Lembar Kerja Jawaban Peserta</h5>
-                                                <p class="small text-muted mb-0">Anda dapat mengunggah **lebih dari 1 file** (Excel, PDF, Word). File akan langsung tersimpan otomatis.</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-lg-5">
-                                            <div class="custom-file shadow-sm mb-2">
-                                                <input type="file" class="custom-file-input" id="answer-file-input" accept=".xlsx,.xls,.pdf,.doc,.docx" multiple>
-                                                <label class="custom-file-label text-left font-weight-normal" for="answer-file-input">Pilih satu atau beberapa file...</label>
-                                            </div>
-                                            <div id="upload-alert" class="alert small p-2 text-center mb-0" style="display: none; border-radius: 6px;"></div>
-                                        </div>
-                                    </div> -->
-
-                                    <div id="uploaded-files-box" class="mt-3 p-3 bg-light rounded border" style="display: none;">
-                                        <h6 class="small font-weight-bold text-secondary mb-2"><i class="fas fa-paperclip mr-1"></i> File Terunggah:</h6>
-                                        <div id="uploaded-files-list" class="d-flex flex-wrap" style="gap: 10px;"></div>
-                                    </div>
-                                </div>
-
-                                <div class="card border-0 shadow-sm mb-4 align-items-center" style="border-radius: 12px;">
-                                    <div class="card-body p-4">
-                                        <h5 class="font-weight-bold mb-3 text-dark">Tabel Jurnal</h5>
-                                        <p class="small text-muted mb-3">Isi tabel di bawah ini. Anda bisa klik kanan untuk menambah/menghapus baris.</p>
-                                        
-                                        <div id="jurnal-table" data-qnum="{{ $q->number }}"></div>
-
-                                        <input type="hidden" name="answers" id="answers">
-                                    </div>
-                                </div>                                
-                            </div>
-                        </div>
-
                     {{-- ========================================== --}}
-                    {{-- UI UNTUK SOAL CFIT) --}}
+                    {{-- UI UNTUK SOAL CFIT --}}
                     {{-- ========================================== --}}
                     @elseif($exam->type == 'cfit')
-                        @foreach($exam->questions as $q)
-
-                            @if(isset($instructionsData[(string)$q->number]))
-                                @php $inst = $instructionsData[(string)$q->number]; @endphp
-                                <tr>
-                                    <td colspan="3" class="p-3 border-0 bg-white">
-                                        <div class="card border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
-                                            <div class="card-body bg-light">
-                                                <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
-                                                @if($inst['type'] == 'image')
-                                                    <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
-                                                @else
-                                                    <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endif     
-
-                            <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
-                                <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
+                        <div class="p-4">
+                            @foreach($exam->questions as $q)
                                 
-                                {{-- Render Gambar CFIT yang sudah di-generate --}}
-                                @if($q->question_image)
-                                    <img src="{{ asset($q->question_image) }}" class="img-fluid mb-3 border rounded shadow-sm" alt="Soal CFIT">
+                                {{-- INSTRUKSI UNIVERSAL CFIT --}}
+                                @if(isset($instructionsData[(string)$q->number]))
+                                    @php $inst = $instructionsData[(string)$q->number]; @endphp
+                                    <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
+                                        <div class="card-body bg-light">
+                                            <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi / Contoh Pengerjaan</h5>
+                                            @if($inst['type'] == 'image')
+                                                <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
+                                            @else
+                                                <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 @endif
 
-                                {{-- Render Opsi Pilihan A, B, C, D... --}}
-                                <div class="row px-3">
-                                    @foreach($q->options as $key => $val)
-                                        <div class="col-4 col-md-2 mb-2">
-                                            <div class="form-check">
-                                                <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ strtoupper($key) }}" style="transform: scale(1.3);">
-                                                <label class="form-check-label ml-2 font-weight-bold" style="cursor: pointer; font-size: 1.1rem;">
-                                                    Pilihan {{ strtoupper($key) }}
-                                                </label>
+                                <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
+                                    <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
+                                    
+                                    @if($q->question_image)
+                                        <img src="{{ asset($q->question_image) }}" class="img-fluid mb-3 border rounded shadow-sm" alt="Soal CFIT">
+                                    @endif
+
+                                    <div class="row px-3">
+                                        @foreach($q->options as $key => $val)
+                                            <div class="col-4 col-md-2 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ strtoupper($key) }}" style="transform: scale(1.3);">
+                                                    <label class="form-check-label ml-2 font-weight-bold" style="cursor: pointer; font-size: 1.1rem;">
+                                                        Pilihan {{ strtoupper($key) }}
+                                                    </label>
+                                                </div>
                                             </div>
-                                        </div>
-                                    @endforeach
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
-                        @endforeach                    
+                            @endforeach  
+                        </div>                  
 
                     {{-- ========================================== --}}
                     {{-- UI UNTUK SOAL TABEL ANGKA (PENJUMLAHAN) --}}
@@ -396,33 +213,29 @@
                                 </div>
                             </div>
                             <div class="pembatas border-bottom"></div>
+                            
                             @foreach($exam->questions as $q)
                                 @php
                                     $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
                                     $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
                                     
-                                    // Parse table data jika ada
                                     $tableData = json_decode($q->question_text, true);
                                     $isStructuredTable = is_array($tableData) && isset($tableData['table']);
                                 @endphp
 
-    
+                                {{-- INSTRUKSI UNIVERSAL ANGKA --}}
                                 @if(isset($instructionsData[(string)$q->number]))
                                     @php $inst = $instructionsData[(string)$q->number]; @endphp
-                                    <tr>
-                                        <td colspan="3" class="p-3 border-0 bg-white">
-                                            <div class="card border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
-                                                <div class="card-body bg-light">
-                                                    <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
-                                                    @if($inst['type'] == 'image')
-                                                        <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
-                                                    @else
-                                                        <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
+                                        <div class="card-body bg-light">
+                                            <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
+                                            @if($inst['type'] == 'image')
+                                                <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
+                                            @else
+                                                <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 @endif
 
                                 <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
@@ -430,14 +243,12 @@
                                         <span class="badge badge-success mr-2">Soal {{ $q->number }}</span>
                                     </h5>
                                     
-                                    {{-- Tampilkan instruksi --}}
                                     @if($isStructuredTable && isset($tableData['question']))
                                         <div class="card border-0 bg-light mb-3 p-3" style="border-left: 3px solid #28a745;">
                                             <p class="mb-0 text-dark font-weight-bold">{{ $tableData['question'] }}</p>
                                         </div>
                                     @endif
                                     
-                                    {{-- Render Tabel Structured --}}
                                     @if($isStructuredTable && isset($tableData['table']['headers']) && isset($tableData['table']['rows']))
                                         <div class="table-responsive mb-3">
                                             <table class="table table-bordered table-sm text-center mb-4" style="background-color: #f8f9fa; font-size: 0.85rem;">
@@ -449,15 +260,11 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {{-- Data Rows (Menampilkan angka & Input Mendatar di Kolom Terakhir) --}}
                                                     @foreach($tableData['table']['rows'] as $rowIdx => $row)
                                                         <tr style="background-color: {{ $rowIdx % 2 == 0 ? '#ffffff' : '#f8f9fa' }};">
                                                             @foreach($row as $colIdx => $cellValue)
                                                                 <td class="py-2 px-1 align-middle" style="font-family: 'Courier New', monospace; font-weight: 500;">
-                                                                    
-                                                                    {{-- Cek apakah ini adalah kolom paling kanan (Kolom 9) --}}
                                                                     @if($colIdx == count($row) - 1)
-                                                                        {{-- Render Kotak Input untuk Penjumlahan Mendatar --}}
                                                                         <input type="text" 
                                                                             class="form-control form-control-sm table-number-cell" 
                                                                             name="answer_{{ $q->number }}_row_{{ $rowIdx }}" 
@@ -465,21 +272,16 @@
                                                                             style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #17a2b8; min-width: 120px;"
                                                                             data-question="{{ $q->number }}">
                                                                     @else
-                                                                        {{-- Render Angka Biasa --}}
                                                                         {{ $cellValue }}
                                                                     @endif
-
                                                                 </td>
                                                             @endforeach
                                                         </tr>
                                                     @endforeach
                                                     
-                                                    {{-- Empty Row untuk Input Jawaban Menurun (Di paling bawah) --}}
                                                     <tr style="background-color: #e3f2fd; border-top: 3px solid #28a745;">
                                                         @for($col = 0; $col < count($tableData['table']['headers']); $col++)
                                                             <td class="py-2 px-1 text-center align-middle">
-                                                                
-                                                                {{-- PERBAIKAN: Jika ini adalah kolom paling kanan, jangan render input! --}}
                                                                 @if($col == count($tableData['table']['headers']) - 1)
                                                                     <span class="text-muted" style="font-weight: bold;">-</span>
                                                                 @else
@@ -490,7 +292,6 @@
                                                                         style="font-size: 0.85rem; text-align: center; border-radius: 4px; font-weight: bold; border: 1px solid #28a745; min-width: 120px;"
                                                                         data-question="{{ $q->number }}">
                                                                 @endif
-
                                                             </td>
                                                         @endfor
                                                     </tr>
@@ -498,7 +299,6 @@
                                             </table>
                                         </div>
                                     @else
-                                        {{-- Fallback jika tidak ada structured table data --}}
                                         <div class="card border-0 bg-light mb-3 p-4" style="overflow-x: auto;">
                                             <pre class="mb-0 text-dark" style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">{{ $q->question_text }}</pre>
                                         </div>
@@ -524,36 +324,32 @@
                                         </div>
                                         <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                     </div>
-
                                     <p class="text-secondary mb-3">
                                         Bacalah setiap pertanyaan dengan <strong>seksama</strong>. Ketik jawaban Anda pada kolom yang tersedia di bawah setiap soal. Pastikan jawaban Anda <strong>lengkap dan jelas</strong>.
                                     </p>
                                 </div>
                             </div>
                             <div class="pembatas border-bottom"></div>
+                            
                             @foreach($exam->questions as $q)
                                 @php
                                     $userAnswer = $session->userAnswers->where('question_number', $q->number)->first();
                                     $answerText = $userAnswer ? ($userAnswer->answers['answer_text'] ?? '') : '';
                                 @endphp
 
-    
+                                {{-- INSTRUKSI UNIVERSAL URAIAN --}}
                                 @if(isset($instructionsData[(string)$q->number]))
                                     @php $inst = $instructionsData[(string)$q->number]; @endphp
-                                    <tr>
-                                        <td colspan="3" class="p-3 border-0 bg-white">
-                                            <div class="card border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
-                                                <div class="card-body bg-light">
-                                                    <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
-                                                    @if($inst['type'] == 'image')
-                                                        <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
-                                                    @else
-                                                        <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
+                                        <div class="card-body bg-light">
+                                            <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
+                                            @if($inst['type'] == 'image')
+                                                <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
+                                            @else
+                                                <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 @endif
 
                                 <div class="mb-5 pb-4 border-bottom question-block" data-qnum="{{ $q->number }}">
@@ -561,7 +357,6 @@
                                         <span class="badge badge-info mr-2">No. {{ $q->number }}</span>
                                     </h5>
                                     <div class="card border-0 bg-light mb-3 p-3">
-                                        {{-- TAMBAHKAN KODE INI UNTUK MUNCULIN GAMBAR TABEL KRAEPLIN SOAL 41 --}}
                                         @if($q->question_image)
                                             <img src="{{ $q->question_image }}" class="img-fluid d-block mb-3" style="max-width:100%; border:1px solid #dee2e6; border-radius:6px; background:#fff;">
                                         @endif
@@ -570,10 +365,8 @@
                                     <div class="form-group">
                                         <label class="font-weight-bold text-secondary mb-2">Jawaban Anda:</label>
                                         @if($exam->type == 'tes_kraeplin')
-                                            {{-- Kotak input 1 baris khusus angka untuk Kraeplin --}}
                                             <input type="text" class="form-control uraian-textarea" name="answer_{{ $q->number }}" placeholder="Ketik angka..." value="{{ $answerText }}" style="font-size: 1.1rem; border-radius: 6px; font-weight: bold; width: 100%; max-width: 300px;">
                                         @else
-                                            {{-- Kotak textarea besar untuk Uraian/Essay biasa --}}
                                             <textarea class="form-control uraian-textarea" name="answer_{{ $q->number }}" rows="4" placeholder="Ketik jawaban Anda di sini..." style="font-size: 0.95rem; border-radius: 6px;">{{ $answerText }}</textarea>
                                         @endif
                                     </div>
@@ -582,8 +375,16 @@
                         </div>
 
                     {{-- ========================================== --}}
-                    {{-- UI STANDAR UNTUK MBTI, VAK, EPPS, DLL (DARI DB) --}}
+                    {{-- UI STANDAR UNTUK MBTI, VAK, EPPS, DLL --}}
                     {{-- ========================================== --}}
+                    @elseif($exam->type == 'soal_kasus')
+                        {{-- KASUS LOGIC TETAP SAMA KARENA TIDAK ADA $q->number SPESIFIK YG PERLU INSTRUKSI IN-LINE --}}
+                        {{-- Kamu bisa menyisipkan manual jika diperlukan di bagian atas logic kasus --}}
+                        <div class="p-4 bg-light text-dark">
+                           <div class="card border-0 shadow-sm bg-white" style="border-radius: 12px; border-top: 6px solid #1a73e8 !important;">
+                                </div>
+                        </div>
+
                     @else
                         <div class="p-4">
                             <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
@@ -594,67 +395,47 @@
                                         </div>
                                         <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                     </div>
-
                                     <p class="text-secondary mb-3">
                                         Pada setiap nomor, Anda akan menemukan beberapa <strong>pilihan</strong>. Tugas Anda adalah memilih karakteristik yang <strong>Paling Mendekati</strong> diri Anda.
                                     </p>
                                 </div>
                             </div>
                             <div class="pembatas border-bottom "></div>
-                            <style>
-                                .pembatas {
-                                    margin: 2rem 0;
-                                }
-                            </style>
+                            
                             @foreach($exam->questions as $q)
                                 @php
                                     $hasImageOpts  = $q->has_image_options ?? false;
                                     $questionImage = $q->question_image ?? null;
                                 @endphp
 
-    
+                                {{-- INSTRUKSI UNIVERSAL PILIHAN GANDA --}}
                                 @if(isset($instructionsData[(string)$q->number]))
                                     @php $inst = $instructionsData[(string)$q->number]; @endphp
-                                    <tr>
-                                        <td colspan="3" class="p-3 border-0 bg-white">
-                                            <div class="card border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
-                                                <div class="card-body bg-light">
-                                                    <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
-                                                    @if($inst['type'] == 'image')
-                                                        <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
-                                                    @else
-                                                        <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #17a2b8;">
+                                        <div class="card-body bg-light">
+                                            <h5 class="font-weight-bold text-info"><i class="fas fa-info-circle mr-2"></i>Instruksi Tambahan</h5>
+                                            @if($inst['type'] == 'image')
+                                                <img src="{{ asset($inst['content']) }}" class="img-fluid rounded border shadow-sm my-2">
+                                            @else
+                                                <p class="mb-0 text-dark">{{ $inst['content'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 @endif
 
                                 <div class="mb-4 pb-3 border-bottom question-block" data-qnum="{{ $q->number }}">
                                     <h5 class="font-weight-bold mb-3">Soal No. {{ $q->number }}</h5>
-
                                     @if($hasImageOpts && $questionImage)
-                                        {{-- Soal Bergambar: 1 gambar utuh soal + pilihan A-E --}}
-                                        <img src="{{ $questionImage }}"
-                                            alt="Soal {{ $q->number }}"
-                                            class="img-fluid d-block mb-3"
-                                            style="max-width:100%; border:1px solid #e9ecef; border-radius:6px; background:#fff;">
+                                        <img src="{{ $questionImage }}" alt="Soal {{ $q->number }}" class="img-fluid d-block mb-3" style="max-width:100%; border:1px solid #e9ecef; border-radius:6px; background:#fff;">
                                         <div class="mt-2">
                                             @foreach(['A','B','C','D','E'] as $letter)
                                                 <div class="form-check mb-2">
-                                                    <input class="form-check-input std-radio" type="radio"
-                                                        name="answer_{{ $q->number }}"
-                                                        value="{{ $letter }}">
-                                                    <label class="form-check-label" style="cursor:pointer; font-weight:600;">
-                                                        {{ $letter }}
-                                                    </label>
+                                                    <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ $letter }}">
+                                                    <label class="form-check-label" style="cursor:pointer; font-weight:600;">{{ $letter }}</label>
                                                 </div>
                                             @endforeach
                                         </div>
-
                                     @else
-                                        {{-- Soal Teks biasa --}}
                                         <p>{!! $q->question_text !!}</p>
                                         @foreach($q->options as $key => $opt)
                                             @php
@@ -662,12 +443,8 @@
                                                 $text   = is_array($opt) ? ($opt['value'] ?? '') : $opt;
                                             @endphp
                                             <div class="form-check mb-2">
-                                                <input class="form-check-input std-radio" type="radio"
-                                                    name="answer_{{ $q->number }}"
-                                                    value="{{ $letter }}">
-                                                <label class="form-check-label" style="cursor:pointer;">
-                                                    {{ $letter }}. {{ $text }}
-                                                </label>
+                                                <input class="form-check-input std-radio" type="radio" name="answer_{{ $q->number }}" value="{{ $letter }}">
+                                                <label class="form-check-label" style="cursor:pointer;">{{ $letter }}. {{ $text }}</label>
                                             </div>
                                         @endforeach
                                     @endif
@@ -675,6 +452,7 @@
                             @endforeach
                         </div>
                     @endif
+
                     <div class="card-footer bg-white border-top pb-4 pt-4 text-center">
                         <button type="button" id="btn-submit-exam" class="btn btn-success btn-lg px-5 shadow-sm">
                             Selesaikan & Kumpulkan Ujian

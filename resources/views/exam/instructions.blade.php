@@ -18,48 +18,74 @@
                         <p class="text-muted mb-0 small">{{$exam->description}}</p>
                     </div>
 
-                    @if ($exam->type == 'pilgan')
-                        <div class="mb-4">
-                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <p class="font-weight-bold text-red-600 mb-0 medium">Pilih hanya 1 (satu ) jawaban yang paling mewakili diri anda dalam berperilaku</p>
-                        </div>
-                    @elseif($exam->type == 'tes_kraeplin')
-                        <div class="mb-4">
-                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <p class="font-weight-bold text-red-600 mb-0 medium">Pada soal yang akan kamu kerjakan ini, ada sejumlah soal menghitung sederhana yang dapat dilakukan setiap orang  
-dengan latar belakang pendidikan sekolah dasar. Anda diminta untuk mengerjakan dengan cepat
-dan tepat. Untuk itu Anda perlu memperhatikan bahwa Tanda Tambah (  +  ) mempunyai arti 
-pembagian (  :  ), Tanda Bagi (  :  ) mempunyai arti pengurangan (  -  ), Tanda Kurang (  -  ) 
-mempunyai arti perkalian (  x  ), dan Tanda Kali (  x  ) mempunyai arti penambahan (  +  ).
-Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian
-                            </p>
-                        </div>
-                    @elseif($exam->type == 'angka')
-                        <div class="mb-4">
-                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Anda akan diminta untuk menjumlahkan angka-angka yang tertera secara mendatar dan menurun.</p>
-                        </div>  
-                    @elseif($exam->type == 'uraian')
-                        <div class="mb-4">
-                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
-                        </div>  
-                    @elseif($exam->type == 'disc')
-                        <div class="mb-4">
-                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <ul class="font-weight-bold text-red-600 mb-0 medium">
-                                <li>Pilih	1	(satu)	huruf	yang	Paling	Mirip	kepribadian	Anda	dan	letakkan	jawabannya	di	kotak	"Mirip".</li>
-                                <li>Pilih	1	(satu)	huruf	yang	Paling	Tidak	Mirip	kepribadian	Anda	dan	letakkan	jawabannya	di	kotak	"Tidak	Mirip"</li>
-                                <li>Jadi,	di	setiap	kotak	hanya	akan	ada	1	Paling	Mirip	dan	1	Paling	Tidak	Mirip</li>
-                            </ul>
-                        </div>  
-                    @elseif($exam->type == 'soal_kasus')
-                        <div class="mb-4">
-                            <span class="badge badge-danger mb-2">CARA MENGISI</span>
-                            <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Telah kami sediakan soal kasus yang akan anda kerjakan, simak baik-baik soal tersebut dan jawablah pertanyaan atau perintah yang tertera.</p>
-                        </div>                 
-                    @endif
+                    {{-- AMBIL DATA INSTRUKSI DARI DATABASE --}}
+                    @php
+                        $instructionsData = json_decode($exam->instructions, true) ?? [];
+                        // Ambil instruksi dengan key "0" sebagai Halaman Depan
+                        $coverInstruction = $instructionsData["0"] ?? null;
+                    @endphp
 
+                    @if($coverInstruction)
+                        {{-- ========================================================= --}}
+                        {{-- 1. TAMPILAN DINAMIS (JIKA ADMIN SET INSTRUKSI NO. SOAL 0) --}}
+                        {{-- ========================================================= --}}
+                        <div class="mb-4 p-4 rounded" style="background-color: #fcf8e3; border-left: 5px solid #dc3545;">
+                            <span class="badge badge-danger mb-3 px-3 py-2" style="font-size: 0.85rem;">CARA MENGISI</span>
+                            
+                            @if($coverInstruction['type'] == 'image')
+                                <img src="{{ asset($coverInstruction['content']) }}" class="img-fluid rounded border shadow-sm">
+                            @else
+                                <p class="font-weight-bold text-dark mb-0" style="font-size: 1.05rem; white-space: pre-line;">
+                                    {{ $coverInstruction['content'] }}
+                                </p>
+                            @endif
+                        </div>
+
+                    @else
+                        {{-- ========================================================= --}}
+                        {{-- 2. TAMPILAN CADANGAN / HARDCODED (JIKA NO 0 TIDAK DISET)  --}}
+                        {{-- ========================================================= --}}
+                        @if ($exam->type == 'pilgan')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <p class="font-weight-bold text-red-600 mb-0 medium">Pilih hanya 1 (satu) jawaban yang paling mewakili diri anda dalam berperilaku</p>
+                            </div>
+                        @elseif($exam->type == 'tes_kraeplin')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <p class="font-weight-bold text-red-600 mb-0 medium">Pada soal yang akan kamu kerjakan ini, ada sejumlah soal menghitung sederhana yang dapat dilakukan setiap orang dengan latar belakang pendidikan sekolah dasar. Anda diminta untuk mengerjakan dengan cepat dan tepat. Untuk itu Anda perlu memperhatikan bahwa Tanda Tambah ( + ) mempunyai arti pembagian ( : ), Tanda Bagi ( : ) mempunyai arti pengurangan ( - ), Tanda Kurang ( - ) mempunyai arti perkalian ( x ), dan Tanda Kali ( x ) mempunyai arti penambahan ( + ). Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian.</p>
+                            </div>
+                        @elseif($exam->type == 'angka')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Anda akan diminta untuk menjumlahkan angka-angka yang tertera secara mendatar dan menurun.</p>
+                            </div>  
+                        @elseif($exam->type == 'uraian')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <p class="font-weight-bold text-red-600 mb-0 medium">Pilihlah opsi jawaban yang menurut anda paling benar di antara kumpulan opsi jawaban yang ada.</p>
+                            </div>  
+                        @elseif($exam->type == 'disc')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <ul class="font-weight-bold text-red-600 mb-0 medium">
+                                    <li>Pilih 1 (satu) huruf yang Paling Mirip kepribadian Anda dan letakkan jawabannya di kotak "Mirip".</li>
+                                    <li>Pilih 1 (satu) huruf yang Paling Tidak Mirip kepribadian Anda dan letakkan jawabannya di kotak "Tidak Mirip".</li>
+                                    <li>Jadi, di setiap kotak hanya akan ada 1 Paling Mirip dan 1 Paling Tidak Mirip.</li>
+                                </ul>
+                            </div>  
+                        @elseif($exam->type == 'soal_kasus')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <p class="font-weight-bold text-red-600 mb-0 medium">Siapkan kalkulator anda. Telah kami sediakan soal kasus yang akan anda kerjakan, simak baik-baik soal tersebut dan jawablah pertanyaan atau perintah yang tertera.</p>
+                            </div>           
+                        @elseif($exam->type == 'cfit')
+                            <div class="mb-4">
+                                <span class="badge badge-danger mb-2">CARA MENGISI</span>
+                                <p class="font-weight-bold text-red-600 mb-0 medium">Perhatikan cara mengerjakan di bawah ini:</p>
+                            </div>          
+                        @endif
+                    @endif
 
                     {{-- Participant Info Cards --}}
                     <!-- <div class="row mb-4">
@@ -94,10 +120,10 @@ Hasil pekerjaan Anda sangat tergantung pada kecepatan dan ketelitian
 
                     {{-- Submit --}}
                     <form method="POST" action="{{ route('exam.begin', $exam) }}"
-                          class="d-flex justify-content-end mt-4">
+                          class="d-flex justify-content-end mt-4 pt-3 border-top">
                         @csrf
-                        <button type="submit" class="btn btn-success btn-block-xs px-5">
-                            Mulai Ujian
+                        <button type="submit" class="btn btn-success btn-block-xs px-5 shadow-sm font-weight-bold">
+                            Mulai Ujian <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     </form>
 

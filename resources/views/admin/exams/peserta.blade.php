@@ -21,7 +21,12 @@
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white font-weight-bold d-flex justify-content-between align-items-center">
                     <span>Kelola Peserta Ujian: {{ $exam->name }}</span>
-                    <a href="{{ route('manage-exams.index') }}" class="btn btn-sm btn-outline-secondary">Kembali</a>
+                    <div>
+                        <a href="{{ route('manage-exams.edit-instructions', $exam) }}" class="btn btn-sm btn-info text-white mr-2">
+                            <i class="mr-1"></i> Kelola Instruksi
+                        </a>
+                        <a href="{{ route('manage-exams.index') }}" class="btn btn-sm btn-outline-secondary">Kembali</a>
+                    </div>
                 </div>
 
                 <div class="card-body">
