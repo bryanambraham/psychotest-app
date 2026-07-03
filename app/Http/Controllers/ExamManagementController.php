@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Exam;
 use Illuminate\Support\Facades\Http;
 use App\Services\ActivityLogger;
+use Illuminate\Support\Facades\Log;
 
 class ExamManagementController extends Controller
 {
@@ -56,6 +57,9 @@ class ExamManagementController extends Controller
                     file_get_contents($file),
                     $file->getClientOriginalName()
                 )->post('http://127.0.0.1:8001/extract-pdf');
+
+                // dd('Hasil Response: ', $response->json());
+
 
                 if ($response->successful()) {
                     $result    = $response->json();
@@ -129,6 +133,7 @@ class ExamManagementController extends Controller
                 }
 
             } catch (\Exception $e) {
+                // dd('Hasil Response: ', $e->getMessage());
                 return redirect()->back()->with('error', 'Gagal terhubung ke Python Service: ' . $e->getMessage());
             }
         }
