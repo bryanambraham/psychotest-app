@@ -5,10 +5,9 @@
     <div class="row justify-content-center">
         <div class="w-full overflow-x-auto">
             <div class="card mb-4 shadow-sm border-0">
-                <div class="card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem;">
+                <div class="fixed-top card-body d-flex justify-content-between align-items-center flex-wrap bg-white rounded" style="gap: 0.5rem; z-index: 1030;">
                     <div>
                         <h4 class="mb-0 font-weight-bold exam-title">{{ $exam->name }}</h4>
-                        <!-- <span class="badge badge-info">{{ strtoupper($exam->type) }}</span> -->
                     </div>
                     <div class="text-danger font-weight-bold timer-display">
                         <span id="timer-display">Memuat...</span>
