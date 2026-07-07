@@ -29,18 +29,25 @@
                     {{-- UI KHUSUS UNTUK UJIAN DISC (DARI DB)       --}}
                     {{-- ========================================== --}}
                     @if($exam->type == 'disc')
-                        <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
+                        <div class="card instruksi-fixed-box border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
                             <div class="card-body bg-light">
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
-                                        <i class="fas fa-info-circle"></i>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                     </div>
-                                    <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan DISC</h5>
+                                    <button type="button" class="btn btn-sm btn-light border instruksi-toggle-btn" title="Sembunyikan/tampilkan instruksi">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
                                 </div>
 
+                                <div class="instruksi-fixed-content">
                                 <p class="text-secondary mb-3">
-                                    Pada setiap nomor, Anda akan menemukan 4 pernyataan. Tugas Anda adalah memilih karakteristik yang <strong>Paling Mendekati</strong> dan <strong>Paling Tidak Mendekati</strong> diri Anda.
+                                    {{ $exam->description }}
                                 </p>
+                                </div>
 
                                 <div class="row">
                                     <div class="col-12 col-md-6 mb-2">
@@ -380,18 +387,25 @@
                     {{-- ========================================== --}}
                     @elseif($exam->type == 'angka')
                         <div class="p-4">
-                            <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #28a745 !important;">
+                            <div class="card instruksi-fixed-box border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #28a745 !important;">
                                 <div class="card-body bg-light">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-calculator"></i>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-calculator"></i>
+                                            </div>
+                                            <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                         </div>
-                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
+                                        <button type="button" class="btn btn-sm btn-light border instruksi-toggle-btn" title="Sembunyikan/tampilkan instruksi">
+                                            <i class="fas fa-chevron-up"></i>
+                                        </button>
                                     </div>
 
+                                    <div class="instruksi-fixed-content">
                                     <p class="text-secondary mb-3">
-                                        Perhatikan tabel angka di bawah dengan <strong>seksama</strong>. Hitung jumlah angka sesuai instruksi yang diberikan. Tulis jawaban numerik Anda pada kolom yang tersedia.
+                                        {{ $exam->description }}
                                     </p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="pembatas border-bottom"></div>
@@ -515,18 +529,25 @@
                     {{-- =============================================== --}}
                     @elseif($exam->type == 'uraian' || $exam->type == 'tes_kraeplin')
                         <div class="p-4">
-                            <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #17a2b8 !important;">
+                            <div class="card instruksi-fixed-box border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #17a2b8 !important;">
                                 <div class="card-body bg-light">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-file-alt"></i>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-file-alt"></i>
+                                            </div>
+                                            <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                         </div>
-                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
+                                        <button type="button" class="btn btn-sm btn-light border instruksi-toggle-btn" title="Sembunyikan/tampilkan instruksi">
+                                            <i class="fas fa-chevron-up"></i>
+                                        </button>
                                     </div>
 
+                                    <div class="instruksi-fixed-content">
                                     <p class="text-secondary mb-3">
-                                        Bacalah setiap pertanyaan dengan <strong>seksama</strong>. Ketik jawaban Anda pada kolom yang tersedia di bawah setiap soal. Pastikan jawaban Anda <strong>lengkap dan jelas</strong>.
+                                        <strong>{{ $exam->description }}</strong>
                                     </p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="pembatas border-bottom"></div>
@@ -585,18 +606,25 @@
                     {{-- ========================================== --}}
                     @else
                         <div class="p-4">
-                            <div class="card border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
+                            <div class="card instruksi-fixed-box border-0 shadow-sm m-3 overflow-hidden" style="border-left: 5px solid #ffc107 !important;">
                                 <div class="card-body bg-light">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-info-circle"></i>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-info-circle"></i>
+                                            </div>
+                                            <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                         </div>
-                                        <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
+                                        <button type="button" class="btn btn-sm btn-light border instruksi-toggle-btn" title="Sembunyikan/tampilkan instruksi">
+                                            <i class="fas fa-chevron-up"></i>
+                                        </button>
                                     </div>
 
+                                    <div class="instruksi-fixed-content">
                                     <p class="text-secondary mb-3">
-                                        Pada setiap nomor, Anda akan menemukan beberapa <strong>pilihan</strong>. Tugas Anda adalah memilih karakteristik yang <strong>Paling Mendekati</strong> diri Anda.
+                                        <strong>{{ $exam->description }}</strong>
                                     </p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="pembatas border-bottom "></div>
@@ -1345,5 +1373,105 @@
 
 /* Camera status badge wrap */
 #camera-status { word-break: break-word; max-width: 90vw; display: inline-block; }
+
+/* Cegah kolom konten menyusut/mengecil ke tengah setelah kartu instruksi
+   dikeluarkan dari alur normal (position: fixed). Tanpa ini, .row (flex)
+   akan menyusutkan lebar kolom mengikuti elemen tersempit yang tersisa. */
+.row.justify-content-center > .w-full.overflow-x-auto {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+/* ===== INSTRUKSI PENGERJAAN: FIXED (SELALU KELIHATAN SEPERTI TIMER) ===== */
+.instruksi-fixed-box {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0; /* akan di-set ulang oleh JS, mengikuti tinggi bar timer */
+    z-index: 1025; /* di bawah timer (1030) */
+    margin: 0 !important;
+    border-radius: 0 !important;
+    max-height: 40vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.instruksi-fixed-box .card-body {
+    padding: 0.85rem 1rem;
+}
+.instruksi-fixed-box.instruksi-collapsed .instruksi-fixed-content {
+    display: none;
+}
+.instruksi-fixed-box .instruksi-toggle-btn i {
+    transition: transform 0.2s ease;
+}
+.instruksi-fixed-box.instruksi-collapsed .instruksi-toggle-btn i {
+    transform: rotate(180deg);
+}
+@media (max-width: 575.98px) {
+    .instruksi-fixed-box { max-height: 45vh; }
+    .instruksi-fixed-box h5 { font-size: 0.95rem; }
+    .instruksi-fixed-box small,
+    .instruksi-fixed-box p { font-size: 0.85rem; }
+}
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var headerBar = document.querySelector('.fixed-top.card-body');
+    var instruksiBox = document.querySelector('.instruksi-fixed-box');
+    var toggleBtn = instruksiBox ? instruksiBox.querySelector('.instruksi-toggle-btn') : null;
+
+    if (!instruksiBox) return;
+
+    var spacer = document.createElement('div');
+    spacer.id = 'instruksi-fixed-spacer';
+    instruksiBox.parentNode.insertBefore(spacer, instruksiBox.nextSibling);
+
+    // Throttle lewat requestAnimationFrame supaya baca/tulis layout
+    // cuma terjadi maksimal sekali per frame (hindari reflow bertubi-tubi).
+    var scheduled = false;
+    function reposition() {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () {
+            var headerHeight = headerBar ? headerBar.offsetHeight : 0;
+            instruksiBox.style.top = headerHeight + 'px';
+            spacer.style.height = (headerHeight + instruksiBox.offsetHeight) + 'px';
+            scheduled = false;
+        });
+    }
+
+    reposition();
+
+    // ResizeObserver cuma memanggil callback saat UKURAN elemen ini benar-benar
+    // berubah (mis. layar diputar, atau isi instruksi berubah karena gambar
+    // selesai dimuat). Ini jauh lebih ringan dibanding event 'resize' bawaan
+    // browser, yang di HP juga ikut nyala tiap address bar muncul/hilang saat
+    // scroll — itulah yang bikin lag sebelumnya.
+    if (typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(reposition);
+        if (headerBar) ro.observe(headerBar);
+        ro.observe(instruksiBox);
+    } else {
+        // Fallback untuk browser lama: hanya proses kalau lebar viewport
+        // beneran berubah, bukan setiap event resize ditembakkan.
+        var lastWidth = window.innerWidth;
+        window.addEventListener('resize', function () {
+            if (window.innerWidth !== lastWidth) {
+                lastWidth = window.innerWidth;
+                reposition();
+            }
+        });
+    }
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+            instruksiBox.classList.toggle('instruksi-collapsed');
+            reposition();
+        });
+    }
+});
+</script>
 @endsection
