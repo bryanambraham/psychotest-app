@@ -34,7 +34,7 @@
                                     <option value="cfit">Soal CFIT</option>
                                     <option value="tes_kraeplin">Soal Kraeplin</option>
                                     <option value="angka">Soal Angka</option>
-                                    <!-- <option value="uraian">Soal Uraian</option> -->
+                                    <option value="uraian">Soal Uraian</option>
                                     <!-- <option value="mbti">MBTI</option>
                                     <option value="epps">EPPS</option>
                                     <option value="big_five">Big Five</option> -->

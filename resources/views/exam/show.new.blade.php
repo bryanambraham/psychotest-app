@@ -35,7 +35,7 @@
                                     <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
                                         <i class="fas fa-info-circle"></i>
                                     </div>
-                                    <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan DISC</h5>
+                                    <h5 class="mb-0 font-weight-bold text-dark">Instruksi Pengerjaan</h5>
                                 </div>
 
                                 <p class="text-secondary mb-3">

@@ -251,9 +251,21 @@
                                                         </td>
                                                         <td class="align-middle">
                                                             @if($answerText)
-                                                                <div class="p-2 bg-light rounded" style="border-left: 3px solid #17a2b8; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto; font-size: 0.9rem;">
-                                                                    {{ $answerText }}
-                                                                </div>
+                                                                {{-- LOGIKA BARU: Cek apakah jawaban berupa gambar (Base64 dari Canvas) --}}
+                                                                @if(strpos($answerText, 'data:image') === 0)
+                                                                    <div class="p-2 border rounded bg-white shadow-sm text-center">
+                                                                        {{-- Render sebagai tag img --}}
+                                                                        <img src="{{ $answerText }}" alt="Skema Jawaban" class="img-fluid rounded" style="max-height: 250px; object-fit: contain; cursor: zoom-in;" onclick="window.open(this.src, '_blank')">
+                                                                        <div class="small text-muted mt-2">
+                                                                            <i class="fas fa-search-plus mr-1"></i> Klik untuk memperbesar gambar
+                                                                        </div>
+                                                                    </div>
+                                                                @else
+                                                                    {{-- Jika bukan gambar, tampilkan sebagai teks biasa --}}
+                                                                    <div class="p-2 bg-light rounded" style="border-left: 3px solid #17a2b8; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto; font-size: 0.9rem;">
+                                                                        {{ $answerText }}
+                                                                    </div>
+                                                                @endif
                                                             @else
                                                                 <span class="badge badge-secondary">❌ Tidak ada jawaban</span>
                                                             @endif

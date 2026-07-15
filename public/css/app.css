@@ -8337,6 +8337,15 @@ button.bg-dark:focus {
   z-index: 1030;
 }
 
+.sticky-instruction {
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 80px; /* Sesuaikan dengan tinggi header sticky-mu */
+    z-index: 1020;
+    background: white;
+    margin-top: 10px;
+}
+
 .fixed-bottom {
   position: fixed;
   right: 0;

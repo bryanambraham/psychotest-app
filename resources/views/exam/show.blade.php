@@ -580,23 +580,70 @@
                                     <h5 class="font-weight-bold mb-3 text-dark">
                                         <span class="badge badge-info mr-2">No. {{ $q->number }}</span>
                                     </h5>
+                                    
                                     <div class="card border-0 bg-light mb-3 p-3">
-                                        {{-- TAMBAHKAN KODE INI UNTUK MUNCULIN GAMBAR TABEL KRAEPLIN SOAL 41 --}}
                                         @if($q->question_image)
                                             <img src="{{ $q->question_image }}" class="img-fluid d-block mb-3" style="max-width:100%; border:1px solid #dee2e6; border-radius:6px; background:#fff;">
                                         @endif
                                         <p class="mb-0 text-dark" style="line-height: 1.6; white-space: pre-line;">{{ $q->question_text }}</p>
                                     </div>
-                                    <div class="form-group">
-                                        <label class="font-weight-bold text-secondary mb-2">Jawaban Anda:</label>
-                                        @if($exam->type == 'tes_kraeplin')
-                                            {{-- Kotak input 1 baris khusus angka untuk Kraeplin --}}
-                                            <input type="text" class="form-control uraian-textarea" name="answer_{{ $q->number }}" placeholder="Ketik angka..." value="{{ $answerText }}" style="font-size: 1.1rem; border-radius: 6px; font-weight: bold; width: 100%; max-width: 300px;">
-                                        @else
-                                            {{-- Kotak textarea besar untuk Uraian/Essay biasa --}}
-                                            <textarea class="form-control uraian-textarea" name="answer_{{ $q->number }}" rows="4" placeholder="Ketik jawaban Anda di sini..." style="font-size: 0.95rem; border-radius: 6px;">{{ $answerText }}</textarea>
-                                        @endif
-                                    </div>
+
+                                    {{-- LOGIKA BARU: CEK OTOMATIS DARI TEKS SOAL --}}
+                                    @php
+                                        $isDrawing = (stripos($q->question_text, 'gambarkan') !== false) || 
+                                                     (stripos($q->question_text, 'gambar') !== false) || 
+                                                     (stripos($q->question_text, 'skema') !== false);
+                                    @endphp
+
+                                    @if($isDrawing)
+                                        <div class="form-group">
+                                            <label class="font-weight-bold text-secondary mb-2">Buat Skema / Gambar Anda:</label>
+                                            <div class="drawing-container border rounded bg-light mb-3 shadow-sm overflow-hidden">
+                                                
+                                                {{-- TOOLBAR ALA MS PAINT --}}
+                                                <div class="paint-toolbar bg-white border-bottom p-2 d-flex flex-wrap align-items-center" style="gap: 8px;">
+                                                    
+                                                    {{-- Tools --}}
+                                                    <button type="button" class="btn btn-sm btn-dark paint-tool-btn" data-tool="draw" onclick="setTool({{ $q->number }}, 'draw', this)">✏️ Pen</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-dark paint-tool-btn" data-tool="line" onclick="setTool({{ $q->number }}, 'line', this)">📏 Garis</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-dark paint-tool-btn" data-tool="rect" onclick="setTool({{ $q->number }}, 'rect', this)">⬜ Kotak</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-dark paint-tool-btn" data-tool="circle" onclick="setTool({{ $q->number }}, 'circle', this)">⭕ Lingkaran</button>
+
+                                                    <button type="button" class="btn btn-sm btn-outline-dark paint-tool-btn" data-tool="text" onclick="setTool({{ $q->number }}, 'text', this)">🅰️ Teks</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-dark paint-tool-btn" data-tool="eraser" onclick="setTool({{ $q->number }}, 'eraser', this)">🧽 Hapus</button>
+
+                                                    <div class="border-left mx-1" style="height: 24px;"></div>
+
+                                                    {{-- Pengaturan Warna & Ketebalan --}}
+                                                    <input type="color" id="color_{{ $q->number }}" value="#000000" onchange="updateBrush({{ $q->number }})" class="p-0 border-0" style="width: 30px; height: 30px; cursor: pointer;" title="Pilih Warna">
+                                                    
+                                                    <input type="range" id="size_{{ $q->number }}" min="1" max="15" value="3" onchange="updateBrush({{ $q->number }})" style="width: 80px; cursor: pointer;" title="Ketebalan Garis">
+
+                                                    <div class="border-left mx-1" style="height: 24px;"></div>
+
+                                                    {{-- Hapus Semua --}}
+                                                    <button type="button" class="btn btn-sm btn-danger ml-auto" onclick="clearCanvas({{ $q->number }})">❌ Bersihkan</button>
+                                                </div>
+
+                                                {{-- Area Kanvas --}}
+                                                <div style="background-color: #ffffff; cursor: crosshair;">
+                                                    <canvas id="canvas_{{ $q->number }}" width="800" height="400" style="width:100%; touch-action: none;"></canvas>
+                                                </div>
+                                            </div>
+                                            
+                                            <input type="hidden" name="answer_{{ $q->number }}" id="drawing_input_{{ $q->number }}" value="{{ $answerText }}">
+                                        </div>
+                                    @else
+                                        {{-- TAMPILKAN INPUT TEKS/KRAEPLIN SEPERTI BIASA --}}
+                                        <div class="form-group">
+                                            <label class="font-weight-bold text-secondary mb-2">Jawaban Anda:</label>
+                                            @if($exam->type == 'tes_kraeplin')
+                                                <input type="text" class="form-control uraian-textarea" name="answer_{{ $q->number }}" value="{{ $answerText }}" style="font-size: 1.1rem; border-radius: 6px; font-weight: bold; width: 100%; max-width: 300px;">
+                                            @else
+                                                <textarea class="form-control uraian-textarea" name="answer_{{ $q->number }}" rows="4">{{ $answerText }}</textarea>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -732,8 +779,9 @@
         // ==========================================
         // 1. FUNGSI AJAX REUSABLE (Simpan Jawaban)
         // ==========================================
-        function saveAnswerAjax(qNum, jsonAnswer) {
-            // PERBAIKAN: Gunakan helper url() agar path folder otomatis terdeteksi di server
+        // PERBAIKAN: Jadikan global (window) agar bisa dipanggil dari script Canvas Paint
+        window.saveAnswerAjax = function(qNum, jsonAnswer) {
+            // Gunakan helper url() agar path folder otomatis terdeteksi di server
             fetch("{{ url('/exam/answer') }}", {
                 method: 'POST',
                 headers: {
@@ -747,12 +795,11 @@
                     answers: jsonAnswer
                 })
             }).catch(err => console.error("Gagal menyimpan", err));
-        }
+        };
 
         // ==========================================
         // 2. LOGIKA UI & VALIDASI: UJIAN DISC & STANDAR
         // ==========================================
-        // (Logika DISC & Standar tetap sama seperti kode kamu sebelumnya)
         const discRadios = document.querySelectorAll('.disc-radio');
         discRadios.forEach(radio => {
             radio.addEventListener('change', function() {
@@ -771,7 +818,7 @@
                 });
                 let mostVal = document.querySelector(`input[name="most_${qNum}"]:checked`)?.value || null;
                 let leastVal = document.querySelector(`input[name="least_${qNum}"]:checked`)?.value || null;
-                saveAnswerAjax(qNum, { most: mostVal, least: leastVal });
+                window.saveAnswerAjax(qNum, { most: mostVal, least: leastVal });
             });
         });
 
@@ -780,7 +827,7 @@
             radio.addEventListener('change', function() {
                 let qNum = this.closest('.question-block').dataset.qnum;
                 let val = this.value;
-                saveAnswerAjax(qNum, { selected: val });
+                window.saveAnswerAjax(qNum, { selected: val });
             });
         });
 
@@ -790,7 +837,7 @@
             textarea.addEventListener('input', function() {
                 let qNum = this.closest('.question-block').dataset.qnum;
                 let val = this.value;
-                saveAnswerAjax(qNum, { answer_text: val });
+                window.saveAnswerAjax(qNum, { answer_text: val });
             });
         });
 
@@ -800,7 +847,7 @@
             input.addEventListener('input', function() {
                 let qNum = this.closest('.question-block').dataset.qnum;
                 let val = this.value;
-                saveAnswerAjax(qNum, { answer_text: val });
+                window.saveAnswerAjax(qNum, { answer_text: val });
             });
         });
 
@@ -810,11 +857,8 @@
             cell.addEventListener('input', function() {
 
                 // === FITUR BARU: Auto Format Ribuan (Titik) ===
-                // 1. Hapus semua karakter selain angka (mencegah user mengetik huruf)
                 let angkaSaja = this.value.replace(/\D/g, '');
-                // 2. Tambahkan titik setiap kelipatan 3 digit
                 let formatTitik = angkaSaja.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                // 3. Kembalikan nilai yang sudah diformat ke dalam input kotak
                 this.value = formatTitik;
                 // ==============================================
 
@@ -823,18 +867,17 @@
                 
                 let cells = block.querySelectorAll('.table-number-cell');
                 let allValues = [];
-                let detailsObj = {}; // Wadah baru untuk menyimpan posisi baris/kolom
+                let detailsObj = {};
                 
                 cells.forEach(c => {
                     let val = c.value.trim();
                     if(val !== '') {
                         allValues.push(val);
                         
-                        // Ekstrak nama input (contoh: answer_1_row_0 atau answer_1_col_2)
                         let nameParts = c.name.split('_');
                         if(nameParts.length >= 4) {
-                            let type = nameParts[2]; // 'row' atau 'col'
-                            let index = parseInt(nameParts[3]) + 1; // +1 agar visualnya mulai dari 1, bukan 0
+                            let type = nameParts[2];
+                            let index = parseInt(nameParts[3]) + 1; 
                             
                             let label = type === 'row' ? `Mendatar (Baris ${index})` : `Menurun (Kolom ${index})`;
                             detailsObj[label] = val;
@@ -844,16 +887,15 @@
                 
                 let combinedValue = allValues.join(', ');
                 
-                // Update input final fallback (jika masih ada)
                 let finalInput = block.querySelector('.table-number-input');
                 if (finalInput) {
                     finalInput.value = combinedValue;
                 }
                 
-                // SIMPAN KE DB DENGAN FORMAT STRUKTUR JSON YANG BARU
-                saveAnswerAjax(qNum, { 
+                // SIMPAN KE DB
+                window.saveAnswerAjax(qNum, { 
                     answer_text: combinedValue,
-                    details: detailsObj // Kirim detail posisi ke server
+                    details: detailsObj
                 });
             });
         });
@@ -864,24 +906,20 @@
         let remainingSeconds = {{ $remainingSeconds }};
         const timerDisplay = document.getElementById('timer-display');
 
-        // Simpan interval ke dalam variabel agar bisa dihentikan (clear)
         const timerInterval = setInterval(updateTimer, 1000);
 
         function updateTimer() {
             if (remainingSeconds <= 0) {
-                // 1. Hentikan Timer
                 clearInterval(timerInterval);
                 timerDisplay.innerHTML = "WAKTU HABIS!";
 
-                // 2. Notifikasi Ke Peserta (Pakai SweetAlert2)
                 Swal.fire({
                     title: 'Waktu Habis!',
                     text: 'Sistem akan mengumpulkan jawaban Anda secara otomatis.',
                     icon: 'warning',
-                    timer: 2500, // Tampil 2.5 detik
+                    timer: 2500,
                     showConfirmButton: false,
                     willClose: () => {
-                        // 3. Jalankan fungsi finish
                         finishExam();
                     }
                 });
@@ -908,11 +946,7 @@
                 cameraStatus.innerHTML = "🟢 Kamera aktif (Ujian diawasi)";
                 cameraStatus.classList.replace('badge-secondary', 'badge-success');
 
-                // JEPRETAN PERTAMA: Langsung ambil foto saat masuk (Detik ke-0)
-                // Memberi delay 1 detik agar kamera sudah benar-benar terbuka
                 setTimeout(takeSnapshotAndSend, 1000);
-
-                // Mulai siklus acak setelah jepretan pertama
                 scheduleNextSnapshot();
             })
             .catch(function(err) {
@@ -937,8 +971,6 @@
         }
 
         function scheduleNextSnapshot() {
-            // INTERVAL DIPERPENDEK: Antara 1 menit (60rb) sampai 5 menit (300rb)
-            // Agar ujian durasi pendek tetap ter-capture beberapa kali
             let timeout = Math.floor(Math.random() * (300000 - 60000 + 1)) + 60000;
             setTimeout(() => {
                 takeSnapshotAndSend();
@@ -946,171 +978,157 @@
             }, timeout);
         }
 
-
         const isKasus = "{{ $exam->type }}" === 'soal_kasus';
-            let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
+        let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
 
-            if (isKasus) {
-                const fileInput = document.getElementById('answer-file-input');
-                const uploadAlert = document.getElementById('upload-alert');
-                const filesBox = document.getElementById('uploaded-files-box');
-                const filesList = document.getElementById('uploaded-files-list');
-                const fileLabel = document.querySelector('.custom-file-label');
+        if (isKasus) {
+            const fileInput = document.getElementById('answer-file-input');
+            const uploadAlert = document.getElementById('upload-alert');
+            const filesBox = document.getElementById('uploaded-files-box');
+            const filesList = document.getElementById('uploaded-files-list');
+            const fileLabel = document.querySelector('.custom-file-label');
 
-                // 1. FUNGSI UNTUK MERENDER BADGE FILE + TOMBOL CANCEL
-                function renderFileList(files) {
-                    // TAMBAHKAN BARIS INI: Cegah error jika elemen HTML sedang di-comment
-                    if (!filesBox || !fileLabel || !filesList || !uploadAlert || !fileInput) return;
+            function renderFileList(files) {
+                if (!filesBox || !fileLabel || !filesList || !uploadAlert || !fileInput) return;
 
-                    if (!files || files.length === 0) {
-                        filesBox.style.display = 'none';
-                        fileLabel.innerHTML = "Pilih satu atau beberapa file...";
-                        return;
-                    }
-                    
-                    filesBox.style.display = 'block';
-                    filesList.innerHTML = '';
-
-                    files.forEach(file => {
-                        filesList.innerHTML += `
-                            <div class="badge badge-white border text-dark p-2 shadow-sm d-flex align-items-center rounded" style="font-size: 0.85rem; gap: 10px;">
-                                <span>📄</span>
-                                <span class="font-weight-normal">${file.name}</span>
-
-                                <button type="button" class="btn-delete-file" data-path="${file.path}"
-                                        style="border: none; background: none; color: #dc3545; font-size: 1.2rem; line-height: 1; padding: 0 0 2px 0; margin-left: 5px; cursor: pointer; font-weight: bold;"
-                                        title="Batalkan file ini">
-                                    &times;
-                                </button>
-                            </div>
-                        `;
-                    });
-
-                    // Daftarkan kembali event klik hapus untuk tombol baru
-                    attachDeleteEvents();
+                if (!files || files.length === 0) {
+                    filesBox.style.display = 'none';
+                    fileLabel.innerHTML = "Pilih satu atau beberapa file...";
+                    return;
                 }
+                
+                filesBox.style.display = 'block';
+                filesList.innerHTML = '';
 
-                // 2. FUNGSI AJAX UNTUK MENGHAPUS/CANCEL FILE
-                function attachDeleteEvents() {
-                    const deleteButtons = document.querySelectorAll('.btn-delete-file');
-                    deleteButtons.forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const filePath = this.dataset.path;
+                files.forEach(file => {
+                    filesList.innerHTML += `
+                        <div class="badge badge-white border text-dark p-2 shadow-sm d-flex align-items-center rounded" style="font-size: 0.85rem; gap: 10px;">
+                            <span>📄</span>
+                            <span class="font-weight-normal">${file.name}</span>
+                            <button type="button" class="btn-delete-file" data-path="${file.path}"
+                                    style="border: none; background: none; color: #dc3545; font-size: 1.2rem; line-height: 1; padding: 0 0 2px 0; margin-left: 5px; cursor: pointer; font-weight: bold;"
+                                    title="Batalkan file ini">
+                                &times;
+                            </button>
+                        </div>
+                    `;
+                });
 
-                            Swal.fire({
-                                title: 'Batalkan file ini?',
-                                text: "File akan dihapus dari server lembar jawaban Anda.",
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#d33',
-                                cancelButtonColor: '#6c757d',
-                                confirmButtonText: 'Ya, Hapus!',
-                                cancelButtonText: 'Batal'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    let formData = new FormData();
-                                    formData.append('exam_session_id', examSessionId);
-                                    formData.append('file_path', filePath);
-
-                                    fetch("{{ route('exam.delete-file') }}", {
-                                        method: 'POST',
-                                        headers: { 'X-CSRF-TOKEN': csrfToken },
-                                        body: formData
-                                    })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        if (data.status === 'success') {
-                                            // Ganti array global dengan sisa file dari server
-                                            uploadedFilesArray = data.files;
-                                            renderFileList(uploadedFilesArray);
-
-                                            if(uploadedFilesArray.length > 0) {
-                                                fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
-                                            }
-
-                                            Swal.fire('Dibatalkan!', 'File berhasil dihapus.', 'success');
-                                        } else {
-                                            Swal.fire('Gagal!', data.message, 'error');
-                                        }
-                                    })
-                                    .catch(err => console.error("Gagal menghapus berkas:", err));
-                                }
-                            });
-                        });
-                    });
-                }
-
-                // Render pertama kali saat halaman dibuka
-                renderFileList(uploadedFilesArray);
-
-                if(fileInput){
-                    // 3. LOGIKA UPLOAD (Sudah Diperbaiki Sistem Error Handling & Header)
-                    fileInput.addEventListener('change', function() {
-                        if (this.files.length === 0) return;
-
-                        let formData = new FormData();
-                        formData.append('exam_session_id', examSessionId);
-                        for (let i = 0; i < this.files.length; i++) {
-                            formData.append('answer_files[]', this.files[i]);
-                        }
-
-                        uploadAlert.style.display = 'block';
-                        uploadAlert.className = 'alert alert-info small p-2';
-                        uploadAlert.innerHTML = '⏳ Sedang mengunggah berkas...';
-
-                        fetch("{{ route('exam.upload-file') }}", {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': csrfToken,
-                                'Accept': 'application/json' // WAKIB: Biar Laravel return JSON kalau error, bukan redirect HTML
-                            },
-                            body: formData
-                        })
-                        .then(async res => {
-                            // Jika server merespon dengan status error (422, 500, dll)
-                            if (!res.ok) {
-                                const errorData = await res.json();
-                                throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
-                            }
-                            return res.json();
-                        })
-                        .then(data => {
-                            if (data.status === 'success') {
-                                uploadAlert.className = 'alert alert-success small p-2';
-                                uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
-                                uploadedFilesArray = data.files;
-                                renderFileList(uploadedFilesArray);
-                                fileLabel.innerHTML = `${data.files.length} file terpilih...`;
-                            } else {
-                                uploadAlert.className = 'alert alert-danger small p-2';
-                                uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
-                            }
-                        })
-                        .catch(err => {
-                            // Tangkap error di sini agar alert tidak stuck loading terus
-                            uploadAlert.className = 'alert alert-danger small p-2';
-                            uploadAlert.innerHTML = '❌ ' + err.message;
-                            console.error(err);
-                        });
-                    });
-                }
+                attachDeleteEvents();
             }
+
+            function attachDeleteEvents() {
+                const deleteButtons = document.querySelectorAll('.btn-delete-file');
+                deleteButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const filePath = this.dataset.path;
+
+                        Swal.fire({
+                            title: 'Batalkan file ini?',
+                            text: "File akan dihapus dari server lembar jawaban Anda.",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, Hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                let formData = new FormData();
+                                formData.append('exam_session_id', examSessionId);
+                                formData.append('file_path', filePath);
+
+                                fetch("{{ route('exam.delete-file') }}", {
+                                    method: 'POST',
+                                    headers: { 'X-CSRF-TOKEN': csrfToken },
+                                    body: formData
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        uploadedFilesArray = data.files;
+                                        renderFileList(uploadedFilesArray);
+
+                                        if(uploadedFilesArray.length > 0) {
+                                            fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
+                                        }
+
+                                        Swal.fire('Dibatalkan!', 'File berhasil dihapus.', 'success');
+                                    } else {
+                                        Swal.fire('Gagal!', data.message, 'error');
+                                    }
+                                })
+                                .catch(err => console.error("Gagal menghapus berkas:", err));
+                            }
+                        });
+                    });
+                });
+            }
+
+            renderFileList(uploadedFilesArray);
+
+            if(fileInput){
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length === 0) return;
+
+                    let formData = new FormData();
+                    formData.append('exam_session_id', examSessionId);
+                    for (let i = 0; i < this.files.length; i++) {
+                        formData.append('answer_files[]', this.files[i]);
+                    }
+
+                    uploadAlert.style.display = 'block';
+                    uploadAlert.className = 'alert alert-info small p-2';
+                    uploadAlert.innerHTML = '⏳ Sedang mengunggah berkas...';
+
+                    fetch("{{ route('exam.upload-file') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json' 
+                        },
+                        body: formData
+                    })
+                    .then(async res => {
+                        if (!res.ok) {
+                            const errorData = await res.json();
+                            throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            uploadAlert.className = 'alert alert-success small p-2';
+                            uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
+                            uploadedFilesArray = data.files;
+                            renderFileList(uploadedFilesArray);
+                            fileLabel.innerHTML = `${data.files.length} file terpilih...`;
+                        } else {
+                            uploadAlert.className = 'alert alert-danger small p-2';
+                            uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
+                        }
+                    })
+                    .catch(err => {
+                        uploadAlert.className = 'alert alert-danger small p-2';
+                        uploadAlert.innerHTML = '❌ ' + err.message;
+                        console.error(err);
+                    });
+                });
+            }
+        }
 
         // ==========================================
         // 5. LOGIKA VALIDASI & SUBMIT
         // ==========================================
         const btnSubmit = document.getElementById('btn-submit-exam');
 
-        // Fungsi untuk mengecek apakah semua soal sudah terisi
         function checkCompletion() {
             if (isKasus) {
                 let hasFile = uploadedFilesArray && uploadedFilesArray.length > 0;
                 let hasTableData = false;
 
-                // Cek apakah tabel Jspreadsheet ada isinya
                 if (typeof tableInstance !== 'undefined') {
                     let tableData = tableInstance.getData();
-                    // Cek semua baris dan kolom, jika ada 1 saja yang tidak kosong, berarti sudah diisi
                     for (let i = 0; i < tableData.length; i++) {
                         for (let j = 0; j < tableData[i].length; j++) {
                             if (tableData[i][j] !== null && tableData[i][j] !== '') {
@@ -1122,7 +1140,6 @@
                     }
                 }
 
-                // Jika tidak ada file DAN tabel Jurnal kosong, lempar error khusus
                 if (!hasFile && !hasTableData) {
                     return ['kasus_kosong'];
                 }
@@ -1134,14 +1151,12 @@
             let isuraian = "{{ $exam->type }}" === 'uraian' || "{{ $exam->type }}" === 'tes_kraeplin';
             let isTableNumber = "{{ $exam->type }}" === 'angka';
 
-            // Ambil semua nomor soal unik yang ada di halaman
             let questionNumbers = [...new Set(Array.from(document.querySelectorAll('.question-block')).map(el => el.dataset.qnum))];
 
             questionNumbers.forEach(qNum => {
                 let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
 
                 if (isDisc) {
-                    // Untuk DISC: Cek apakah Most DAN Least sudah dipilih
                     let mostSelected = document.querySelector(`input[name="most_${qNum}"]:checked`);
                     let leastSelected = document.querySelector(`input[name="least_${qNum}"]:checked`);
 
@@ -1150,10 +1165,7 @@
                     }
                 } 
                 else if (isTableNumber) {
-                    // LOGIKA BARU KHUSUS TABEL ANGKA
-                    // Cek semua kotak kecil di dalam tabel
                     let cells = block.querySelectorAll('.table-number-cell');
-                    // Cek apakah minimal ada 1 kotak yang sudah diisi angka oleh peserta
                     let hasAnswer = Array.from(cells).some(c => c.value.trim() !== '');
                     
                     if (!hasAnswer) {
@@ -1161,14 +1173,17 @@
                     }
                 } 
                 else if (isuraian) {
-                    // Cek elemen berdasarkan attribut name, tidak peduli dia input atau textarea
                     let inputEl = document.querySelector(`[name="answer_${qNum}"]`);
-                    if (!inputEl || !inputEl.value.trim()) {
+                    // Bypass validasi khusus untuk soal tipe drawing (karena input hiddennya tersimpan via JS)
+                    let isDrawingCanvas = block.querySelector(`canvas[id="canvas_${qNum}"]`);
+                    
+                    if (!isDrawingCanvas && (!inputEl || !inputEl.value.trim())) {
                         unanswered.push(qNum);
+                    } else if (isDrawingCanvas && (!inputEl || inputEl.value === '')) {
+                         unanswered.push(qNum);
                     }
                 }
                 else {
-                    // Untuk Standar (MBTI/VAK): Cek apakah radio button sudah dipilih
                     let selected = document.querySelector(`input[name="answer_${qNum}"]:checked`);
                     if (!selected) {
                         unanswered.push(qNum);
@@ -1179,19 +1194,13 @@
             return unanswered;
         }
 
-        // ==========================================
-        // FUNGSI: Pilih opsi gambar (klik gambar)
-        // ==========================================
         window.selectImageOption = function(imgEl, qNum, letter) {
-            // Reset semua gambar di soal ini
             document.querySelectorAll(`[data-qnum="${qNum}"] .img-option`).forEach(img => {
                 img.style.borderColor = '#dee2e6';
                 img.style.boxShadow = 'none';
             });
-            // Highlight gambar yang dipilih
             imgEl.style.borderColor = '#28a745';
             imgEl.style.boxShadow = '0 0 0 3px rgba(40,167,69,0.25)';
-            // Set radio button tersembunyi & trigger save
             let radio = document.getElementById(`opt_${qNum}_${letter}`);
             if (radio) {
                 radio.checked = true;
@@ -1200,19 +1209,15 @@
         };
 
         btnSubmit.addEventListener('click', function() {
-            // 1. Jalankan Validasi
             let missingAnswers = checkCompletion();
 
             if (missingAnswers.length > 0) {
-                // Atur pesan teks default untuk soal biasa
                 let warningText = `Anda belum menjawab soal nomor: ${missingAnswers.join(', ')}. Silakan lengkapi semua jawaban sebelum mengumpulkan.`;
 
-                // Jika errornya berasal dari Soal Kasus (file kosong & tabel kosong)
                 if (isKasus && missingAnswers[0] === 'kasus_kosong') {
                     warningText = "Anda belum mengisi Tabel Jurnal Umum atau mengunggah file lembar jawaban. Silakan lengkapi salah satunya sebelum mengumpulkan.";
                 }
 
-                // Tampilkan peringatan dan batalkan submit
                 Swal.fire({
                     title: 'Belum Lengkap!',
                     text: warningText,
@@ -1220,10 +1225,9 @@
                     confirmButtonColor: '#d33',
                     confirmButtonText: 'Oke, Saya Lengkapi'
                 });
-                return; // Berhenti di sini
+                return; 
             }
 
-            // 2. Jika sudah lengkap, tampilkan konfirmasi yakin/tidak
             Swal.fire({
                 title: 'Kumpulkan Ujian?',
                 text: "Anda telah menjawab semua soal. Yakin ingin mengumpulkan sekarang?",
@@ -1240,10 +1244,7 @@
             });
         });
 
-        // Fungsi ini dipanggil oleh Tombol (setelah validasi)
-        // ATAU dipanggil langsung oleh Timer (tanpa validasi)
         function finishExam() {
-            // Tampilkan loading agar user tidak klik berkali-kali
             Swal.fire({
                 title: 'Memproses...',
                 text: 'Mohon tunggu sebentar',
@@ -1251,11 +1252,9 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // Ambil foto terakhir
             takeSnapshotAndSend();
 
             setTimeout(() => {
-                // Trik jitu: Render URL dasar dari PHP, lalu ganti teks 'PLACEHOLDER' dengan variable JavaScript
                 let url = "{{ route('exam.finish', ['session_id' => 'PLACEHOLDER']) }}";
                 window.location.href = url.replace('PLACEHOLDER', examSessionId);
             }, 500);
@@ -1285,29 +1284,22 @@
                 allowInsertRow: true,
                 allowManualInsertRow: true,
                 allowDeleteRow: true,
-                
-                // UBAH BAGIAN INI MENJADI TRUE AGAR BISA DITAMBAH/DIHAPUS
                 allowInsertColumn: true, 
                 allowManualInsertColumn: true,
                 allowDeleteColumn: true,
-                
                 wordWrap: true,
                 
-                // EVENT ONCHANGE: Terpanggil setiap sel diedit atau baris ditambah/dihapus
                 onchange: function(instance, cell, x, y, value) {
-                    // Ambil seluruh data tabel bentuk Array
                     let tableData = tableInstance.getData();
-                    
-                    // Simpan ke database secara otomatis lewat AJAX
-                    saveAnswerAjax(qNum, tableData);
+                    window.saveAnswerAjax(qNum, tableData);
                 },
                 oninsertrow: function() {
                     let tableData = tableInstance.getData();
-                    saveAnswerAjax(qNum, tableData);
+                    window.saveAnswerAjax(qNum, tableData);
                 },
                 ondeleterow: function() {
                     let tableData = tableInstance.getData();
-                    saveAnswerAjax(qNum, tableData);
+                    window.saveAnswerAjax(qNum, tableData);
                 }
             });
         }
@@ -1418,60 +1410,505 @@
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    var headerBar = document.querySelector('.fixed-top.card-body');
-    var instruksiBox = document.querySelector('.instruksi-fixed-box');
-    var toggleBtn = instruksiBox ? instruksiBox.querySelector('.instruksi-toggle-btn') : null;
+    window.canvases = {};
+    window.canvasStates = {};
 
-    if (!instruksiBox) return;
+    document.addEventListener("DOMContentLoaded", function() {
 
-    var spacer = document.createElement('div');
-    spacer.id = 'instruksi-fixed-spacer';
-    instruksiBox.parentNode.insertBefore(spacer, instruksiBox.nextSibling);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        const examSessionId = {{ $session->id }};
 
-    // Throttle lewat requestAnimationFrame supaya baca/tulis layout
-    // cuma terjadi maksimal sekali per frame (hindari reflow bertubi-tubi).
-    var scheduled = false;
-    function reposition() {
-        if (scheduled) return;
-        scheduled = true;
-        requestAnimationFrame(function () {
-            var headerHeight = headerBar ? headerBar.offsetHeight : 0;
-            instruksiBox.style.top = headerHeight + 'px';
-            spacer.style.height = (headerHeight + instruksiBox.offsetHeight) + 'px';
-            scheduled = false;
+        // ==========================================
+        // 1. FUNGSI AJAX REUSABLE (Simpan Jawaban)
+        // ==========================================
+        window.saveAnswerAjax = function(qNum, jsonAnswer) {
+            fetch("{{ url('/exam/answer') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    exam_session_id: examSessionId,
+                    question_number: qNum,
+                    answers: jsonAnswer
+                })
+            }).catch(err => console.error("Gagal menyimpan", err));
+        };
+
+        // ==========================================
+        // 2. LOGIKA UI & VALIDASI STANDAR
+        // ==========================================
+        const discRadios = document.querySelectorAll('.disc-radio');
+        discRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                let block = this.closest('.question-block');
+                let qNum = block.dataset.qnum;
+                let type = this.dataset.type;
+                let val = this.value;
+                let oppositeType = (type === 'most') ? 'least' : 'most';
+                let oppositeRadios = document.querySelectorAll(`input[name="${oppositeType}_${qNum}"]`);
+                oppositeRadios.forEach(el => {
+                    el.disabled = false;
+                    if (el.value === val) {
+                        el.disabled = true;
+                        if (el.checked) el.checked = false;
+                    }
+                });
+                let mostVal = document.querySelector(`input[name="most_${qNum}"]:checked`)?.value || null;
+                let leastVal = document.querySelector(`input[name="least_${qNum}"]:checked`)?.value || null;
+                window.saveAnswerAjax(qNum, { most: mostVal, least: leastVal });
+            });
         });
-    }
 
-    reposition();
+        const stdRadios = document.querySelectorAll('.std-radio');
+        stdRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                let qNum = this.closest('.question-block').dataset.qnum;
+                window.saveAnswerAjax(qNum, { selected: this.value });
+            });
+        });
 
-    // ResizeObserver cuma memanggil callback saat UKURAN elemen ini benar-benar
-    // berubah (mis. layar diputar, atau isi instruksi berubah karena gambar
-    // selesai dimuat). Ini jauh lebih ringan dibanding event 'resize' bawaan
-    // browser, yang di HP juga ikut nyala tiap address bar muncul/hilang saat
-    // scroll — itulah yang bikin lag sebelumnya.
-    if (typeof ResizeObserver !== 'undefined') {
-        var ro = new ResizeObserver(reposition);
-        if (headerBar) ro.observe(headerBar);
-        ro.observe(instruksiBox);
-    } else {
-        // Fallback untuk browser lama: hanya proses kalau lebar viewport
-        // beneran berubah, bukan setiap event resize ditembakkan.
-        var lastWidth = window.innerWidth;
-        window.addEventListener('resize', function () {
-            if (window.innerWidth !== lastWidth) {
-                lastWidth = window.innerWidth;
-                reposition();
+        const uraianTextareas = document.querySelectorAll('.uraian-textarea, .table-number-input');
+        uraianTextareas.forEach(input => {
+            input.addEventListener('input', function() {
+                let qNum = this.closest('.question-block').dataset.qnum;
+                window.saveAnswerAjax(qNum, { answer_text: this.value });
+            });
+        });
+
+        const tableNumberCells = document.querySelectorAll('.table-number-cell');
+        tableNumberCells.forEach(cell => {
+            cell.addEventListener('input', function() {
+                let angkaSaja = this.value.replace(/\D/g, '');
+                let formatTitik = angkaSaja.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                this.value = formatTitik;
+
+                let qNum = this.dataset.question;
+                let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
+                
+                let cells = block.querySelectorAll('.table-number-cell');
+                let allValues = [];
+                let detailsObj = {};
+                
+                cells.forEach(c => {
+                    let val = c.value.trim();
+                    if(val !== '') {
+                        allValues.push(val);
+                        let nameParts = c.name.split('_');
+                        if(nameParts.length >= 4) {
+                            let type = nameParts[2];
+                            let index = parseInt(nameParts[3]) + 1; 
+                            let label = type === 'row' ? `Mendatar (Baris ${index})` : `Menurun (Kolom ${index})`;
+                            detailsObj[label] = val;
+                        }
+                    }
+                });
+                
+                let combinedValue = allValues.join(', ');
+                let finalInput = block.querySelector('.table-number-input');
+                if (finalInput) finalInput.value = combinedValue;
+                
+                window.saveAnswerAjax(qNum, { answer_text: combinedValue, details: detailsObj });
+            });
+        });
+
+        // ==========================================
+        // 3. LOGIKA TIMER & PROCTORING
+        // ==========================================
+        let remainingSeconds = {{ $remainingSeconds }};
+        const timerDisplay = document.getElementById('timer-display');
+        const timerInterval = setInterval(updateTimer, 1000);
+
+        function updateTimer() {
+            if (remainingSeconds <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.innerHTML = "WAKTU HABIS!";
+                Swal.fire({
+                    title: 'Waktu Habis!',
+                    text: 'Sistem akan mengumpulkan jawaban Anda otomatis.',
+                    icon: 'warning',
+                    timer: 2500,
+                    showConfirmButton: false,
+                    willClose: () => { finishExam(); }
+                });
+                return;
             }
-        });
-    }
+            let m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
+            let s = (remainingSeconds % 60).toString().padStart(2, '0');
+            timerDisplay.innerHTML = m + ":" + s;
+            remainingSeconds--;
+        }
+        updateTimer();
 
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function () {
-            instruksiBox.classList.toggle('instruksi-collapsed');
-            reposition();
+        // --- Proctoring Camera ---
+        const video = document.getElementById('webcam-video');
+        const canvasSnap = document.getElementById('snapshot-canvas');
+        const cameraStatus = document.getElementById('camera-status');
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(function(stream) {
+                video.srcObject = stream;
+                cameraStatus.innerHTML = "🟢 Kamera aktif (Ujian diawasi)";
+                cameraStatus.classList.replace('badge-secondary', 'badge-success');
+                setTimeout(takeSnapshotAndSend, 1000);
+                scheduleNextSnapshot();
+            }).catch(function() {
+                cameraStatus.innerHTML = "❌ Akses Kamera Ditolak!";
+                cameraStatus.classList.replace('badge-secondary', 'badge-danger');
+            });
+
+        function takeSnapshotAndSend() {
+            if(!video.srcObject) return;
+            canvasSnap.width = 640; canvasSnap.height = 480;
+            canvasSnap.getContext('2d').drawImage(video, 0, 0, canvasSnap.width, canvasSnap.height);
+            let base64Image = canvasSnap.toDataURL('image/jpeg', 0.6);
+            fetch("{{ url('/proctoring/snap') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({ exam_session_id: examSessionId, image: base64Image })
+            });
+        }
+        function scheduleNextSnapshot() {
+            let timeout = Math.floor(Math.random() * (300000 - 60000 + 1)) + 60000;
+            setTimeout(() => { takeSnapshotAndSend(); scheduleNextSnapshot(); }, timeout);
+        }
+
+        // ==========================================
+        // 4. LOGIKA KASUS AKUNTANSI (UPLOAD & JURNAL)
+        // ==========================================
+        const isKasus = "{{ $exam->type }}" === 'soal_kasus';
+        let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
+
+        if (isKasus) {
+            const fileInput = document.getElementById('answer-file-input');
+            const uploadAlert = document.getElementById('upload-alert');
+            const filesBox = document.getElementById('uploaded-files-box');
+            const filesList = document.getElementById('uploaded-files-list');
+            const fileLabel = document.querySelector('.custom-file-label');
+
+            function renderFileList(files) {
+                if (!filesBox) return;
+                if (!files || files.length === 0) {
+                    filesBox.style.display = 'none';
+                    if(fileLabel) fileLabel.innerHTML = "Pilih satu atau beberapa file...";
+                    return;
+                }
+                filesBox.style.display = 'block';
+                filesList.innerHTML = '';
+                files.forEach(file => {
+                    filesList.innerHTML += `
+                        <div class="badge badge-white border text-dark p-2 shadow-sm d-flex align-items-center rounded" style="font-size: 0.85rem; gap: 10px;">
+                            <span>📄</span>
+                            <span class="font-weight-normal">${file.name}</span>
+                            <button type="button" class="btn-delete-file" data-path="${file.path}" style="border:none;background:none;color:#dc3545;font-size:1.2rem;line-height:1;margin-left:5px;cursor:pointer;font-weight:bold;">&times;</button>
+                        </div>`;
+                });
+                attachDeleteEvents();
+            }
+
+            function attachDeleteEvents() {
+                document.querySelectorAll('.btn-delete-file').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const filePath = this.dataset.path;
+                        Swal.fire({
+                            title: 'Batalkan file ini?', text: "File akan dihapus.", icon: 'warning', showCancelButton: true,
+                            confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Hapus!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                let formData = new FormData();
+                                formData.append('exam_session_id', examSessionId);
+                                formData.append('file_path', filePath);
+                                fetch("{{ route('exam.delete-file') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken }, body: formData })
+                                .then(res => res.json()).then(data => {
+                                    if (data.status === 'success') {
+                                        uploadedFilesArray = data.files; renderFileList(uploadedFilesArray);
+                                        if(uploadedFilesArray.length > 0) fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+            }
+            renderFileList(uploadedFilesArray);
+
+            if(fileInput){
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length === 0) return;
+                    let formData = new FormData();
+                    formData.append('exam_session_id', examSessionId);
+                    for (let i = 0; i < this.files.length; i++) formData.append('answer_files[]', this.files[i]);
+                    
+                    uploadAlert.style.display = 'block'; uploadAlert.className = 'alert alert-info small p-2'; uploadAlert.innerHTML = '⏳ Sedang mengunggah...';
+                    
+                    fetch("{{ route('exam.upload-file') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }, body: formData })
+                    .then(async res => {
+                        if (!res.ok) { const err = await res.json(); throw new Error(err.message); }
+                        return res.json();
+                    }).then(data => {
+                        if (data.status === 'success') {
+                            uploadAlert.className = 'alert alert-success small p-2'; uploadAlert.innerHTML = '🟢 Berhasil!';
+                            uploadedFilesArray = data.files; renderFileList(uploadedFilesArray);
+                            fileLabel.innerHTML = `${data.files.length} file terpilih...`;
+                        } else {
+                            uploadAlert.className = 'alert alert-danger small p-2'; uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
+                        }
+                    }).catch(err => {
+                        uploadAlert.className = 'alert alert-danger small p-2'; uploadAlert.innerHTML = '❌ ' + err.message;
+                    });
+                });
+            }
+
+            const jurnalContainer = document.getElementById('jurnal-table');
+            if (jurnalContainer) {
+                let qNum = jurnalContainer.dataset.qnum;
+                var tableInstance = jspreadsheet(jurnalContainer, {
+                    data: [['', '', '', '', ''], ['', '', '', '', '']],
+                    columns: [
+                        { type: 'calendar', title: 'Tanggal', width: 120, options: { format: 'DD/MM/YYYY' } },
+                        { type: 'text', title: 'Keterangan', width: 250 },
+                        { type: 'text', title: 'Ref', width: 80 },
+                        { type: 'text', title: 'Debit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
+                        { type: 'text', title: 'Kredit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
+                    ],
+                    minDimensions: [5, 5],
+                    allowInsertRow: true, allowManualInsertRow: true, allowDeleteRow: true,
+                    allowInsertColumn: true, allowManualInsertColumn: true, allowDeleteColumn: true, wordWrap: true,
+                    onchange: function() { window.saveAnswerAjax(qNum, tableInstance.getData()); },
+                    oninsertrow: function() { window.saveAnswerAjax(qNum, tableInstance.getData()); },
+                    ondeleterow: function() { window.saveAnswerAjax(qNum, tableInstance.getData()); }
+                });
+            }
+        }
+
+        // ==========================================
+        // 5. PENYELESAIAN (FINISH EXAM)
+        // ==========================================
+        document.getElementById('btn-submit-exam').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Kumpulkan Ujian?',
+                text: "Yakin ingin mengumpulkan sekarang?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Kumpulkan!'
+            }).then((result) => {
+                if (result.isConfirmed) finishExam();
+            });
         });
-    }
-});
+
+        function finishExam() {
+            Swal.fire({ title: 'Memproses...', text: 'Tunggu sebentar', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+            takeSnapshotAndSend();
+            setTimeout(() => {
+                let url = "{{ route('exam.finish', ['session_id' => 'PLACEHOLDER']) }}";
+                window.location.href = url.replace('PLACEHOLDER', examSessionId);
+            }, 500);
+        }
+
+        // ==========================================
+        // 6. LOGIKA CANVAS PAINT (FIXED & TEXT TOOL)
+        // ==========================================
+        document.querySelectorAll('canvas[id^="canvas_"]').forEach(canvasEl => {
+            let qNum = canvasEl.id.split('_')[1];
+
+            // Cegah init dobel (kalau script ini kejalan lagi, elemen canvas bisa
+            // "dibungkus" fabric dua kali dan bikin layer lower/upper-canvas tumpuk,
+            // ini salah satu penyebab utama coretan/teks kelihatan hilang)
+            if (canvasEl.dataset.fabricInitialized === '1') return;
+            canvasEl.dataset.fabricInitialized = '1';
+
+            let canvas = new fabric.Canvas(canvasEl.id, { 
+                isDrawingMode: true,
+                selection: false,
+                renderOnAddRemove: true,
+                enableRetinaScaling: false // hindari mismatch resolusi antara CSS width:100% vs atribut width/height
+            });
+            
+            // Pengaturan Pen (BUG DECIMATION DIHAPUS)
+            canvas.freeDrawingBrush.width = 3;
+            canvas.freeDrawingBrush.color = '#000000';
+            
+            window.canvases[qNum] = canvas;
+            window.canvasStates[qNum] = { tool: 'draw', isDragging: false, shape: null, startX: 0, startY: 0 };
+
+            canvas.on('mouse:down', function(o){
+                let state = window.canvasStates[qNum];
+                if(state.tool === 'draw' || state.tool === 'eraser') return; // Biarkan Fabric coret-coret sendiri
+
+                let pointer = canvas.getPointer(o.e);
+                state.startX = pointer.x;
+                state.startY = pointer.y;
+                
+                let color = document.getElementById('color_' + qNum).value;
+                let size = parseInt(document.getElementById('size_' + qNum).value);
+
+                // --- LOGIKA ALAT TEKS BARU ---
+                if(state.tool === 'text') {
+                    Swal.fire({
+                        title: 'Masukkan Teks',
+                        input: 'text',
+                        inputPlaceholder: 'Ketik tulisan di sini...',
+                        showCancelButton: true,
+                        confirmButtonText: 'Tempelkan',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            let textObj = new fabric.Text(result.value, {
+                                left: state.startX,
+                                top: state.startY,
+                                fill: color,
+                                fontSize: 16 + (size * 2), // Teks bisa membesar kalau slider ditarik
+                                selectable: false
+                            });
+                            canvas.add(textObj);
+                            canvas.requestRenderAll(); // Paksa redraw, jangan andalkan auto-render saja
+                            window.updateDrawingInput(qNum); // Langsung Simpan
+                        }
+                    });
+                    return; // Hentikan script di sini, jangan lanjut gambar kotak
+                }
+                // ------------------------------
+
+                state.isDragging = true;
+
+                if(state.tool === 'rect'){
+                    state.shape = new fabric.Rect({ left: state.startX, top: state.startY, width: 0, height: 0, fill: 'transparent', stroke: color, strokeWidth: size, selectable: false });
+                    canvas.add(state.shape);
+                } else if(state.tool === 'circle'){
+                    state.shape = new fabric.Circle({ left: state.startX, top: state.startY, radius: 0, fill: 'transparent', stroke: color, strokeWidth: size, selectable: false });
+                    canvas.add(state.shape);
+                } else if(state.tool === 'line'){
+                    state.shape = new fabric.Line([state.startX, state.startY, state.startX, state.startY], { stroke: color, strokeWidth: size, selectable: false });
+                    canvas.add(state.shape);
+                }
+                canvas.requestRenderAll();
+            });
+
+            canvas.on('mouse:move', function(o){
+                let state = window.canvasStates[qNum];
+                if(!state.isDragging) return;
+                
+                let pointer = canvas.getPointer(o.e);
+                
+                if(state.tool === 'rect'){
+                    state.shape.set({ width: Math.abs(pointer.x - state.startX), height: Math.abs(pointer.y - state.startY) });
+                    state.shape.set({ left: Math.min(pointer.x, state.startX), top: Math.min(pointer.y, state.startY) });
+                } else if(state.tool === 'circle'){
+                    let radius = Math.max(Math.abs(pointer.x - state.startX), Math.abs(pointer.y - state.startY)) / 2;
+                    state.shape.set({ radius: radius });
+                    state.shape.set({ left: Math.min(pointer.x, state.startX), top: Math.min(pointer.y, state.startY) });
+                } else if(state.tool === 'line'){
+                    state.shape.set({ x2: pointer.x, y2: pointer.y });
+                }
+                canvas.renderAll();
+            });
+
+            canvas.on('mouse:up', function(o){
+                let state = window.canvasStates[qNum];
+                if (state.isDragging) {
+                    state.isDragging = false;
+                    canvas.requestRenderAll();
+                    window.updateDrawingInput(qNum); // Simpan
+                }
+            });
+
+            // Pengaman agar mouse tidak error kalau keluar kotak
+            canvas.on('mouse:out', function(o){
+                let state = window.canvasStates[qNum];
+                if (state.isDragging) {
+                    state.isDragging = false;
+                    canvas.requestRenderAll();
+                    window.updateDrawingInput(qNum);
+                }
+            });
+
+            // Simpan setiap selesai free-drawing (pen/eraser).
+            // path:created memberi objek path-nya langsung lewat e.path, jadi kita
+            // pastikan dia benar-benar ada di canvas.getObjects() dan dipaksa render
+            // sebelum disimpan sebagai gambar. Ini mengatasi kasus garis kelihatan
+            // hilang begitu mouse dilepas.
+            canvas.on('path:created', function(e){
+                if (e && e.path && canvas.getObjects().indexOf(e.path) === -1) {
+                    canvas.add(e.path);
+                }
+                canvas.requestRenderAll();
+                window.updateDrawingInput(qNum);
+            });
+
+            // Kalau posisi canvas berubah (scroll panjang, resize, atau layout
+            // bergeser karena gambar/instruksi baru selesai load), offset pointer
+            // fabric jadi basi dan bikin gambar terlihat "hilang"/salah posisi.
+            window.addEventListener('resize', () => canvas.calcOffset());
+            window.addEventListener('scroll', () => canvas.calcOffset(), { passive: true });
+        });
+    });
+
+    // ==========================================
+    // FUNGSI PENDUKUNG PAINT (GLOBAL WINDOW)
+    // ==========================================
+    window.updateDrawingInput = function(qNum) {
+        if (!window.canvases[qNum]) return;
+        window.canvases[qNum].renderAll(); // pastikan frame terbaru sebelum di-export
+        let dataURL = window.canvases[qNum].toDataURL({ format: 'png', quality: 0.8 });
+        let inputEl = document.getElementById('drawing_input_' + qNum);
+        if (inputEl) inputEl.value = dataURL;
+
+        if(typeof window.saveAnswerAjax === 'function') {
+            window.saveAnswerAjax(qNum, { answer_text: dataURL });
+        }
+    };
+
+    window.setTool = function(qNum, tool, btnEl) {
+        qNum = String(qNum);
+        if (!window.canvasStates[qNum] || !window.canvases[qNum]) return;
+
+        window.canvasStates[qNum].tool = tool;
+        let canvas = window.canvases[qNum];
+        
+        let container = btnEl.closest('.paint-toolbar');
+        container.querySelectorAll('.paint-tool-btn').forEach(b => {
+            b.classList.remove('btn-dark');
+            b.classList.add('btn-outline-dark');
+        });
+        btnEl.classList.remove('btn-outline-dark');
+        btnEl.classList.add('btn-dark');
+
+        if (tool === 'draw' || tool === 'eraser') {
+            canvas.isDrawingMode = true;
+            window.updateBrush(qNum);
+        } else {
+            canvas.isDrawingMode = false; // Matikan free-drawing untuk Kotak, Garis, dan Teks
+        }
+    };
+
+    window.updateBrush = function(qNum) {
+        qNum = String(qNum);
+        if (!window.canvasStates[qNum] || !window.canvases[qNum]) return;
+
+        let canvas = window.canvases[qNum];
+        let color = document.getElementById('color_' + qNum).value;
+        let size = parseInt(document.getElementById('size_' + qNum).value);
+        let tool = window.canvasStates[qNum].tool;
+
+        if(tool === 'eraser') {
+            canvas.freeDrawingBrush.color = '#ffffff';
+            canvas.freeDrawingBrush.width = size * 3;
+        } else {
+            canvas.freeDrawingBrush.color = color;
+            canvas.freeDrawingBrush.width = size;
+        }
+    };
+
+    window.clearCanvas = function(qNum) {
+        qNum = String(qNum);
+        if (!window.canvases[qNum]) return;
+        window.canvases[qNum].clear();
+        window.canvases[qNum].backgroundColor = "#ffffff";
+        window.updateDrawingInput(qNum);
+    };
 </script>
 @endsection
