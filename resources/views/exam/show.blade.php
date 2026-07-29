@@ -17,6 +17,7 @@
 
             <div class="card shadow-sm border-0">
                 <div class="card-body p-0">
+                    <div id="fixed-content-spacer"></div>
 
                     {{-- ========================================== --}}
                     {{-- DECODE DATA INSTRUKSI (1 KALI UNTUK SEMUA) --}}
@@ -771,17 +772,19 @@
 
 @section('scripts')
 <script>
+    window.canvases = {};
+    window.canvasStates = {};
+
     document.addEventListener("DOMContentLoaded", function() {
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         const examSessionId = {{ $session->id }};
+        const examType = "{{ $exam->type }}";
 
         // ==========================================
         // 1. FUNGSI AJAX REUSABLE (Simpan Jawaban)
         // ==========================================
-        // PERBAIKAN: Jadikan global (window) agar bisa dipanggil dari script Canvas Paint
         window.saveAnswerAjax = function(qNum, jsonAnswer) {
-            // Gunakan helper url() agar path folder otomatis terdeteksi di server
             fetch("{{ url('/exam/answer') }}", {
                 method: 'POST',
                 headers: {
@@ -798,18 +801,16 @@
         };
 
         // ==========================================
-        // 2. LOGIKA UI & VALIDASI: UJIAN DISC & STANDAR
+        // 2. HANDLER INPUT (DISC, RADIO STANDAR, URAIAN, TABEL ANGKA)
         // ==========================================
-        const discRadios = document.querySelectorAll('.disc-radio');
-        discRadios.forEach(radio => {
+        document.querySelectorAll('.disc-radio').forEach(radio => {
             radio.addEventListener('change', function() {
                 let block = this.closest('.question-block');
                 let qNum = block.dataset.qnum;
                 let type = this.dataset.type;
                 let val = this.value;
                 let oppositeType = (type === 'most') ? 'least' : 'most';
-                let oppositeRadios = document.querySelectorAll(`input[name="${oppositeType}_${qNum}"]`);
-                oppositeRadios.forEach(el => {
+                document.querySelectorAll(`input[name="${oppositeType}_${qNum}"]`).forEach(el => {
                     el.disabled = false;
                     if (el.value === val) {
                         el.disabled = true;
@@ -822,110 +823,75 @@
             });
         });
 
-        const stdRadios = document.querySelectorAll('.std-radio');
-        stdRadios.forEach(radio => {
+        document.querySelectorAll('.std-radio').forEach(radio => {
             radio.addEventListener('change', function() {
                 let qNum = this.closest('.question-block').dataset.qnum;
-                let val = this.value;
-                window.saveAnswerAjax(qNum, { selected: val });
+                window.saveAnswerAjax(qNum, { selected: this.value });
             });
         });
 
-        // Handler untuk textarea (uraian questions)
-        const uraianTextareas = document.querySelectorAll('.uraian-textarea');
-        uraianTextareas.forEach(textarea => {
-            textarea.addEventListener('input', function() {
-                let qNum = this.closest('.question-block').dataset.qnum;
-                let val = this.value;
-                window.saveAnswerAjax(qNum, { answer_text: val });
-            });
-        });
-
-        // Handler untuk input number (angka_akuntasi questions)
-        const tableNumberInputs = document.querySelectorAll('.table-number-input');
-        tableNumberInputs.forEach(input => {
+        document.querySelectorAll('.uraian-textarea, .table-number-input').forEach(input => {
             input.addEventListener('input', function() {
                 let qNum = this.closest('.question-block').dataset.qnum;
-                let val = this.value;
-                window.saveAnswerAjax(qNum, { answer_text: val });
+                window.saveAnswerAjax(qNum, { answer_text: this.value });
             });
         });
 
-        // Handler untuk cell inputs di dalam tabel (angka_akuntasi questions)
-        const tableNumberCells = document.querySelectorAll('.table-number-cell');
-        tableNumberCells.forEach(cell => {
+        document.querySelectorAll('.table-number-cell').forEach(cell => {
             cell.addEventListener('input', function() {
-
-                // === FITUR BARU: Auto Format Ribuan (Titik) ===
                 let angkaSaja = this.value.replace(/\D/g, '');
                 let formatTitik = angkaSaja.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                 this.value = formatTitik;
-                // ==============================================
 
                 let qNum = this.dataset.question;
                 let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
-                
                 let cells = block.querySelectorAll('.table-number-cell');
                 let allValues = [];
                 let detailsObj = {};
-                
+
                 cells.forEach(c => {
                     let val = c.value.trim();
-                    if(val !== '') {
+                    if (val !== '') {
                         allValues.push(val);
-                        
                         let nameParts = c.name.split('_');
-                        if(nameParts.length >= 4) {
+                        if (nameParts.length >= 4) {
                             let type = nameParts[2];
-                            let index = parseInt(nameParts[3]) + 1; 
-                            
+                            let index = parseInt(nameParts[3]) + 1;
                             let label = type === 'row' ? `Mendatar (Baris ${index})` : `Menurun (Kolom ${index})`;
                             detailsObj[label] = val;
                         }
                     }
                 });
-                
+
                 let combinedValue = allValues.join(', ');
-                
                 let finalInput = block.querySelector('.table-number-input');
-                if (finalInput) {
-                    finalInput.value = combinedValue;
-                }
-                
-                // SIMPAN KE DB
-                window.saveAnswerAjax(qNum, { 
-                    answer_text: combinedValue,
-                    details: detailsObj
-                });
+                if (finalInput) finalInput.value = combinedValue;
+
+                window.saveAnswerAjax(qNum, { answer_text: combinedValue, details: detailsObj });
             });
         });
 
         // ==========================================
-        // 3. LOGIKA TIMER MUNDUR
+        // 3. TIMER MUNDUR
         // ==========================================
         let remainingSeconds = {{ $remainingSeconds }};
         const timerDisplay = document.getElementById('timer-display');
-
         const timerInterval = setInterval(updateTimer, 1000);
 
         function updateTimer() {
             if (remainingSeconds <= 0) {
                 clearInterval(timerInterval);
                 timerDisplay.innerHTML = "WAKTU HABIS!";
-
                 Swal.fire({
                     title: 'Waktu Habis!',
                     text: 'Sistem akan mengumpulkan jawaban Anda secara otomatis.',
                     icon: 'warning',
                     timer: 2500,
                     showConfirmButton: false,
-                    willClose: () => {
-                        finishExam();
-                    }
+                    willClose: () => { finishExam(); }
                 });
                 return;
             }
-
             let m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
             let s = (remainingSeconds % 60).toString().padStart(2, '0');
             timerDisplay.innerHTML = m + ":" + s;
@@ -937,7 +903,7 @@
         // 4. KAMERA PROCTORING
         // ==========================================
         const video = document.getElementById('webcam-video');
-        const canvas = document.getElementById('snapshot-canvas');
+        const canvasSnap = document.getElementById('snapshot-canvas');
         const cameraStatus = document.getElementById('camera-status');
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: false })
@@ -945,41 +911,38 @@
                 video.srcObject = stream;
                 cameraStatus.innerHTML = "🟢 Kamera aktif (Ujian diawasi)";
                 cameraStatus.classList.replace('badge-secondary', 'badge-success');
-
                 setTimeout(takeSnapshotAndSend, 1000);
                 scheduleNextSnapshot();
             })
-            .catch(function(err) {
+            .catch(function() {
                 cameraStatus.innerHTML = "❌ Akses Kamera Ditolak!";
                 cameraStatus.classList.replace('badge-secondary', 'badge-danger');
                 Swal.fire('Kamera Wajib!', 'Ujian ini memerlukan kamera untuk pengawasan.', 'error');
             });
 
         function takeSnapshotAndSend() {
-            canvas.width = 640; canvas.height = 480;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            let base64Image = canvas.toDataURL('image/jpeg', 0.6);
-
+            if (!video.srcObject) return;
+            canvasSnap.width = 640; canvasSnap.height = 480;
+            canvasSnap.getContext('2d').drawImage(video, 0, 0, canvasSnap.width, canvasSnap.height);
+            let base64Image = canvasSnap.toDataURL('image/jpeg', 0.6);
             fetch("{{ url('/proctoring/snap') }}", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                 body: JSON.stringify({ exam_session_id: examSessionId, image: base64Image })
             });
         }
 
         function scheduleNextSnapshot() {
             let timeout = Math.floor(Math.random() * (300000 - 60000 + 1)) + 60000;
-            setTimeout(() => {
-                takeSnapshotAndSend();
-                scheduleNextSnapshot();
-            }, timeout);
+            setTimeout(() => { takeSnapshotAndSend(); scheduleNextSnapshot(); }, timeout);
         }
 
-        const isKasus = "{{ $exam->type }}" === 'soal_kasus';
+        // ==========================================
+        // 5. SOAL KASUS AKUNTANSI (UPLOAD FILE & TABEL JURNAL)
+        // ==========================================
+        const isKasus = examType === 'soal_kasus';
         let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
+        var tableInstance; // dideklarasikan di scope luar agar bisa dipakai checkCompletion()
 
         if (isKasus) {
             const fileInput = document.getElementById('answer-file-input');
@@ -989,76 +952,51 @@
             const fileLabel = document.querySelector('.custom-file-label');
 
             function renderFileList(files) {
-                if (!filesBox || !fileLabel || !filesList || !uploadAlert || !fileInput) return;
-
+                if (!filesBox) return;
                 if (!files || files.length === 0) {
                     filesBox.style.display = 'none';
-                    fileLabel.innerHTML = "Pilih satu atau beberapa file...";
+                    if (fileLabel) fileLabel.innerHTML = "Pilih satu atau beberapa file...";
                     return;
                 }
-                
                 filesBox.style.display = 'block';
                 filesList.innerHTML = '';
-
                 files.forEach(file => {
                     filesList.innerHTML += `
                         <div class="badge badge-white border text-dark p-2 shadow-sm d-flex align-items-center rounded" style="font-size: 0.85rem; gap: 10px;">
                             <span>📄</span>
                             <span class="font-weight-normal">${file.name}</span>
-                            <button type="button" class="btn-delete-file" data-path="${file.path}"
-                                    style="border: none; background: none; color: #dc3545; font-size: 1.2rem; line-height: 1; padding: 0 0 2px 0; margin-left: 5px; cursor: pointer; font-weight: bold;"
-                                    title="Batalkan file ini">
-                                &times;
-                            </button>
-                        </div>
-                    `;
+                            <button type="button" class="btn-delete-file" data-path="${file.path}" style="border:none;background:none;color:#dc3545;font-size:1.2rem;line-height:1;margin-left:5px;cursor:pointer;font-weight:bold;">&times;</button>
+                        </div>`;
                 });
-
                 attachDeleteEvents();
             }
 
             function attachDeleteEvents() {
-                const deleteButtons = document.querySelectorAll('.btn-delete-file');
-                deleteButtons.forEach(btn => {
+                document.querySelectorAll('.btn-delete-file').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const filePath = this.dataset.path;
-
                         Swal.fire({
-                            title: 'Batalkan file ini?',
-                            text: "File akan dihapus dari server lembar jawaban Anda.",
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Ya, Hapus!',
-                            cancelButtonText: 'Batal'
+                            title: 'Batalkan file ini?', text: "File akan dihapus dari server lembar jawaban Anda.", icon: 'warning',
+                            showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, Hapus!', cancelButtonText: 'Batal'
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 let formData = new FormData();
                                 formData.append('exam_session_id', examSessionId);
                                 formData.append('file_path', filePath);
-
-                                fetch("{{ route('exam.delete-file') }}", {
-                                    method: 'POST',
-                                    headers: { 'X-CSRF-TOKEN': csrfToken },
-                                    body: formData
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (data.status === 'success') {
-                                        uploadedFilesArray = data.files;
-                                        renderFileList(uploadedFilesArray);
-
-                                        if(uploadedFilesArray.length > 0) {
-                                            fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
+                                fetch("{{ route('exam.delete-file') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken }, body: formData })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            uploadedFilesArray = data.files;
+                                            renderFileList(uploadedFilesArray);
+                                            if (uploadedFilesArray.length > 0) fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
+                                            Swal.fire('Dibatalkan!', 'File berhasil dihapus.', 'success');
+                                        } else {
+                                            Swal.fire('Gagal!', data.message, 'error');
                                         }
-
-                                        Swal.fire('Dibatalkan!', 'File berhasil dihapus.', 'success');
-                                    } else {
-                                        Swal.fire('Gagal!', data.message, 'error');
-                                    }
-                                })
-                                .catch(err => console.error("Gagal menghapus berkas:", err));
+                                    })
+                                    .catch(err => console.error("Gagal menghapus berkas:", err));
                             }
                         });
                     });
@@ -1067,15 +1005,12 @@
 
             renderFileList(uploadedFilesArray);
 
-            if(fileInput){
+            if (fileInput) {
                 fileInput.addEventListener('change', function() {
                     if (this.files.length === 0) return;
-
                     let formData = new FormData();
                     formData.append('exam_session_id', examSessionId);
-                    for (let i = 0; i < this.files.length; i++) {
-                        formData.append('answer_files[]', this.files[i]);
-                    }
+                    for (let i = 0; i < this.files.length; i++) formData.append('answer_files[]', this.files[i]);
 
                     uploadAlert.style.display = 'block';
                     uploadAlert.className = 'alert alert-info small p-2';
@@ -1083,42 +1018,60 @@
 
                     fetch("{{ route('exam.upload-file') }}", {
                         method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json' 
-                        },
+                        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
                         body: formData
                     })
-                    .then(async res => {
-                        if (!res.ok) {
-                            const errorData = await res.json();
-                            throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
-                        }
-                        return res.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'success') {
-                            uploadAlert.className = 'alert alert-success small p-2';
-                            uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
-                            uploadedFilesArray = data.files;
-                            renderFileList(uploadedFilesArray);
-                            fileLabel.innerHTML = `${data.files.length} file terpilih...`;
-                        } else {
+                        .then(async res => {
+                            if (!res.ok) {
+                                const errorData = await res.json();
+                                throw new Error(errorData.message || 'Ukuran file terlalu besar atau format tidak didukung.');
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                uploadAlert.className = 'alert alert-success small p-2';
+                                uploadAlert.innerHTML = '🟢 Berkas berhasil ditambahkan!';
+                                uploadedFilesArray = data.files;
+                                renderFileList(uploadedFilesArray);
+                                fileLabel.innerHTML = `${data.files.length} file terpilih...`;
+                            } else {
+                                uploadAlert.className = 'alert alert-danger small p-2';
+                                uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
+                            }
+                        })
+                        .catch(err => {
                             uploadAlert.className = 'alert alert-danger small p-2';
-                            uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
-                        }
-                    })
-                    .catch(err => {
-                        uploadAlert.className = 'alert alert-danger small p-2';
-                        uploadAlert.innerHTML = '❌ ' + err.message;
-                        console.error(err);
-                    });
+                            uploadAlert.innerHTML = '❌ ' + err.message;
+                            console.error(err);
+                        });
+                });
+            }
+
+            const jurnalContainer = document.getElementById('jurnal-table');
+            if (jurnalContainer) {
+                let qNumJurnal = jurnalContainer.dataset.qnum;
+                tableInstance = jspreadsheet(jurnalContainer, {
+                    data: [['', '', '', '', ''], ['', '', '', '', '']],
+                    columns: [
+                        { type: 'calendar', title: 'Tanggal', width: 120, options: { format: 'DD/MM/YYYY' } },
+                        { type: 'text', title: 'Keterangan', width: 250 },
+                        { type: 'text', title: 'Ref', width: 80 },
+                        { type: 'text', title: 'Debit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
+                        { type: 'text', title: 'Kredit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
+                    ],
+                    minDimensions: [5, 5],
+                    allowInsertRow: true, allowManualInsertRow: true, allowDeleteRow: true,
+                    allowInsertColumn: true, allowManualInsertColumn: true, allowDeleteColumn: true, wordWrap: true,
+                    onchange: function() { window.saveAnswerAjax(qNumJurnal, tableInstance.getData()); },
+                    oninsertrow: function() { window.saveAnswerAjax(qNumJurnal, tableInstance.getData()); },
+                    ondeleterow: function() { window.saveAnswerAjax(qNumJurnal, tableInstance.getData()); }
                 });
             }
         }
 
         // ==========================================
-        // 5. LOGIKA VALIDASI & SUBMIT
+        // 6. VALIDASI & SUBMIT (SATU-SATUNYA LISTENER)
         // ==========================================
         const btnSubmit = document.getElementById('btn-submit-exam');
 
@@ -1126,8 +1079,7 @@
             if (isKasus) {
                 let hasFile = uploadedFilesArray && uploadedFilesArray.length > 0;
                 let hasTableData = false;
-
-                if (typeof tableInstance !== 'undefined') {
+                if (tableInstance) {
                     let tableData = tableInstance.getData();
                     for (let i = 0; i < tableData.length; i++) {
                         for (let j = 0; j < tableData[i].length; j++) {
@@ -1139,17 +1091,14 @@
                         if (hasTableData) break;
                     }
                 }
-
-                if (!hasFile && !hasTableData) {
-                    return ['kasus_kosong'];
-                }
+                if (!hasFile && !hasTableData) return ['kasus_kosong'];
                 return [];
             }
 
             let unanswered = [];
-            let isDisc = "{{ $exam->type }}" === 'disc';
-            let isuraian = "{{ $exam->type }}" === 'uraian' || "{{ $exam->type }}" === 'tes_kraeplin';
-            let isTableNumber = "{{ $exam->type }}" === 'angka';
+            let isDisc = examType === 'disc';
+            let isUraian = examType === 'uraian' || examType === 'tes_kraeplin';
+            let isTableNumber = examType === 'angka';
 
             let questionNumbers = [...new Set(Array.from(document.querySelectorAll('.question-block')).map(el => el.dataset.qnum))];
 
@@ -1159,35 +1108,22 @@
                 if (isDisc) {
                     let mostSelected = document.querySelector(`input[name="most_${qNum}"]:checked`);
                     let leastSelected = document.querySelector(`input[name="least_${qNum}"]:checked`);
-
-                    if (!mostSelected || !leastSelected) {
-                        unanswered.push(qNum);
-                    }
-                } 
-                else if (isTableNumber) {
+                    if (!mostSelected || !leastSelected) unanswered.push(qNum);
+                } else if (isTableNumber) {
                     let cells = block.querySelectorAll('.table-number-cell');
                     let hasAnswer = Array.from(cells).some(c => c.value.trim() !== '');
-                    
-                    if (!hasAnswer) {
-                        unanswered.push(qNum);
-                    }
-                } 
-                else if (isuraian) {
+                    if (!hasAnswer) unanswered.push(qNum);
+                } else if (isUraian) {
                     let inputEl = document.querySelector(`[name="answer_${qNum}"]`);
-                    // Bypass validasi khusus untuk soal tipe drawing (karena input hiddennya tersimpan via JS)
                     let isDrawingCanvas = block.querySelector(`canvas[id="canvas_${qNum}"]`);
-                    
                     if (!isDrawingCanvas && (!inputEl || !inputEl.value.trim())) {
                         unanswered.push(qNum);
                     } else if (isDrawingCanvas && (!inputEl || inputEl.value === '')) {
-                         unanswered.push(qNum);
-                    }
-                }
-                else {
-                    let selected = document.querySelector(`input[name="answer_${qNum}"]:checked`);
-                    if (!selected) {
                         unanswered.push(qNum);
                     }
+                } else {
+                    let selected = document.querySelector(`input[name="answer_${qNum}"]:checked`);
+                    if (!selected) unanswered.push(qNum);
                 }
             });
 
@@ -1213,495 +1149,32 @@
 
             if (missingAnswers.length > 0) {
                 let warningText = `Anda belum menjawab soal nomor: ${missingAnswers.join(', ')}. Silakan lengkapi semua jawaban sebelum mengumpulkan.`;
-
                 if (isKasus && missingAnswers[0] === 'kasus_kosong') {
                     warningText = "Anda belum mengisi Tabel Jurnal Umum atau mengunggah file lembar jawaban. Silakan lengkapi salah satunya sebelum mengumpulkan.";
                 }
-
                 Swal.fire({
-                    title: 'Belum Lengkap!',
-                    text: warningText,
-                    icon: 'error',
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Oke, Saya Lengkapi'
+                    title: 'Belum Lengkap!', text: warningText, icon: 'error',
+                    confirmButtonColor: '#d33', confirmButtonText: 'Oke, Saya Lengkapi'
                 });
-                return; 
+                return;
             }
 
             Swal.fire({
                 title: 'Kumpulkan Ujian?',
                 text: "Anda telah menjawab semua soal. Yakin ingin mengumpulkan sekarang?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Kumpulkan Sekarang!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    finishExam();
-                }
-            });
-        });
-
-        function finishExam() {
-            Swal.fire({
-                title: 'Memproses...',
-                text: 'Mohon tunggu sebentar',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-
-            takeSnapshotAndSend();
-
-            setTimeout(() => {
-                let url = "{{ route('exam.finish', ['session_id' => 'PLACEHOLDER']) }}";
-                window.location.href = url.replace('PLACEHOLDER', examSessionId);
-            }, 500);
-        }
-        
-        // ==========================================
-        // 6. LOGIKA TABEL JURNAL (JSPREADSHEET)
-        // ==========================================
-        const jurnalContainer = document.getElementById('jurnal-table');
-        
-        if (jurnalContainer) {
-            let qNum = jurnalContainer.dataset.qnum;
-
-                var tableInstance = jspreadsheet(jurnalContainer, {
-                data: [
-                    ['', '', '', '', ''], 
-                    ['', '', '', '', ''],
-                ],
-                columns: [
-                    { type: 'calendar', title: 'Tanggal', width: 120, options: { format: 'DD/MM/YYYY' } },
-                    { type: 'text', title: 'Keterangan', width: 250 },
-                    { type: 'text', title: 'Ref', width: 80 },
-                    { type: 'text', title: 'Debit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
-                    { type: 'text', title: 'Kredit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
-                ],
-                minDimensions: [5, 5],
-                allowInsertRow: true,
-                allowManualInsertRow: true,
-                allowDeleteRow: true,
-                allowInsertColumn: true, 
-                allowManualInsertColumn: true,
-                allowDeleteColumn: true,
-                wordWrap: true,
-                
-                onchange: function(instance, cell, x, y, value) {
-                    let tableData = tableInstance.getData();
-                    window.saveAnswerAjax(qNum, tableData);
-                },
-                oninsertrow: function() {
-                    let tableData = tableInstance.getData();
-                    window.saveAnswerAjax(qNum, tableData);
-                },
-                ondeleterow: function() {
-                    let tableData = tableInstance.getData();
-                    window.saveAnswerAjax(qNum, tableData);
-                }
-            });
-        }
-    });
-</script>
-
-<style>
-/* ===== RESPONSIVE SHOW.BLADE ===== */
-
-/* Timer & judul di header */
-.exam-title  { font-size: clamp(0.95rem, 3.5vw, 1.35rem); }
-.timer-display { font-size: clamp(1.1rem, 4vw, 1.5rem); }
-
-/* DISC table: scroll horizontal di HP */
-#examUsersTable, .table-responsive { overflow-x: auto; }
-
-/* Tombol submit full-width di HP */
-@media (max-width: 575.98px) {
-    #btn-submit-exam { width: 100%; font-size: 0.95rem; }
-
-    /* Perkecil input di tabel angka */
-    .table-number-cell { font-size: 0.75rem !important; padding: 2px 4px !important; }
-
-    /* Instruksi DISC icon circle lebih kecil */
-    .rounded-circle[style*="40px"] { width: 30px !important; height: 30px !important; font-size: 0.8rem; }
-
-    /* Padding card lebih rapat */
-    .card-body.p-4 { padding: 1rem !important; }
-
-    /* Textarea uraian lebih pendek */
-    .uraian-textarea { rows: 3; font-size: 0.88rem !important; }
-
-    /* Tabel DISC: font lebih kecil */
-    .table td, .table th { font-size: 0.78rem; padding: 0.35rem 0.4rem; }
-
-    /* Radio DISC scale down */
-    input[type=radio][style*="scale(1.5)"] { transform: scale(1.1) !important; }
-}
-
-@media (min-width: 576px) and (max-width: 991.98px) {
-    .table td, .table th { font-size: 0.83rem; }
-    #btn-submit-exam { width: 100%; }
-}
-
-/* Kasus akuntansi: tabel saldo scroll horizontal */
-.table-responsive { -webkit-overflow-scrolling: touch; }
-
-/* ── Opsi Gambar (soal IQ bergambar) ── */
-.img-option {
-    cursor: pointer;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    border: 2px solid #dee2e6 !important;
-    border-radius: 6px;
-    background: #fff;
-}
-.img-option:hover {
-    border-color: #80bdff !important;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
-}
-@media (max-width: 575.98px) {
-    .img-option { max-width: 80px !important; max-height: 70px !important; }
-}
-
-/* Camera status badge wrap */
-#camera-status { word-break: break-word; max-width: 90vw; display: inline-block; }
-
-/* Cegah kolom konten menyusut/mengecil ke tengah setelah kartu instruksi
-   dikeluarkan dari alur normal (position: fixed). Tanpa ini, .row (flex)
-   akan menyusutkan lebar kolom mengikuti elemen tersempit yang tersisa. */
-.row.justify-content-center > .w-full.overflow-x-auto {
-    width: 100% !important;
-    max-width: 100% !important;
-    flex: 1 1 100% !important;
-}
-
-/* ===== INSTRUKSI PENGERJAAN: FIXED (SELALU KELIHATAN SEPERTI TIMER) ===== */
-.instruksi-fixed-box {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0; /* akan di-set ulang oleh JS, mengikuti tinggi bar timer */
-    z-index: 1025; /* di bawah timer (1030) */
-    margin: 0 !important;
-    border-radius: 0 !important;
-    max-height: 40vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-.instruksi-fixed-box .card-body {
-    padding: 0.85rem 1rem;
-}
-.instruksi-fixed-box.instruksi-collapsed .instruksi-fixed-content {
-    display: none;
-}
-.instruksi-fixed-box .instruksi-toggle-btn i {
-    transition: transform 0.2s ease;
-}
-.instruksi-fixed-box.instruksi-collapsed .instruksi-toggle-btn i {
-    transform: rotate(180deg);
-}
-@media (max-width: 575.98px) {
-    .instruksi-fixed-box { max-height: 45vh; }
-    .instruksi-fixed-box h5 { font-size: 0.95rem; }
-    .instruksi-fixed-box small,
-    .instruksi-fixed-box p { font-size: 0.85rem; }
-}
-</style>
-
-<script>
-    window.canvases = {};
-    window.canvasStates = {};
-
-    document.addEventListener("DOMContentLoaded", function() {
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-        const examSessionId = {{ $session->id }};
-
-        // ==========================================
-        // 1. FUNGSI AJAX REUSABLE (Simpan Jawaban)
-        // ==========================================
-        window.saveAnswerAjax = function(qNum, jsonAnswer) {
-            fetch("{{ url('/exam/answer') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    exam_session_id: examSessionId,
-                    question_number: qNum,
-                    answers: jsonAnswer
-                })
-            }).catch(err => console.error("Gagal menyimpan", err));
-        };
-
-        // ==========================================
-        // 2. LOGIKA UI & VALIDASI STANDAR
-        // ==========================================
-        const discRadios = document.querySelectorAll('.disc-radio');
-        discRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                let block = this.closest('.question-block');
-                let qNum = block.dataset.qnum;
-                let type = this.dataset.type;
-                let val = this.value;
-                let oppositeType = (type === 'most') ? 'least' : 'most';
-                let oppositeRadios = document.querySelectorAll(`input[name="${oppositeType}_${qNum}"]`);
-                oppositeRadios.forEach(el => {
-                    el.disabled = false;
-                    if (el.value === val) {
-                        el.disabled = true;
-                        if (el.checked) el.checked = false;
-                    }
-                });
-                let mostVal = document.querySelector(`input[name="most_${qNum}"]:checked`)?.value || null;
-                let leastVal = document.querySelector(`input[name="least_${qNum}"]:checked`)?.value || null;
-                window.saveAnswerAjax(qNum, { most: mostVal, least: leastVal });
-            });
-        });
-
-        const stdRadios = document.querySelectorAll('.std-radio');
-        stdRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                let qNum = this.closest('.question-block').dataset.qnum;
-                window.saveAnswerAjax(qNum, { selected: this.value });
-            });
-        });
-
-        const uraianTextareas = document.querySelectorAll('.uraian-textarea, .table-number-input');
-        uraianTextareas.forEach(input => {
-            input.addEventListener('input', function() {
-                let qNum = this.closest('.question-block').dataset.qnum;
-                window.saveAnswerAjax(qNum, { answer_text: this.value });
-            });
-        });
-
-        const tableNumberCells = document.querySelectorAll('.table-number-cell');
-        tableNumberCells.forEach(cell => {
-            cell.addEventListener('input', function() {
-                let angkaSaja = this.value.replace(/\D/g, '');
-                let formatTitik = angkaSaja.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                this.value = formatTitik;
-
-                let qNum = this.dataset.question;
-                let block = document.querySelector(`.question-block[data-qnum="${qNum}"]`);
-                
-                let cells = block.querySelectorAll('.table-number-cell');
-                let allValues = [];
-                let detailsObj = {};
-                
-                cells.forEach(c => {
-                    let val = c.value.trim();
-                    if(val !== '') {
-                        allValues.push(val);
-                        let nameParts = c.name.split('_');
-                        if(nameParts.length >= 4) {
-                            let type = nameParts[2];
-                            let index = parseInt(nameParts[3]) + 1; 
-                            let label = type === 'row' ? `Mendatar (Baris ${index})` : `Menurun (Kolom ${index})`;
-                            detailsObj[label] = val;
-                        }
-                    }
-                });
-                
-                let combinedValue = allValues.join(', ');
-                let finalInput = block.querySelector('.table-number-input');
-                if (finalInput) finalInput.value = combinedValue;
-                
-                window.saveAnswerAjax(qNum, { answer_text: combinedValue, details: detailsObj });
-            });
-        });
-
-        // ==========================================
-        // 3. LOGIKA TIMER & PROCTORING
-        // ==========================================
-        let remainingSeconds = {{ $remainingSeconds }};
-        const timerDisplay = document.getElementById('timer-display');
-        const timerInterval = setInterval(updateTimer, 1000);
-
-        function updateTimer() {
-            if (remainingSeconds <= 0) {
-                clearInterval(timerInterval);
-                timerDisplay.innerHTML = "WAKTU HABIS!";
-                Swal.fire({
-                    title: 'Waktu Habis!',
-                    text: 'Sistem akan mengumpulkan jawaban Anda otomatis.',
-                    icon: 'warning',
-                    timer: 2500,
-                    showConfirmButton: false,
-                    willClose: () => { finishExam(); }
-                });
-                return;
-            }
-            let m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
-            let s = (remainingSeconds % 60).toString().padStart(2, '0');
-            timerDisplay.innerHTML = m + ":" + s;
-            remainingSeconds--;
-        }
-        updateTimer();
-
-        // --- Proctoring Camera ---
-        const video = document.getElementById('webcam-video');
-        const canvasSnap = document.getElementById('snapshot-canvas');
-        const cameraStatus = document.getElementById('camera-status');
-
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-            .then(function(stream) {
-                video.srcObject = stream;
-                cameraStatus.innerHTML = "🟢 Kamera aktif (Ujian diawasi)";
-                cameraStatus.classList.replace('badge-secondary', 'badge-success');
-                setTimeout(takeSnapshotAndSend, 1000);
-                scheduleNextSnapshot();
-            }).catch(function() {
-                cameraStatus.innerHTML = "❌ Akses Kamera Ditolak!";
-                cameraStatus.classList.replace('badge-secondary', 'badge-danger');
-            });
-
-        function takeSnapshotAndSend() {
-            if(!video.srcObject) return;
-            canvasSnap.width = 640; canvasSnap.height = 480;
-            canvasSnap.getContext('2d').drawImage(video, 0, 0, canvasSnap.width, canvasSnap.height);
-            let base64Image = canvasSnap.toDataURL('image/jpeg', 0.6);
-            fetch("{{ url('/proctoring/snap') }}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                body: JSON.stringify({ exam_session_id: examSessionId, image: base64Image })
-            });
-        }
-        function scheduleNextSnapshot() {
-            let timeout = Math.floor(Math.random() * (300000 - 60000 + 1)) + 60000;
-            setTimeout(() => { takeSnapshotAndSend(); scheduleNextSnapshot(); }, timeout);
-        }
-
-        // ==========================================
-        // 4. LOGIKA KASUS AKUNTANSI (UPLOAD & JURNAL)
-        // ==========================================
-        const isKasus = "{{ $exam->type }}" === 'soal_kasus';
-        let uploadedFilesArray = {!! $session->answer_file ? $session->answer_file : '[]' !!};
-
-        if (isKasus) {
-            const fileInput = document.getElementById('answer-file-input');
-            const uploadAlert = document.getElementById('upload-alert');
-            const filesBox = document.getElementById('uploaded-files-box');
-            const filesList = document.getElementById('uploaded-files-list');
-            const fileLabel = document.querySelector('.custom-file-label');
-
-            function renderFileList(files) {
-                if (!filesBox) return;
-                if (!files || files.length === 0) {
-                    filesBox.style.display = 'none';
-                    if(fileLabel) fileLabel.innerHTML = "Pilih satu atau beberapa file...";
-                    return;
-                }
-                filesBox.style.display = 'block';
-                filesList.innerHTML = '';
-                files.forEach(file => {
-                    filesList.innerHTML += `
-                        <div class="badge badge-white border text-dark p-2 shadow-sm d-flex align-items-center rounded" style="font-size: 0.85rem; gap: 10px;">
-                            <span>📄</span>
-                            <span class="font-weight-normal">${file.name}</span>
-                            <button type="button" class="btn-delete-file" data-path="${file.path}" style="border:none;background:none;color:#dc3545;font-size:1.2rem;line-height:1;margin-left:5px;cursor:pointer;font-weight:bold;">&times;</button>
-                        </div>`;
-                });
-                attachDeleteEvents();
-            }
-
-            function attachDeleteEvents() {
-                document.querySelectorAll('.btn-delete-file').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const filePath = this.dataset.path;
-                        Swal.fire({
-                            title: 'Batalkan file ini?', text: "File akan dihapus.", icon: 'warning', showCancelButton: true,
-                            confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Hapus!'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                let formData = new FormData();
-                                formData.append('exam_session_id', examSessionId);
-                                formData.append('file_path', filePath);
-                                fetch("{{ route('exam.delete-file') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken }, body: formData })
-                                .then(res => res.json()).then(data => {
-                                    if (data.status === 'success') {
-                                        uploadedFilesArray = data.files; renderFileList(uploadedFilesArray);
-                                        if(uploadedFilesArray.length > 0) fileLabel.innerHTML = `${uploadedFilesArray.length} file terpilih...`;
-                                    }
-                                });
-                            }
-                        });
-                    });
-                });
-            }
-            renderFileList(uploadedFilesArray);
-
-            if(fileInput){
-                fileInput.addEventListener('change', function() {
-                    if (this.files.length === 0) return;
-                    let formData = new FormData();
-                    formData.append('exam_session_id', examSessionId);
-                    for (let i = 0; i < this.files.length; i++) formData.append('answer_files[]', this.files[i]);
-                    
-                    uploadAlert.style.display = 'block'; uploadAlert.className = 'alert alert-info small p-2'; uploadAlert.innerHTML = '⏳ Sedang mengunggah...';
-                    
-                    fetch("{{ route('exam.upload-file') }}", { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }, body: formData })
-                    .then(async res => {
-                        if (!res.ok) { const err = await res.json(); throw new Error(err.message); }
-                        return res.json();
-                    }).then(data => {
-                        if (data.status === 'success') {
-                            uploadAlert.className = 'alert alert-success small p-2'; uploadAlert.innerHTML = '🟢 Berhasil!';
-                            uploadedFilesArray = data.files; renderFileList(uploadedFilesArray);
-                            fileLabel.innerHTML = `${data.files.length} file terpilih...`;
-                        } else {
-                            uploadAlert.className = 'alert alert-danger small p-2'; uploadAlert.innerHTML = '❌ Gagal: ' + data.message;
-                        }
-                    }).catch(err => {
-                        uploadAlert.className = 'alert alert-danger small p-2'; uploadAlert.innerHTML = '❌ ' + err.message;
-                    });
-                });
-            }
-
-            const jurnalContainer = document.getElementById('jurnal-table');
-            if (jurnalContainer) {
-                let qNum = jurnalContainer.dataset.qnum;
-                var tableInstance = jspreadsheet(jurnalContainer, {
-                    data: [['', '', '', '', ''], ['', '', '', '', '']],
-                    columns: [
-                        { type: 'calendar', title: 'Tanggal', width: 120, options: { format: 'DD/MM/YYYY' } },
-                        { type: 'text', title: 'Keterangan', width: 250 },
-                        { type: 'text', title: 'Ref', width: 80 },
-                        { type: 'text', title: 'Debit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
-                        { type: 'text', title: 'Kredit (Rp)', width: 150, mask: '#.##0,00', align: 'right' },
-                    ],
-                    minDimensions: [5, 5],
-                    allowInsertRow: true, allowManualInsertRow: true, allowDeleteRow: true,
-                    allowInsertColumn: true, allowManualInsertColumn: true, allowDeleteColumn: true, wordWrap: true,
-                    onchange: function() { window.saveAnswerAjax(qNum, tableInstance.getData()); },
-                    oninsertrow: function() { window.saveAnswerAjax(qNum, tableInstance.getData()); },
-                    ondeleterow: function() { window.saveAnswerAjax(qNum, tableInstance.getData()); }
-                });
-            }
-        }
-
-        // ==========================================
-        // 5. PENYELESAIAN (FINISH EXAM)
-        // ==========================================
-        document.getElementById('btn-submit-exam').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Kumpulkan Ujian?',
-                text: "Yakin ingin mengumpulkan sekarang?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Kumpulkan!'
+                icon: 'question', showCancelButton: true,
+                confirmButtonColor: '#28a745', cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Kumpulkan Sekarang!', cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) finishExam();
             });
         });
 
         function finishExam() {
-            Swal.fire({ title: 'Memproses...', text: 'Tunggu sebentar', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+            Swal.fire({
+                title: 'Memproses...', text: 'Mohon tunggu sebentar', allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
             takeSnapshotAndSend();
             setTimeout(() => {
                 let url = "{{ route('exam.finish', ['session_id' => 'PLACEHOLDER']) }}";
@@ -1710,114 +1183,85 @@
         }
 
         // ==========================================
-        // 6. LOGIKA CANVAS PAINT (FIXED & TEXT TOOL)
+        // 7. CANVAS PAINT (DRAWING TOOL)
         // ==========================================
         document.querySelectorAll('canvas[id^="canvas_"]').forEach(canvasEl => {
             let qNum = canvasEl.id.split('_')[1];
-
-            // Cegah init dobel (kalau script ini kejalan lagi, elemen canvas bisa
-            // "dibungkus" fabric dua kali dan bikin layer lower/upper-canvas tumpuk,
-            // ini salah satu penyebab utama coretan/teks kelihatan hilang)
             if (canvasEl.dataset.fabricInitialized === '1') return;
             canvasEl.dataset.fabricInitialized = '1';
 
-            let canvas = new fabric.Canvas(canvasEl.id, { 
-                isDrawingMode: true,
-                selection: false,
-                renderOnAddRemove: true,
-                enableRetinaScaling: false // hindari mismatch resolusi antara CSS width:100% vs atribut width/height
+            let canvas = new fabric.Canvas(canvasEl.id, {
+                isDrawingMode: true, selection: false, renderOnAddRemove: true, enableRetinaScaling: false
             });
-            
-            // Pengaturan Pen (BUG DECIMATION DIHAPUS)
             canvas.freeDrawingBrush.width = 3;
             canvas.freeDrawingBrush.color = '#000000';
-            
+
             window.canvases[qNum] = canvas;
             window.canvasStates[qNum] = { tool: 'draw', isDragging: false, shape: null, startX: 0, startY: 0 };
 
-            canvas.on('mouse:down', function(o){
+            canvas.on('mouse:down', function(o) {
                 let state = window.canvasStates[qNum];
-                if(state.tool === 'draw' || state.tool === 'eraser') return; // Biarkan Fabric coret-coret sendiri
+                if (state.tool === 'draw' || state.tool === 'eraser') return;
 
                 let pointer = canvas.getPointer(o.e);
                 state.startX = pointer.x;
                 state.startY = pointer.y;
-                
+
                 let color = document.getElementById('color_' + qNum).value;
                 let size = parseInt(document.getElementById('size_' + qNum).value);
 
-                // --- LOGIKA ALAT TEKS BARU ---
-                if(state.tool === 'text') {
+                if (state.tool === 'text') {
                     Swal.fire({
-                        title: 'Masukkan Teks',
-                        input: 'text',
-                        inputPlaceholder: 'Ketik tulisan di sini...',
-                        showCancelButton: true,
-                        confirmButtonText: 'Tempelkan',
-                        cancelButtonText: 'Batal'
+                        title: 'Masukkan Teks', input: 'text', inputPlaceholder: 'Ketik tulisan di sini...',
+                        showCancelButton: true, confirmButtonText: 'Tempelkan', cancelButtonText: 'Batal'
                     }).then((result) => {
                         if (result.isConfirmed && result.value) {
                             let textObj = new fabric.Text(result.value, {
-                                left: state.startX,
-                                top: state.startY,
-                                fill: color,
-                                fontSize: 16 + (size * 2), // Teks bisa membesar kalau slider ditarik
-                                selectable: false
+                                left: state.startX, top: state.startY, fill: color,
+                                fontSize: 16 + (size * 2), selectable: false
                             });
                             canvas.add(textObj);
-                            canvas.requestRenderAll(); // Paksa redraw, jangan andalkan auto-render saja
-                            window.updateDrawingInput(qNum); // Langsung Simpan
+                            canvas.requestRenderAll();
+                            window.updateDrawingInput(qNum);
                         }
                     });
-                    return; // Hentikan script di sini, jangan lanjut gambar kotak
+                    return;
                 }
-                // ------------------------------
 
                 state.isDragging = true;
 
-                if(state.tool === 'rect'){
+                if (state.tool === 'rect') {
                     state.shape = new fabric.Rect({ left: state.startX, top: state.startY, width: 0, height: 0, fill: 'transparent', stroke: color, strokeWidth: size, selectable: false });
                     canvas.add(state.shape);
-                } else if(state.tool === 'circle'){
+                } else if (state.tool === 'circle') {
                     state.shape = new fabric.Circle({ left: state.startX, top: state.startY, radius: 0, fill: 'transparent', stroke: color, strokeWidth: size, selectable: false });
                     canvas.add(state.shape);
-                } else if(state.tool === 'line'){
+                } else if (state.tool === 'line') {
                     state.shape = new fabric.Line([state.startX, state.startY, state.startX, state.startY], { stroke: color, strokeWidth: size, selectable: false });
                     canvas.add(state.shape);
                 }
                 canvas.requestRenderAll();
             });
 
-            canvas.on('mouse:move', function(o){
+            canvas.on('mouse:move', function(o) {
                 let state = window.canvasStates[qNum];
-                if(!state.isDragging) return;
-                
+                if (!state.isDragging) return;
                 let pointer = canvas.getPointer(o.e);
-                
-                if(state.tool === 'rect'){
+
+                if (state.tool === 'rect') {
                     state.shape.set({ width: Math.abs(pointer.x - state.startX), height: Math.abs(pointer.y - state.startY) });
                     state.shape.set({ left: Math.min(pointer.x, state.startX), top: Math.min(pointer.y, state.startY) });
-                } else if(state.tool === 'circle'){
+                } else if (state.tool === 'circle') {
                     let radius = Math.max(Math.abs(pointer.x - state.startX), Math.abs(pointer.y - state.startY)) / 2;
                     state.shape.set({ radius: radius });
                     state.shape.set({ left: Math.min(pointer.x, state.startX), top: Math.min(pointer.y, state.startY) });
-                } else if(state.tool === 'line'){
+                } else if (state.tool === 'line') {
                     state.shape.set({ x2: pointer.x, y2: pointer.y });
                 }
                 canvas.renderAll();
             });
 
-            canvas.on('mouse:up', function(o){
-                let state = window.canvasStates[qNum];
-                if (state.isDragging) {
-                    state.isDragging = false;
-                    canvas.requestRenderAll();
-                    window.updateDrawingInput(qNum); // Simpan
-                }
-            });
-
-            // Pengaman agar mouse tidak error kalau keluar kotak
-            canvas.on('mouse:out', function(o){
+            canvas.on('mouse:up', function() {
                 let state = window.canvasStates[qNum];
                 if (state.isDragging) {
                     state.isDragging = false;
@@ -1826,12 +1270,16 @@
                 }
             });
 
-            // Simpan setiap selesai free-drawing (pen/eraser).
-            // path:created memberi objek path-nya langsung lewat e.path, jadi kita
-            // pastikan dia benar-benar ada di canvas.getObjects() dan dipaksa render
-            // sebelum disimpan sebagai gambar. Ini mengatasi kasus garis kelihatan
-            // hilang begitu mouse dilepas.
-            canvas.on('path:created', function(e){
+            canvas.on('mouse:out', function() {
+                let state = window.canvasStates[qNum];
+                if (state.isDragging) {
+                    state.isDragging = false;
+                    canvas.requestRenderAll();
+                    window.updateDrawingInput(qNum);
+                }
+            });
+
+            canvas.on('path:created', function(e) {
                 if (e && e.path && canvas.getObjects().indexOf(e.path) === -1) {
                     canvas.add(e.path);
                 }
@@ -1839,25 +1287,55 @@
                 window.updateDrawingInput(qNum);
             });
 
-            // Kalau posisi canvas berubah (scroll panjang, resize, atau layout
-            // bergeser karena gambar/instruksi baru selesai load), offset pointer
-            // fabric jadi basi dan bikin gambar terlihat "hilang"/salah posisi.
             window.addEventListener('resize', () => canvas.calcOffset());
             window.addEventListener('scroll', () => canvas.calcOffset(), { passive: true });
+        });
+
+        // ==========================================
+        // 8. LAYOUT INSTRUKSI FIXED + TOMBOL TOGGLE
+        // ==========================================
+        function updateFixedLayout() {
+            const timerBar = document.querySelector('.fixed-top');
+            const instruksiBox = document.querySelector('.instruksi-fixed-box');
+            const spacer = document.getElementById('fixed-content-spacer');
+
+            const timerHeight = timerBar ? timerBar.offsetHeight : 0;
+            let totalHeight = timerHeight;
+
+            if (instruksiBox) {
+                instruksiBox.style.top = timerHeight + 'px';
+                totalHeight += instruksiBox.offsetHeight;
+            }
+            if (spacer) spacer.style.height = totalHeight + 'px';
+        }
+
+        window.addEventListener('load', updateFixedLayout);
+        window.addEventListener('resize', updateFixedLayout);
+        document.querySelectorAll('.instruksi-fixed-box img').forEach(img => {
+            img.addEventListener('load', updateFixedLayout);
+        });
+        updateFixedLayout();
+
+        document.querySelectorAll('.instruksi-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const box = this.closest('.instruksi-fixed-box');
+                if (!box) return;
+                box.classList.toggle('instruksi-collapsed');
+                setTimeout(updateFixedLayout, 50);
+            });
         });
     });
 
     // ==========================================
-    // FUNGSI PENDUKUNG PAINT (GLOBAL WINDOW)
+    // FUNGSI PENDUKUNG PAINT (GLOBAL, dipanggil dari onclick inline HTML)
     // ==========================================
     window.updateDrawingInput = function(qNum) {
         if (!window.canvases[qNum]) return;
-        window.canvases[qNum].renderAll(); // pastikan frame terbaru sebelum di-export
+        window.canvases[qNum].renderAll();
         let dataURL = window.canvases[qNum].toDataURL({ format: 'png', quality: 0.8 });
         let inputEl = document.getElementById('drawing_input_' + qNum);
         if (inputEl) inputEl.value = dataURL;
-
-        if(typeof window.saveAnswerAjax === 'function') {
+        if (typeof window.saveAnswerAjax === 'function') {
             window.saveAnswerAjax(qNum, { answer_text: dataURL });
         }
     };
@@ -1865,10 +1343,9 @@
     window.setTool = function(qNum, tool, btnEl) {
         qNum = String(qNum);
         if (!window.canvasStates[qNum] || !window.canvases[qNum]) return;
-
         window.canvasStates[qNum].tool = tool;
         let canvas = window.canvases[qNum];
-        
+
         let container = btnEl.closest('.paint-toolbar');
         container.querySelectorAll('.paint-tool-btn').forEach(b => {
             b.classList.remove('btn-dark');
@@ -1881,20 +1358,19 @@
             canvas.isDrawingMode = true;
             window.updateBrush(qNum);
         } else {
-            canvas.isDrawingMode = false; // Matikan free-drawing untuk Kotak, Garis, dan Teks
+            canvas.isDrawingMode = false;
         }
     };
 
     window.updateBrush = function(qNum) {
         qNum = String(qNum);
         if (!window.canvasStates[qNum] || !window.canvases[qNum]) return;
-
         let canvas = window.canvases[qNum];
         let color = document.getElementById('color_' + qNum).value;
         let size = parseInt(document.getElementById('size_' + qNum).value);
         let tool = window.canvasStates[qNum].tool;
 
-        if(tool === 'eraser') {
+        if (tool === 'eraser') {
             canvas.freeDrawingBrush.color = '#ffffff';
             canvas.freeDrawingBrush.width = size * 3;
         } else {
@@ -1911,4 +1387,78 @@
         window.updateDrawingInput(qNum);
     };
 </script>
+
+<style>
+/* ===== RESPONSIVE SHOW.BLADE ===== */
+
+.exam-title  { font-size: clamp(0.95rem, 3.5vw, 1.35rem); }
+.timer-display { font-size: clamp(1.1rem, 4vw, 1.5rem); }
+
+#examUsersTable, .table-responsive { overflow-x: auto; }
+
+@media (max-width: 575.98px) {
+    #btn-submit-exam { width: 100%; font-size: 0.95rem; }
+    .table-number-cell { font-size: 0.75rem !important; padding: 2px 4px !important; }
+    .rounded-circle[style*="40px"] { width: 30px !important; height: 30px !important; font-size: 0.8rem; }
+    .card-body.p-4 { padding: 1rem !important; }
+    .uraian-textarea { rows: 3; font-size: 0.88rem !important; }
+    .table td, .table th { font-size: 0.78rem; padding: 0.35rem 0.4rem; }
+    input[type=radio][style*="scale(1.5)"] { transform: scale(1.1) !important; }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .table td, .table th { font-size: 0.83rem; }
+    #btn-submit-exam { width: 100%; }
+}
+
+.table-responsive { -webkit-overflow-scrolling: touch; }
+
+.img-option {
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 6px;
+    background: #fff;
+}
+.img-option:hover {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+}
+@media (max-width: 575.98px) {
+    .img-option { max-width: 80px !important; max-height: 70px !important; }
+}
+
+#camera-status { word-break: break-word; max-width: 90vw; display: inline-block; }
+
+.row.justify-content-center > .w-full.overflow-x-auto {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+/* ===== INSTRUKSI PENGERJAAN: FIXED ===== */
+.instruksi-fixed-box {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0; /* di-set ulang oleh JS via updateFixedLayout() */
+    z-index: 1025;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    max-height: 40vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.instruksi-fixed-box .card-body { padding: 0.85rem 1rem; }
+.instruksi-fixed-box.instruksi-collapsed .instruksi-fixed-content { display: none; }
+.instruksi-fixed-box .instruksi-toggle-btn i { transition: transform 0.2s ease; }
+.instruksi-fixed-box.instruksi-collapsed .instruksi-toggle-btn i { transform: rotate(180deg); }
+@media (max-width: 575.98px) {
+    .instruksi-fixed-box { max-height: 45vh; }
+    .instruksi-fixed-box h5 { font-size: 0.95rem; }
+    .instruksi-fixed-box small,
+    .instruksi-fixed-box p { font-size: 0.85rem; }
+}
+</style>
 @endsection
