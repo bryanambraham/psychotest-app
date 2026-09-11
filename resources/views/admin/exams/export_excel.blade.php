@@ -89,11 +89,14 @@
                             $least = $data['least'] ?? '-';
                             // br khusus excel agar pindah baris tapi tetap di kotak yang sama
                             $answerString = "Most: $most <br style='mso-data-placement:same-cell;' /> Least: $least";
-                        } elseif ($session->exam->type == 'angka' || $session->exam->type == 'uraian') {
+                        } elseif ($session->exam->type == 'angka' || $session->exam->type == 'uraian' || $session->exam->type == 'tes_kraeplin') {
                             if (isset($data['details']) && !empty($data['details'])) {
                                 $ansArr = [];
                                 foreach ($data['details'] as $lbl => $val) {
-                                    $valFormat = is_numeric($val) ? number_format($val, 0, ',', '.') : $val;
+                                
+                                    $cleanVal = str_replace('.', '', $val);
+
+                                    $valFormat = is_numeric($cleanVal) ? number_format($cleanVal, 0, ',', '.') : $val;
                                     $ansArr[] = "$lbl : $valFormat";
                                 }
                                 $answerString = implode("<br style='mso-data-placement:same-cell;' />", $ansArr);
