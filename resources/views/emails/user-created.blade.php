@@ -5,6 +5,10 @@ Akun Anda telah berhasil dibuat di aplikasi kami.
 
 @component('mail::panel')
 Email: {{ $user->email }}
+@php
+ $decrypted_password = \Illuminate\Support\Facades\Crypt::decryptString($user->password);
+@endphp
+Password: {{ $decrypted_password }}                                 
 @endcomponent
 
 Silakan login untuk mulai menggunakan aplikasi.

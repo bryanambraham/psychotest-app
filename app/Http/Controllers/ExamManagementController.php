@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\UserAssignMail;
 use App\Question;
 use App\User;
 use App\VerifyUser;
 use Illuminate\Http\Request;
 use App\Exam;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use App\Services\ActivityLogger;
 use Illuminate\Support\Facades\Log;
 
@@ -171,18 +173,30 @@ class ExamManagementController extends Controller
     $exam = Exam::findOrFail($id);
 
     // 1. Ambil ID user yang sedang dicentang
-    $selectedIds = $request->input('user_ids', []); // ID yang dicheck
+    $selectedIds = array_values(array_unique(array_filter($request->input('user_ids', [])))); // ID yang dicheck
 
     // 2. Ambil ID user yang sedang ditampilkan di layar (dari hidden input tadi)
-    $visibleIds  = $request->input('visible_user_ids', []);
+    $visibleIds  = array_values(array_unique(array_filter($request->input('visible_user_ids', []))));
 
     // 3. Cari user mana yang ditampilkan tapi TIDAK dicentang (berarti ingin dihapus)
     $idsToRemove = array_diff($visibleIds, $selectedIds);
+    $currentAssignedIds = $exam->users()->pluck('users.id')->toArray();
+    $newAssignedIds = array_values(array_diff($selectedIds, $currentAssignedIds));
 
     // 4. Proses Update Database
     // Tambahkan user yang dicentang (tanpa menghapus yang lama/yang tidak tampil)
     if (!empty($selectedIds)) {
         $exam->users()->syncWithoutDetaching($selectedIds);
+    }
+
+    $usersToNotify = User::whereIn('id', $newAssignedIds)
+        ->whereDoesntHave('examSessions', function ($query) use ($exam) {
+            $query->where('exam_id', $exam->id);
+        })
+        ->get();
+
+    foreach ($usersToNotify as $user) {
+        Mail::to($user->email)->send(new UserAssignMail($user, $exam));
     }
 
     // Hapus hanya user yang tampil di layar tapi tidak dicentang

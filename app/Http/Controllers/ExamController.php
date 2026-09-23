@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Exam;
 use App\ExamSession;
+use App\Mail\UserAssignMail;
 use App\User;
 use App\UserAnswer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Services\ActivityLogger;
 
@@ -78,12 +80,23 @@ class ExamController extends Controller
             'email' => 'required|string|email|max:255',
         ]);
 
+
+        // Mengubah array langsung menjadi sebuah OBJECT
+        $user = (object) [
+            'name'     => trim(strtolower($request->name)),
+            'position' => trim(strtolower($request->position)),
+            'phone'    => trim(strtolower($request->phone)),
+            'email'    => trim(strtolower($request->email)),
+        ];
+
         session()->put('exam_candidate.' . $exam->id, [
             'name'     => trim(strtolower($request->name)),
             'position' => trim(strtolower($request->position)),
             'phone'    => trim(strtolower($request->phone)),
             'email'    => trim(strtolower($request->email)),
         ]);
+
+        Mail::to($user->email)->send(new UserAssignMail($user, $exam));
 
         return redirect()->route('exam.instructions', $exam);
     }
