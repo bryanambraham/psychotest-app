@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    private function sendMail($user){
+        
+        return view('emails.user_created', $user);
+    }
+
     // Tampilkan daftar semua user
     public function index()
     {
