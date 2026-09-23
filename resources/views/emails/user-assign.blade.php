@@ -15,11 +15,11 @@ Terima kasih telah mengikuti proses rekrutmen bersama GrandLucky. Sebagai bagian
     $decrypted_password = \Illuminate\Support\Facades\Crypt::decryptString($user->password);
 @endphp
 * **Password:** {{ $decrypted_password }}
-* **Batas Waktu Pengerjaan:** *Maksimal 48 jam sejak email ini diterima.* Setelah melewati batas waktu tersebut, akses psikotes akan ditutup.
+* **Batas Waktu Pengerjaan:** *Maksimal 48 jam sejak email ini diterima.*
 @endcomponent
 
 @component('mail::button', ['url' => 'https://recruitment.grandlucky.co.id/psychotest.online/public/login'])
-Masuk ke Aplikasi Psikotes
+Masuk ke Halaman Tes
 @endcomponent
 
 Sebelum memulai mengerjakan test, mohon perhatikan beberapa hal, yaitu:
@@ -33,6 +33,6 @@ Demikian Kami sampaikan,
 Terima kasih atas partisipasinya dan semoga sukses.
 
 Warm regards,  
-**Talent Acquisition**  
+**HR Talent Acquisition**  
 {{ config('app.name') }}
 @endcomponent
