@@ -42,7 +42,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="lokasi_diundang">Lokasi Interview</label>
-                                    <input type="text" id="lokasi_diundang" name="lokasi_diundang" class="form-control" placeholder="Contoh: GrandLucky Group - Bandung" required>
+                                    <input type="text" id="lokasi_diundang" name="lokasi_diundang" class="form-control" placeholder="Contoh: HO" required>
                                 </div>
                             </div>
                         </div>

@@ -33,7 +33,7 @@ class UserInterviewMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Undangan Interview Kerja')
+        return $this->subject('Undangan Interview Rekrutmen GrandLucky Group')
             ->markdown('emails.user-interview')
             ->with([
                 'user' => $this->user,
