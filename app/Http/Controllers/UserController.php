@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\UserInterviewMail;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -39,6 +41,8 @@ class UserController extends Controller
             'phone'    => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'role'     => 'required|in:admin,user',
+            'interview' => 'nullable|date',
+            'status_kandidat' => 'nullable|string',
         ]);
 
         $user = User::create([
@@ -48,6 +52,8 @@ class UserController extends Controller
             'phone' => strtolower($request->phone),
             'password' => \Illuminate\Support\Facades\Crypt::encryptString($request->password),
             'role'     => $request->role,
+            'interview' => $request->interview,
+            'status_kandidat' => $request->status_kandidat,
         ]);
 
         ActivityLogger::logCreate($user, $user->id, $user, "User di POST: {$user->name}, email: {$user->email}, dan NoTelp: {$user->phone}.");
@@ -73,6 +79,8 @@ class UserController extends Controller
             'position' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'role'  => 'required|in:admin,user',
+            'interview' => 'nullable|date',
+            'status_kandidat' => 'nullable|string',
         ]);
 
         $data = [
@@ -81,6 +89,8 @@ class UserController extends Controller
             'position' => strtolower($request->position),
             'phone' => strtolower($request->phone),
             'role' => $request->role,
+            'interview' => $request->interview,
+            'status_kandidat' => $request->status_kandidat,
         ];
 
         // Update password hanya jika diisi
@@ -168,5 +178,37 @@ class UserController extends Controller
         fclose($handle);
 
         return redirect()->route('users.index')->with('success', 'Data user berhasil di-import dari CSV.');
+    }
+
+    public function filterInterview(User $user)
+    {
+        return view('interview.create', compact('user'));
+    }
+
+    public function undangInterview(Request $request, User $user)
+    {
+        $request->validate([
+            'jenis_undangan' => 'required|string',
+            'pengundang' => 'required|string',
+            'posisi_pengundang' => 'required|string',
+            'tanggal_diundang' => 'required|date',
+            'waktu_diundang' => 'required',
+            'lokasi_diundang' => 'required|string',
+            'persiapan_diundang' => 'required|string',
+        ]);
+
+        $jenis_undangan = $request->jenis_undangan;
+        $pengundang = $request->pengundang;
+        $posisi_pengundang = $request->posisi_pengundang;
+        $tanggal_diundang = $request->tanggal_diundang;
+        $waktu_diundang = $request->waktu_diundang;
+        $lokasi_diundang = $request->lokasi_diundang;
+        $persiapan_diundang = $request->persiapan_diundang;
+
+        Mail::to($user->email)->send(
+            new UserInterviewMail($user, $jenis_undangan, $pengundang, $posisi_pengundang, $tanggal_diundang, $waktu_diundang, $lokasi_diundang, $persiapan_diundang)
+        );
+
+        return redirect()->route('users.index')->with('success', 'Undangan interview berhasil dikirim ke ' . $user->email . '.');
     }
 }

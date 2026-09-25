@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -112,4 +113,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
     Route::delete('/activity-log/destroy', [ActivityLogController::class, 'destroy'])->name('activity-log.destroy');
+
+    Route::get('/users/{user}/interview', [UserController::class, 'filterInterview'])->name('users.interview');
+    Route::post('/users/{user}/interview', [UserController::class, 'undangInterview'])->name('users.interview.send');
 });

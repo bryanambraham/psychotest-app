@@ -22,6 +22,11 @@
                             <label>Email</label>
                             <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                         </div>
+                        
+                        <div class="form-group">
+                            <label>Status Kandidat</label>
+                            <input type="status_kandidat" name="status_kandidat" class="form-control" value="{{ old('status_kandidat', $user->status_kandidat) }}">
+                        </div>
 
                         <div class="form-group">
                             <label>Posisi</label>

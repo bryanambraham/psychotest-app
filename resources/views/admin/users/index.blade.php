@@ -77,6 +77,8 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex flex-wrap justify-content-center gap-1">
+                                <a href="{{ route('users.interview', $user) }}"
+                                   class="btn btn-sm btn-warning text-nowrap" style="background-color: blue !important;">Send Inv</a>
                                 <a href="{{ route('users.edit', $user->id) }}"
                                    class="btn btn-sm btn-warning text-nowrap">Edit</a>
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">

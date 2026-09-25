@@ -1,12 +1,8 @@
 @component('mail::message')
 Halo {{ $user->name }},
 
-Akun Anda telah diassign untuk mengikuti ujian "{{ $exam->name }}", silakan dikerjakan.
-
-@component('mail::message')
-Halo {{ $user->name }},
-
-Terima kasih telah mengikuti proses rekrutmen bersama GrandLucky. Sebagai bagian dari tahap selanjutnya, kami mengundang Anda untuk mengikuti psikotes yang dapat diakses melalui website rekrutmen kami dengan detail sebagai berikut:
+Terima kasih telah mengikuti proses rekrutmen bersama GrandLucky. 
+Sebagai bagian dari tahap selanjutnya, kami mengundang Anda untuk mengikuti psikotes yang dapat diakses melalui website rekrutmen kami dengan detail sebagai berikut:
 
 @component('mail::panel')
 **Detail Akun Login:**

@@ -107,6 +107,9 @@
                         @else
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle font-weight-bold" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    @if (auth::user()->status_kandidat)
+                                        <span class="badge badge-pill mr-2" style="background-color: blue;">{{ strtoupper(auth()->user()->status_kandidat) }}</span>
+                                    @endif
                                     <span class="badge badge-pill badge-primary mr-2">{{ strtoupper(auth()->user()->role) }}</span>
                                     Halo, {{ Str::before(Auth::user()->name, ' ') }}
                                 </a>
