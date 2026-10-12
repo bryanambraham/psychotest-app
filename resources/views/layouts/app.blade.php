@@ -29,6 +29,25 @@
         }
         .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.04); }
     </style>
+
+
+        @auth
+        <script>
+            // Sesi di server cuma diperpanjang kalau ada REQUEST, bukan gerakan mouse.
+            // Jadi hitungannya dari halaman ini dimuat (= request terakhir dari tab ini).
+            // Lewat session.lifetime + 1 menit buffer, sesi pasti udah mati di server,
+            // reload (GET) di sini bikin user dilempar ke /login dengan normal, bukan
+            // baru ketauan pas klik tombol & kena 419. Buffer-nya penting: kalau reload
+            // pas sebelum expired, reload itu sendiri malah memperpanjang sesi.
+            (function () {
+                var expireMs = ({{ (int) config('session.lifetime') }} + 1) * 60 * 1000;
+
+                setTimeout(function () {
+                    window.location.reload();
+                }, expireMs);
+            })();
+        </script>
+        @endauth
 </head>
 <body>
     <div id="app" class="font-weight-bold">

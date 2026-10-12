@@ -86,6 +86,12 @@ Route::middleware(['auth'])->group(function () {
     // Update data ujian & Sinkronisasi Peserta (Sync many-to-many)
     Route::put('/manage-exams/{id}', 'ExamManagementController@update')->name('manage-exams.update')->middleware('role:admin');
 
+    // URL di atas cuma buat PUT. Kalau kebuka lewat GET (refresh / Enter di address bar
+    // setelah submit gagal), balikin ke halaman edit daripada error MethodNotAllowed.
+    Route::get('/manage-exams/{id}', function ($id) {
+        return redirect()->route('manage-exams.edit', $id);
+    })->where('id', '[0-9]+')->middleware('role:admin');
+
     // Resource route untuk User (index, create, store, edit, update, destroy)
     Route::resource('users', 'UserController')->middleware('role:admin');
     Route::post('/users/import', [App\Http\Controllers\UserController::class, 'import'])->name('users.import');
