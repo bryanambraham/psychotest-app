@@ -1,7 +1,5 @@
 <?php
 
-namespace Database\Seeders;
-
 use Illuminate\Database\Seeder;
 use App\Role;
 use App\Permission;
@@ -277,11 +275,4 @@ class RolePermissionSeeder extends Seeder
         User::where('role', 'admin')->update(['role_id' => $adminRole->id]);
         User::where('role', 'user')->orWhereNull('role')->update(['role_id' => $userRole->id]);
     }
-}
-
-// Jembatan alias agar dapat dipanggil dengan atau tanpa namespace:
-// php artisan db:seed --class=RolePermissionSeeder
-// maupun php artisan db:seed --class="Database\Seeders\RolePermissionSeeder"
-if (!class_exists('RolePermissionSeeder', false)) {
-    class_alias(\Database\Seeders\RolePermissionSeeder::class, 'RolePermissionSeeder');
 }
