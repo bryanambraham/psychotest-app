@@ -16,7 +16,7 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:users.view')->only(['index']);
+        $this->middleware('permission:users.view,users.view_own')->only(['index']);
         $this->middleware('permission:users.create')->only(['create', 'store']);
         $this->middleware('permission:users.edit')->only(['edit', 'update']);
         $this->middleware('permission:users.delete')->only(['destroy']);
@@ -32,9 +32,15 @@ class UserController extends Controller
     // Tampilkan daftar semua user
     public function index()
     {
-        $users = User::latest()
-        ->where('name', 'not like', strtolower(config('app.admin_name')))
-        ->paginate(10);
+        $query = User::latest()
+            ->where('name', 'not like', strtolower(config('app.admin_name')));
+
+        // Jika bukan admin dan tidak memiliki hak 'users.view' (semua), tapi memiliki 'users.view_own'
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('users.view') && auth()->user()->hasPermission('users.view_own')) {
+            $query->where('created_by', auth()->id());
+        }
+
+        $users = $query->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
@@ -76,6 +82,7 @@ class UserController extends Controller
             'role_id'  => $roleModel ? $roleModel->id : null,
             'interview' => $request->interview,
             'status_kandidat' => $request->status_kandidat,
+            'created_by' => auth()->id(),
         ]);
 
         ActivityLogger::logCreate($user, $user->id, $user, "User di POST: {$user->name}, email: {$user->email}, dan NoTelp: {$user->phone}.");
@@ -87,6 +94,14 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
+
+        // Jika hanya memiliki izin view_own, pastikan hanya bisa mengedit user buatannya sendiri
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('users.view') && auth()->user()->hasPermission('users.view_own')) {
+            if ($user->created_by !== auth()->id()) {
+                abort(403, 'Anda hanya dapat mengedit user yang Anda buat sendiri.');
+            }
+        }
+
         $roles = Schema::hasTable('roles') ? Role::all() : collect([
             (object)['name' => 'user', 'display_name' => 'Peserta (User)'],
             (object)['name' => 'admin', 'display_name' => 'Administrator'],
@@ -98,6 +113,13 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+
+        // Jika hanya memiliki izin view_own, pastikan hanya bisa mengupdate user buatannya sendiri
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('users.view') && auth()->user()->hasPermission('users.view_own')) {
+            if ($user->created_by !== auth()->id()) {
+                abort(403, 'Anda hanya dapat mengupdate user yang Anda buat sendiri.');
+            }
+        }
 
         $roleRules = Schema::hasTable('roles') ? 'required|string|exists:roles,name' : 'required|in:admin,user';
 
@@ -146,6 +168,13 @@ class UserController extends Controller
         // Mencegah admin menghapus dirinya sendiri
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+        }
+
+        // Jika hanya memiliki izin view_own, pastikan hanya bisa menghapus user buatannya sendiri
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('users.view') && auth()->user()->hasPermission('users.view_own')) {
+            if ($user->created_by !== auth()->id()) {
+                abort(403, 'Anda hanya dapat menghapus user yang Anda buat sendiri.');
+            }
         }
 
         $user->delete();
@@ -199,6 +228,7 @@ class UserController extends Controller
                     'phone'    => $phone !== '' ? strtolower($phone) : null,
                     'password' => \Illuminate\Support\Facades\Crypt::encryptString($password !== '' ? $password : 'password123'),
                     'role'     => in_array(strtolower($role), ['admin', 'user']) ? strtolower($role) : 'user',
+                    'created_by' => auth()->id(),
                 ]);
 
                 // Catat di Activity Logger

@@ -58,6 +58,9 @@
                             <div class="d-block d-sm-none text-muted small">{{ $user->email }}</div>
                             <div class="d-block d-md-none text-muted small">Posisi: {{ $user->position ?? '-' }}</div>
                             <div class="d-block d-md-none text-muted small">Phone: {{ $user->phone ?? '-' }}</div>
+                            @if($user->creator)
+                                <div class="text-muted small mt-1"><i class="fas fa-user-edit mr-1"></i>Oleh: <span class="badge badge-light border">{{ $user->creator->name }}</span></div>
+                            @endif
                         </td>
                         <td class="d-none d-sm-table-cell text-break" style="max-width: 180px;">
                             {{ $user->email }}

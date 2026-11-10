@@ -25,7 +25,7 @@ class ExamManagementController extends Controller
         $this->middleware('permission:exams.qr')->only(['downloadQr']);
         $this->middleware('permission:exams.answer_keys')->only(['editAnswerKeys', 'updateAnswerKeys']);
         $this->middleware('permission:exams.instructions')->only(['editInstruction', 'updateInstructions']);
-        $this->middleware('permission:exam_results.view')->only(['resultsIndex']);
+        $this->middleware('permission:exam_results.view,exam_results.view_own')->only(['resultsIndex']);
         $this->middleware('permission:exam_results.detail')->only(['resultsShow']);
         $this->middleware('permission:exam_results.delete')->only(['destroyResultsIndex']);
         $this->middleware('permission:exam_results.export')->only(['exportExcel']);
@@ -271,9 +271,16 @@ class ExamManagementController extends Controller
         // 2. TAMPILKAN DATA SEPERTI BIASA
         // ========================================================
         // Ambil semua sesi yang sudah di-update
-        $sessions = \App\ExamSession::with(['user', 'exam'])
-                    ->latest()
-                    ->paginate(10);
+        $query = \App\ExamSession::with(['user', 'exam'])->latest();
+
+        // Jika bukan admin dan tidak memiliki hak 'exam_results.view' (semua), tapi memiliki 'exam_results.view_own'
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('exam_results.view') && auth()->user()->hasPermission('exam_results.view_own')) {
+            $query->whereHas('user', function ($q) {
+                $q->where('created_by', auth()->id());
+            });
+        }
+
+        $sessions = $query->paginate(10);
 
         return view('admin.exams.results_index', compact('sessions'));
     }
@@ -282,6 +289,13 @@ class ExamManagementController extends Controller
     {
         // Ambil semua sesi yang sudah selesai atau sedang berlangsung
         $sessions = \App\ExamSession::with(['user'])->findOrFail($id);
+
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('exam_results.view') && auth()->user()->hasPermission('exam_results.view_own')) {
+            if ($sessions->user && $sessions->user->created_by !== auth()->id()) {
+                abort(403, 'Anda hanya dapat menghapus hasil ujian dari peserta yang Anda buat sendiri.');
+            }
+        }
+
         $sessions->delete();
 
         ActivityLogger::logUpdate($sessions, $sessions->id, $sessions, "Hasil Ujian {$sessions->user->name} untuk posisi {$sessions->user->position}, di DELETE");
@@ -294,6 +308,12 @@ class ExamManagementController extends Controller
     {
         $session = \App\ExamSession::with(['user', 'exam.questions', 'proctoringLogs', 'userAnswers'])
                     ->findOrFail($session_id);
+
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('exam_results.view') && auth()->user()->hasPermission('exam_results.view_own')) {
+            if ($session->user && $session->user->created_by !== auth()->id()) {
+                abort(403, 'Anda hanya dapat melihat hasil ujian dari peserta yang Anda buat sendiri.');
+            }
+        }
 
         $verifyUser = VerifyUser::where('email', $session->user->email)->first();
 
@@ -457,6 +477,12 @@ class ExamManagementController extends Controller
     {
         $session = \App\ExamSession::with(['user', 'exam.questions', 'userAnswers'])
                     ->findOrFail($session_id);
+
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('exam_results.view') && auth()->user()->hasPermission('exam_results.view_own')) {
+            if ($session->user && $session->user->created_by !== auth()->id()) {
+                abort(403, 'Anda hanya dapat mengunduh hasil ujian dari peserta yang Anda buat sendiri.');
+            }
+        }
                     
         $verifyUser = \App\VerifyUser::where('email', $session->user->email)->first();
 

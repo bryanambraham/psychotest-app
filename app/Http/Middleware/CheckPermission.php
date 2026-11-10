@@ -20,8 +20,18 @@ class CheckPermission
             return redirect()->route('login');
         }
 
-        // Cek izin permission
-        if (!auth()->user()->hasPermission($permission)) {
+        // Cek izin permission (mendukung single atau multiple permission dipisah koma/pipe)
+        $permissions = preg_split('/[,|]/', $permission);
+        $hasAccess = false;
+        foreach ($permissions as $p) {
+            $p = trim($p);
+            if (!empty($p) && auth()->user()->hasPermission($p)) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        if (!$hasAccess) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => 'Anda tidak memiliki izin untuk aksi ini (' . $permission . ').'

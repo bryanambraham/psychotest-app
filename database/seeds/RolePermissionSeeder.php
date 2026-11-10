@@ -22,6 +22,7 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'exams.view',
                 'display_name' => 'Lihat Daftar Ujian & Preview',
                 'group' => 'Materi Ujian',
+                'description' => 'Melihat daftar materi ujian, preview dan copy link ujian',
             ],
             [
                 'name' => 'exams.create',
@@ -63,9 +64,15 @@ class RolePermissionSeeder extends Seeder
             // Hasil Ujian
             [
                 'name' => 'exam_results.view',
-                'display_name' => 'Lihat Laporan Hasil Ujian',
+                'display_name' => 'Lihat Laporan Hasil Ujian (Semua)',
                 'group' => 'Hasil Ujian',
-                'description' => 'Melihat daftar hasil ujian seluruh peserta',
+                'description' => 'Melihat daftar hasil ujian seluruh peserta di sistem',
+            ],
+            [
+                'name' => 'exam_results.view_own',
+                'display_name' => 'Lihat Hasil Ujian (User Buatan Sendiri Saja)',
+                'group' => 'Hasil Ujian',
+                'description' => 'Hanya dapat melihat daftar hasil ujian dari peserta yang dibuat oleh akun sendiri',
             ],
             [
                 'name' => 'exam_results.detail',
@@ -89,9 +96,15 @@ class RolePermissionSeeder extends Seeder
             // Manajemen User
             [
                 'name' => 'users.view',
-                'display_name' => 'Lihat Daftar User',
+                'display_name' => 'Lihat Daftar User (Semua)',
                 'group' => 'Manajemen User',
-                'description' => 'Melihat daftar seluruh pengguna',
+                'description' => 'Melihat daftar seluruh pengguna di sistem',
+            ],
+            [
+                'name' => 'users.view_own',
+                'display_name' => 'Lihat User (Buatan Sendiri Saja)',
+                'group' => 'Manajemen User',
+                'description' => 'Hanya dapat melihat daftar user yang dibuat oleh akun sendiri',
             ],
             [
                 'name' => 'users.create',
@@ -264,4 +277,11 @@ class RolePermissionSeeder extends Seeder
         User::where('role', 'admin')->update(['role_id' => $adminRole->id]);
         User::where('role', 'user')->orWhereNull('role')->update(['role_id' => $userRole->id]);
     }
+}
+
+// Jembatan alias agar dapat dipanggil dengan atau tanpa namespace:
+// php artisan db:seed --class=RolePermissionSeeder
+// maupun php artisan db:seed --class="Database\Seeders\RolePermissionSeeder"
+if (!class_exists('RolePermissionSeeder', false)) {
+    class_alias(\Database\Seeders\RolePermissionSeeder::class, 'RolePermissionSeeder');
 }

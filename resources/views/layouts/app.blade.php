@@ -71,7 +71,7 @@
                             </li>
 
                             {{-- Menu Administrasi Berdasarkan Hak Akses --}}
-                            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('exams.view') || auth()->user()->hasPermission('users.view') || auth()->user()->hasPermission('verify_users.view') || auth()->user()->hasPermission('roles.view') || auth()->user()->hasPermission('exam_results.view'))
+                            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('exams.view') || auth()->user()->hasPermission('users.view') || auth()->user()->hasPermission('users.view_own') || auth()->user()->hasPermission('verify_users.view') || auth()->user()->hasPermission('roles.view') || auth()->user()->hasPermission('exam_results.view') || auth()->user()->hasPermission('exam_results.view_own'))
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <i class="fas fa-cogs mr-1"></i> Administrasi
@@ -82,11 +82,11 @@
                                                 <i class="fas fa-edit mr-2 text-muted"></i> Kelola Ujian
                                             </a>
                                         @endcan
-                                        @can('users.view')
+                                        @canany(['users.view', 'users.view_own'])
                                             <a class="dropdown-item" href="{{ route('users.index') }}">
                                                 <i class="fas fa-users mr-2 text-muted"></i> Kelola User
                                             </a>
-                                        @endcan
+                                        @endcanany
                                         @can('verify_users.view')
                                             <a class="dropdown-item" href="{{ route('verify_users.index') }}">
                                                 <i class="fas fa-user-check mr-2 text-muted"></i> Kelola Verifikasi User
@@ -97,12 +97,12 @@
                                                 <i class="fas fa-user-shield mr-2 text-muted"></i> Kelola Role &amp; Hak Akses
                                             </a>
                                         @endcan
-                                        @can('exam_results.view')
+                                        @canany(['exam_results.view', 'exam_results.view_own'])
                                             <div class="dropdown-divider"></div>
                                             <a class="dropdown-item" href="{{ route('manage-exams.results') }}">
                                                 <i class="fas fa-chart-bar mr-2 text-muted"></i> Hasil Ujian
                                             </a>
-                                        @endcan
+                                        @endcanany
                                     </div>
                                 </li>
                             @endif

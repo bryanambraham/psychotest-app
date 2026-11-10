@@ -46,7 +46,12 @@
                 <tbody>
                     @foreach($sessions as $session)
                     <tr>
-                        <td class="text-nowrap">{{ $session->user->name }}</td>
+                        <td class="text-nowrap">
+                            {{ $session->user->name }}
+                            @if($session->user && $session->user->creator)
+                                <div class="text-muted small mt-1"><i class="fas fa-user-edit mr-1"></i>Oleh: <span class="badge badge-light border">{{ $session->user->creator->name }}</span></div>
+                            @endif
+                        </td>
                         <td class="text-break" style="max-width: 160px;">{{ $session->user->email }}</td>
                         <td class="d-none d-md-table-cell">{{ $session->user->position ?? '-' }}</td>
                         <td class="text-nowrap d-none d-lg-table-cell">{{ $session->user->phone ?? '-' }}</td>

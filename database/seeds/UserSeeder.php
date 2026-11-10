@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\seeds;
 
 use App\User;
 use Illuminate\Database\Seeder;
@@ -16,12 +16,14 @@ class UserSeeder extends Seeder
     public function run()
     {
         //
-        User::create([
-            'name' => 'bryan',
-            'username' => 'bryan',
-            'role' => 'admin',
-            'email' => 'bryanambraham@gmail.com',
-            'password' => Hash::make('bryan123'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'bryanambraham@gmail.com'],
+            [
+                'name' => 'bryan',
+                'username' => 'bryan',
+                'role' => 'admin',
+                'password' => \Illuminate\Support\Facades\Crypt::encryptString('bryan123'),
+            ]
+        );
     }
 }
