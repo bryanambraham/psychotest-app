@@ -11,34 +11,44 @@ class CheckPermission
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
-     * @param  string  $permission
+     * @param  mixed  ...$permissions
      * @return mixed
      */
-    public function handle($request, Closure $next, $permission)
+    public function handle($request, Closure $next, ...$permissions)
     {
         if (!auth()->check()) {
             return redirect()->route('login');
         }
 
-        // Cek izin permission (mendukung single atau multiple permission dipisah koma/pipe)
-        $permissions = preg_split('/[,|]/', $permission);
-        $hasAccess = false;
+        // Kumpulkan semua permission yang diizinkan (mendukung variadic maupun pemisah koma/pipe)
+        $permissionList = [];
         foreach ($permissions as $p) {
-            $p = trim($p);
-            if (!empty($p) && auth()->user()->hasPermission($p)) {
+            foreach (preg_split('/[,|]/', (string) $p) as $item) {
+                $item = trim($item);
+                if (!empty($item)) {
+                    $permissionList[] = $item;
+                }
+            }
+        }
+
+        // Cek apakah user memiliki salah satu dari permission yang diizinkan
+        $hasAccess = false;
+        foreach ($permissionList as $p) {
+            if (auth()->user()->hasPermission($p)) {
                 $hasAccess = true;
                 break;
             }
         }
 
         if (!$hasAccess) {
+            $required = implode(' atau ', $permissionList);
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki izin untuk aksi ini (' . $permission . ').'
+                    'message' => 'Anda tidak memiliki izin untuk aksi ini (' . $required . ').'
                 ], 403);
             }
 
-            abort(403, 'Anda tidak memiliki hak akses / izin (' . $permission . ') untuk halaman ini.');
+            abort(403, 'Anda tidak memiliki hak akses / izin (' . $required . ') untuk halaman ini.');
         }
 
         return $next($request);
