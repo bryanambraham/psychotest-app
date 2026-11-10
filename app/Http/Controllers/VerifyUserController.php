@@ -7,6 +7,14 @@ use Illuminate\Http\Request;
 
 class VerifyUserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth')->except(['create', 'store']);
+        $this->middleware('permission:verify_users.view')->only(['index']);
+        $this->middleware('permission:verify_users.delete')->only(['destroy']);
+        $this->middleware('permission:verify_users.delete_all')->only(['destroyAll']);
+    }
+
     // Tampilkan daftar semua user
     public function index()
     {

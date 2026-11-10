@@ -6,7 +6,9 @@
     {{-- ===== PAGE HEADER ===== --}}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <h3 class="mb-0 fs-responsive font-weight-bold">Daftar Materi Psikotes</h3>
-        <a href="{{ route('manage-exams.create') }}" class="btn btn-primary btn-sm">+ Tambah Ujian</a>
+        @can('exams.create')
+            <a href="{{ route('manage-exams.create') }}" class="btn btn-primary btn-sm">+ Tambah Ujian</a>
+        @endcan
     </div>
 
     {{-- ===== ALERT ===== --}}
@@ -58,36 +60,48 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex flex-wrap justify-content-center gap-1">
-                                <a href="{{ route('exam.show', $exam) }}"
-                                   class="btn btn-sm btn-outline-success text-nowrap">Preview</a>
+                                @can('exams.view')
+                                    <a href="{{ route('exam.show', $exam) }}"
+                                       class="btn btn-sm btn-outline-success text-nowrap">Preview</a>
+                                @endcan
 
-                                <a href="{{ route('manage-exams.edit', $exam->id) }}"
-                                   class="btn btn-sm btn-primary text-nowrap">Kelola</a>
+                                @can('exams.edit')
+                                    <a href="{{ route('manage-exams.edit', $exam->id) }}"
+                                       class="btn btn-sm btn-primary text-nowrap">Kelola</a>
+                                @endcan
 
-                                <a href="{{ route('manage-exams.edit-answer-keys', $exam->id) }}"
-                                   class="btn btn-sm btn-info text-nowrap" title="Edit Kunci Jawaban">
-                                    <span class="d-none d-lg-inline">Kunci Jawaban</span>
-                                    <span class="d-inline d-lg-none" title="Kunci Jawaban">Kunci</span>
-                                </a>
+                                @can('exams.answer_keys')
+                                    <a href="{{ route('manage-exams.edit-answer-keys', $exam->id) }}"
+                                       class="btn btn-sm btn-info text-nowrap" title="Edit Kunci Jawaban">
+                                        <span class="d-none d-lg-inline">Kunci Jawaban</span>
+                                        <span class="d-inline d-lg-none" title="Kunci Jawaban">Kunci</span>
+                                    </a>
+                                @endcan
 
-                                <a href="{{ route('manage-exams.qr', $exam->id) }}"
-                                   class="btn btn-sm btn-outline-secondary text-nowrap" title="Download QR">QR</a>
+                                @can('exams.qr')
+                                    <a href="{{ route('manage-exams.qr', $exam->id) }}"
+                                       class="btn btn-sm btn-outline-secondary text-nowrap" title="Download QR">QR</a>
+                                @endcan
 
-                                <button onclick="navigator.clipboard.writeText('{{ route('exam.show', $exam) }}'); alert('Link berhasil disalin!')"
-                                        class="btn btn-sm btn-outline-info text-nowrap">
-                                    <span class="d-none d-lg-inline">Copy Link</span>
-                                    <span class="d-inline d-lg-none" title="Copy Link">Copy</span>
-                                </button>
-
-                                <form action="{{ route('manage-exams.destroy', $exam->id) }}" method="POST"
-                                      style="display: inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger text-nowrap"
-                                            onclick="return confirm('Apakah Anda yakin ingin menghapus ujian ini?')">
-                                        Hapus
+                                @can('exams.view')
+                                    <button onclick="navigator.clipboard.writeText('{{ route('exam.show', $exam) }}'); alert('Link berhasil disalin!')"
+                                            class="btn btn-sm btn-outline-info text-nowrap">
+                                        <span class="d-none d-lg-inline">Copy Link</span>
+                                        <span class="d-inline d-lg-none" title="Copy Link">Copy</span>
                                     </button>
-                                </form>
+                                @endcan
+
+                                @can('exams.delete')
+                                    <form action="{{ route('manage-exams.destroy', $exam->id) }}" method="POST"
+                                          style="display: inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger text-nowrap"
+                                                onclick="return confirm('Apakah Anda yakin ingin menghapus ujian ini?')">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>

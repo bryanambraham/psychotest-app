@@ -25,6 +25,21 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        // Integrasi Gate dengan sistem Role & Permission
+        Gate::before(function ($user, $ability) {
+            if ($user->hasRole('admin')) {
+                return true;
+            }
+
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('permissions')) {
+                    return $user->hasPermission($ability) ? true : null;
+                }
+            } catch (\Throwable $e) {
+                return null;
+            }
+
+            return null;
+        });
     }
 }

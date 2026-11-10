@@ -9,9 +9,11 @@
         </div>
         <div class="d-flex" style="gap: 10px;">
             {{-- TOMBOL EXPORT BARU --}}
-            <a href="{{ route('manage-exams.results.export', $session->id) }}" class="btn btn-success btn-sm shadow-sm font-weight-bold">
-                📥 Export ke Excel
-            </a>
+            @can('exam_results.export')
+                <a href="{{ route('manage-exams.results.export', $session->id) }}" class="btn btn-success btn-sm shadow-sm font-weight-bold">
+                    📥 Export ke Excel
+                </a>
+            @endcan
             
             <a href="{{ route('manage-exams.results') }}" class="btn btn-secondary btn-sm shadow-sm">Kembali</a>
         </div>

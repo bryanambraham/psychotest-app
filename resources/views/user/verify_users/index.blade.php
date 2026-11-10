@@ -36,14 +36,16 @@
     </div>
 
     @if (count($users) >= 1)
-        <form action="{{ route('verify_user_all.destroy') }}" method="POST" class="my-4" id="delete-form-deleteAll">
-            @csrf
-            @method('DELETE')
-            <button type="button" class="btn btn-danger btn-sm shadow-sm btn-delete" title="Hapus Semua Verifikasi Data" style="border-radius: 6px;" id="deleteAll">
-                <!-- <i class="fas fa-trash-alt"></i> -->
-                    Hapus Semua Verifikasi User
-            </button>
-        </form>    
+        @can('verify_users.delete_all')
+            <form action="{{ route('verify_user_all.destroy') }}" method="POST" class="my-4" id="delete-form-deleteAll">
+                @csrf
+                @method('DELETE')
+                <button type="button" class="btn btn-danger btn-sm shadow-sm btn-delete" title="Hapus Semua Verifikasi Data" style="border-radius: 6px;" id="deleteAll">
+                    <!-- <i class="fas fa-trash-alt"></i> -->
+                        Hapus Semua Verifikasi User
+                </button>
+            </form>
+        @endcan
     @endif
 
 
@@ -96,15 +98,17 @@
                             {{-- Tombol Aksi --}}
                             <td class="align-middle px-4 text-center">
                                 <div class="d-flex justify-content-center" style="gap: 8px;">
-                                    {{-- Tombol Hapus --}}
-                                    <form action="{{ route('verify_user.destroy', $user->id) }}" method="POST" class="d-inline" id="delete-form-{{ $user->id }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn btn-danger btn-sm shadow-sm btn-delete" data-id="{{ $user->id }}" title="Hapus Data" style="border-radius: 6px;">
-                                            <!-- <i class="fas fa-trash-alt"></i> -->
-                                             Hapus
-                                        </button>
-                                    </form>
+                                    @can('verify_users.delete')
+                                        {{-- Tombol Hapus --}}
+                                        <form action="{{ route('verify_user.destroy', $user->id) }}" method="POST" class="d-inline" id="delete-form-{{ $user->id }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="btn btn-danger btn-sm shadow-sm btn-delete" data-id="{{ $user->id }}" title="Hapus Data" style="border-radius: 6px;">
+                                                <!-- <i class="fas fa-trash-alt"></i> -->
+                                                 Hapus
+                                            </button>
+                                        </form>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

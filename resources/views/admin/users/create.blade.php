@@ -37,9 +37,12 @@
                         </div> -->
                         <div class="form-group">
                             <label>Role</label>
-                            <select name="role" class="form-control">
-                                <option value="user">Peserta (User)</option>
-                                <option value="admin">Administrator</option>
+                            <select name="role" class="form-control" required>
+                                @foreach($roles ?? \App\Role::all() as $r)
+                                    <option value="{{ $r->name }}" {{ old('role', 'user') == $r->name ? 'selected' : '' }}>
+                                        {{ $r->display_name }} ({{ $r->name }})
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="form-group">

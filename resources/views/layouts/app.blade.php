@@ -70,29 +70,44 @@
                                 </a>
                             </li>
 
-                            {{-- Menu Khusus Admin --}}
-                            @if(auth()->user()->role == 'admin')
+                            {{-- Menu Administrasi Berdasarkan Hak Akses --}}
+                            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('exams.view') || auth()->user()->hasPermission('users.view') || auth()->user()->hasPermission('verify_users.view') || auth()->user()->hasPermission('roles.view') || auth()->user()->hasPermission('exam_results.view'))
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <i class="fas fa-cogs mr-1"></i> Administrasi
                                     </a>
                                     <div class="dropdown-menu shadow-sm" aria-labelledby="adminDropdown">
-                                        <a class="dropdown-item" href="{{ route('manage-exams.index') }}">
-                                            <i class="fas fa-edit mr-2 text-muted"></i> Kelola Ujian
-                                        </a>
-                                        <a class="dropdown-item" href="{{ route('users.index') }}">
-                                            <i class="fas fa-users mr-2 text-muted"></i> Kelola User
-                                        </a>
-                                        <a class="dropdown-item" href="{{ route('verify_users.index') }}">
-                                            <i class="fas fa-users mr-2 text-muted"></i> Kelola Verifikasi User
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="{{ route('manage-exams.results') }}">
-                                            <i class="fas fa-chart-bar mr-2 text-muted"></i> Hasil Ujian
-                                        </a>
+                                        @can('exams.view')
+                                            <a class="dropdown-item" href="{{ route('manage-exams.index') }}">
+                                                <i class="fas fa-edit mr-2 text-muted"></i> Kelola Ujian
+                                            </a>
+                                        @endcan
+                                        @can('users.view')
+                                            <a class="dropdown-item" href="{{ route('users.index') }}">
+                                                <i class="fas fa-users mr-2 text-muted"></i> Kelola User
+                                            </a>
+                                        @endcan
+                                        @can('verify_users.view')
+                                            <a class="dropdown-item" href="{{ route('verify_users.index') }}">
+                                                <i class="fas fa-user-check mr-2 text-muted"></i> Kelola Verifikasi User
+                                            </a>
+                                        @endcan
+                                        @can('roles.view')
+                                            <a class="dropdown-item" href="{{ route('roles.index') }}">
+                                                <i class="fas fa-user-shield mr-2 text-muted"></i> Kelola Role &amp; Hak Akses
+                                            </a>
+                                        @endcan
+                                        @can('exam_results.view')
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="{{ route('manage-exams.results') }}">
+                                                <i class="fas fa-chart-bar mr-2 text-muted"></i> Hasil Ujian
+                                            </a>
+                                        @endcan
                                     </div>
                                 </li>
+                            @endif
 
+                            @can('system.toggle_closed')
                                 <form action="{{ route('admin.toggle-site-closed') }}" method="POST" class="d-inline ml-4">
                                     @csrf
                                     @if(\Illuminate\Support\Facades\Cache::get('site_closed_mode', false))
@@ -107,11 +122,13 @@
                                         </button>
                                     @endif
                                 </form>
-                            @endif
+                            @endcan
 
-                            @if(auth()->user()->name ==  strtolower(config('app.admin_name'))) 
-                                <a class="mx-3 btn btn-success font-weight-bold shadow-sm" href="{{ route('activity-log.index') }}">Activity Log</a>
-                            @endif
+                            @can('activity_log.view')
+                                <a class="mx-3 btn btn-success font-weight-bold shadow-sm" href="{{ route('activity-log.index') }}">
+                                    <i class="fas fa-history mr-1"></i> Activity Log
+                                </a>
+                            @endcan
                         @endauth
                     </ul>
 
@@ -146,7 +163,7 @@
                                     </span>
                                 @endif
 
-                                    <span class="badge badge-pill badge-primary mr-2">{{ strtoupper(auth()->user()->role) }}</span>
+                                    <span class="badge badge-pill badge-primary mr-2">{{ strtoupper(auth()->user()->getActiveRole() ? auth()->user()->getActiveRole()->display_name : auth()->user()->role) }}</span>
                                     Halo, {{ Str::before(Auth::user()->name, ' ') }}
                                 </a>
 

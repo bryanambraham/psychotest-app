@@ -78,20 +78,24 @@
                             {{ $session->created_at->format('d M Y, H:i') }}
                         </td>
                         <td class="text-center d-flex justify-content-center gap-2">
-                            <a href="{{ route('manage-exams.results.show', $session->id) }}"
-                               class="btn btn-sm btn-info text-white text-nowrap">
-                                <span class="d-none d-md-inline">Lihat Detail &amp; Foto</span>
-                                <span class="d-inline d-md-none">Detail</span>
-                            </a>
+                            @can('exam_results.detail')
+                                <a href="{{ route('manage-exams.results.show', $session->id) }}"
+                                   class="btn btn-sm btn-info text-white text-nowrap">
+                                    <span class="d-none d-md-inline">Lihat Detail &amp; Foto</span>
+                                    <span class="d-inline d-md-none">Detail</span>
+                                </a>
+                            @endcan
 
-                            <form action="{{ route('manage-exams.results.destroy', $session->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger text-white text-nowrap" onclick="return confirm('Apakah Anda yakin ingin menghapus hasil ujian ini?')">
-                                    <span class="d-none d-md-inline">Hapus</span>
-                                    <span class="d-inline d-md-none">Hapus</span>
-                                </button>
-                            </form>
+                            @can('exam_results.delete')
+                                <form action="{{ route('manage-exams.results.destroy', $session->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger text-white text-nowrap" onclick="return confirm('Apakah Anda yakin ingin menghapus hasil ujian ini?')">
+                                        <span class="d-none d-md-inline">Hapus</span>
+                                        <span class="d-inline d-md-none">Hapus</span>
+                                    </button>
+                                </form>
+                            @endcan
                         </td>
                     </tr>
                     @endforeach

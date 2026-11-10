@@ -7,10 +7,14 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h4 class="mb-0 fs-responsive font-weight-bold">Manajemen User</h4>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
-                ⬇️ Import CSV
-            </button>
-            <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">+ Tambah User</a>
+            @can('users.import')
+                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
+                    ⬇️ Import CSV
+                </button>
+            @endcan
+            @can('users.create')
+                <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">+ Tambah User</a>
+            @endcan
         </div>
     </div>
 
@@ -72,20 +76,28 @@
                         </td>
                         <td>
                             <span class="badge {{ $user->role == 'admin' ? 'badge-danger' : 'badge-secondary' }}">
-                                {{ strtoupper($user->role) }}
+                                {{ strtoupper($user->getActiveRole() ? $user->getActiveRole()->display_name : $user->role) }}
                             </span>
                         </td>
                         <td class="text-center">
                             <div class="d-flex flex-wrap justify-content-center gap-1">
-                                <a href="{{ route('users.interview', $user) }}"
-                                   class="btn btn-sm btn-warning text-nowrap" style="background-color: blue !important;">Send Inv</a>
-                                <a href="{{ route('users.edit', $user->id) }}"
-                                   class="btn btn-sm btn-warning text-nowrap">Edit</a>
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger text-nowrap"
-                                            onclick="return confirm('Hapus user ini?')">Hapus</button>
-                                </form>
+                                @can('users.interview')
+                                    <a href="{{ route('users.interview', $user) }}"
+                                       class="btn btn-sm btn-warning text-nowrap" style="background-color: blue !important;">Send Inv</a>
+                                @endcan
+
+                                @can('users.edit')
+                                    <a href="{{ route('users.edit', $user->id) }}"
+                                       class="btn btn-sm btn-warning text-nowrap">Edit</a>
+                                @endcan
+
+                                @can('users.delete')
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger text-nowrap"
+                                                onclick="return confirm('Hapus user ini?')">Hapus</button>
+                                    </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>

@@ -8,6 +8,13 @@ use Spatie\Activitylog\Models\Activity;
 
 class ActivityLogController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:activity_log.view')->only(['index']);
+        $this->middleware('permission:activity_log.delete')->only(['destroy']);
+    }
+
     public function index(Request $request)
     {   
         $number_paginate = [10, 25, 50, 100, 300, 999999999];

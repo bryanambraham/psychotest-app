@@ -3,14 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Mail\UserInterviewMail;
+use App\Role;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:users.view')->only(['index']);
+        $this->middleware('permission:users.create')->only(['create', 'store']);
+        $this->middleware('permission:users.edit')->only(['edit', 'update']);
+        $this->middleware('permission:users.delete')->only(['destroy']);
+        $this->middleware('permission:users.import')->only(['import']);
+        $this->middleware('permission:users.interview')->only(['filterInterview', 'undangInterview']);
+    }
+
     private function sendMail($user){
         
         return view('emails.user_created', $user);
@@ -28,22 +41,30 @@ class UserController extends Controller
     // Form tambah user
     public function create()
     {
-        return view('admin.users.create');
+        $roles = Schema::hasTable('roles') ? Role::all() : collect([
+            (object)['name' => 'user', 'display_name' => 'Peserta (User)'],
+            (object)['name' => 'admin', 'display_name' => 'Administrator'],
+        ]);
+        return view('admin.users.create', compact('roles'));
     }
 
     // Simpan user baru
     public function store(Request $request)
     {
+        $roleRules = Schema::hasTable('roles') ? 'required|string|exists:roles,name' : 'required|in:admin,user';
+
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'position' => 'nullable|string|max:50',
             'phone'    => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
-            'role'     => 'required|in:admin,user',
+            'role'     => $roleRules,
             'interview' => 'nullable|date',
             'status_kandidat' => 'nullable|string',
         ]);
+
+        $roleModel = Schema::hasTable('roles') ? Role::where('name', $request->role)->first() : null;
 
         $user = User::create([
             'name' => strtolower($request->name),
@@ -51,7 +72,8 @@ class UserController extends Controller
             'position' => strtolower($request->position),
             'phone' => strtolower($request->phone),
             'password' => \Illuminate\Support\Facades\Crypt::encryptString($request->password),
-            'role'     => $request->role,
+            'role'     => $roleModel ? $roleModel->name : $request->role,
+            'role_id'  => $roleModel ? $roleModel->id : null,
             'interview' => $request->interview,
             'status_kandidat' => $request->status_kandidat,
         ]);
@@ -65,7 +87,11 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        return view('admin.users.edit', compact('user'));
+        $roles = Schema::hasTable('roles') ? Role::all() : collect([
+            (object)['name' => 'user', 'display_name' => 'Peserta (User)'],
+            (object)['name' => 'admin', 'display_name' => 'Administrator'],
+        ]);
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     // Update data user
@@ -73,22 +99,27 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        $roleRules = Schema::hasTable('roles') ? 'required|string|exists:roles,name' : 'required|in:admin,user';
+
         $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'position' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
-            'role'  => 'required|in:admin,user',
+            'role'  => $roleRules,
             'interview' => 'nullable|date',
             'status_kandidat' => 'nullable|string',
         ]);
+
+        $roleModel = Schema::hasTable('roles') ? Role::where('name', $request->role)->first() : null;
 
         $data = [
             'name' => strtolower($request->name),
             'email' => strtolower($request->email),
             'position' => strtolower($request->position),
             'phone' => strtolower($request->phone),
-            'role' => $request->role,
+            'role' => $roleModel ? $roleModel->name : $request->role,
+            'role_id' => $roleModel ? $roleModel->id : null,
             'interview' => $request->interview,
             'status_kandidat' => $request->status_kandidat,
         ];

@@ -54,72 +54,124 @@ Route::get('/exam/{exam}', 'ExamController@show')->name('exam.show');
 //     return redirect()->route('exam.instructions', $exam);
 // })->name('exam.show');
 
-Route::get('/verify-user', 'VerifyUserController@index')->name('verify_users.index');
 Route::get('/verify-data', 'VerifyUserController@create')->name('verify.create');
 Route::post('/verify-data', 'VerifyUserController@store')->name('verify.store');
-Route::delete('/verify-data/{id}', 'VerifyUserController@destroy')->name('verify_user.destroy');
-Route::delete('/verify-data/destroy/all', 'VerifyUserController@destroyAll')->name('verify_user_all.destroy');
 
 // Grup Rute yang memerlukan Login
 Route::middleware(['auth'])->group(function () {
-    Route::post('/admin/toggle-site-closed', 'ExamManagementController@toggleSiteClosed')->name('admin.toggle-site-closed');
+    // Verifikasi User Admin
+    Route::get('/verify-user', 'VerifyUserController@index')
+        ->name('verify_users.index')
+        ->middleware('permission:verify_users.view');
+
+    Route::delete('/verify-data/{id}', 'VerifyUserController@destroy')
+        ->name('verify_user.destroy')
+        ->middleware('permission:verify_users.delete');
+
+    Route::delete('/verify-data/destroy/all', 'VerifyUserController@destroyAll')
+        ->name('verify_user_all.destroy')
+        ->middleware('permission:verify_users.delete_all');
+    Route::post('/admin/toggle-site-closed', 'ExamManagementController@toggleSiteClosed')
+        ->name('admin.toggle-site-closed')
+        ->middleware('permission:system.toggle_closed');
+
     /* --------------------------------------------------------------------------
-    | Sisi Admin (Manajemen Ujian & Peserta)
+    | Sisi Admin & Manajemen (Dilindungi Permission)
     |--------------------------------------------------------------------------
     */
-    // Daftar semua materi ujian
-    Route::get('/manage-exams', 'ExamManagementController@index')->name('manage-exams.index')->middleware('role:admin');
+    // Manajemen Ujian
+    Route::get('/manage-exams', 'ExamManagementController@index')
+        ->name('manage-exams.index')
+        ->middleware('permission:exams.view');
 
-    Route::delete('/manage-exams/destroy/{id}', 'ExamManagementController@destroy')->name('manage-exams.destroy')->middleware('role:admin');
+    Route::get('/manage-exams/create', 'ExamManagementController@create')
+        ->name('manage-exams.create')
+        ->middleware('permission:exams.create');
 
-    // Form tambah materi baru
-    Route::get('/manage-exams/create', 'ExamManagementController@create')->name('manage-exams.create')->middleware('role:admin');
+    Route::post('/manage-exams', 'ExamManagementController@store')
+        ->name('manage-exams.store')
+        ->middleware('permission:exams.create');
 
-    // Simpan materi baru (logic pengiriman ke Python bisa ditaruh di sini)
-    Route::post('/manage-exams', 'ExamManagementController@store')->name('manage-exams.store')->middleware('role:admin');
+    Route::get('/manage-exams/{id}/peserta', 'ExamManagementController@edit')
+        ->name('manage-exams.edit')
+        ->middleware('permission:exams.edit');
 
-    // Form edit ujian & Atur Penugasan Peserta (Assignment)
-    Route::get('/manage-exams/{id}/peserta', 'ExamManagementController@edit')->name('manage-exams.edit')->middleware('role:admin');
+    Route::get('/manage-exams/edit/{id}', 'ExamManagementController@edit')
+        ->name('manage-exams.edit')
+        ->middleware('permission:exams.edit');
 
-    Route::get('/manage-exams/edit/{id}', 'ExamManagementController@edit')->name('manage-exams.edit')->middleware('role:admin');
+    Route::put('/manage-exams/{id}', 'ExamManagementController@update')
+        ->name('manage-exams.update')
+        ->middleware('permission:exams.edit');
 
-    // Update data ujian & Sinkronisasi Peserta (Sync many-to-many)
-    Route::put('/manage-exams/{id}', 'ExamManagementController@update')->name('manage-exams.update')->middleware('role:admin');
-
-    // URL di atas cuma buat PUT. Kalau kebuka lewat GET (refresh / Enter di address bar
-    // setelah submit gagal), balikin ke halaman edit daripada error MethodNotAllowed.
     Route::get('/manage-exams/{id}', function ($id) {
         return redirect()->route('manage-exams.edit', $id);
-    })->where('id', '[0-9]+')->middleware('role:admin');
+    })->where('id', '[0-9]+')->middleware('permission:exams.edit');
 
-    // Resource route untuk User (index, create, store, edit, update, destroy)
-    Route::resource('users', 'UserController')->middleware('role:admin');
-    Route::post('/users/import', [App\Http\Controllers\UserController::class, 'import'])->name('users.import');
+    Route::delete('/manage-exams/destroy/{id}', 'ExamManagementController@destroy')
+        ->name('manage-exams.destroy')
+        ->middleware('permission:exams.delete');
 
-    Route::get('/exam-results', 'ExamManagementController@resultsIndex')->name('manage-exams.results')->middleware('role:admin');
-    Route::delete('/exam-results/{id}', 'ExamManagementController@destroyResultsIndex')->name('manage-exams.results.destroy')->middleware('role:admin');
-    Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')->name('manage-exams.results.show')->middleware('role:admin');
+    Route::get('/manage-exams/{id}/qr', 'ExamManagementController@downloadQr')
+        ->name('manage-exams.qr')
+        ->middleware('permission:exams.qr');
 
-    // TAMBAHKAN ROUTE EXPORT EXCEL DI SINI
-    Route::get('/exam-results/{session_id}/export', 'ExamManagementController@exportExcel')->name('manage-exams.results.export')->middleware('role:admin');
-    
-    // Download QR untuk setiap ujian (menghasilkan PNG yang bisa diunduh)
-    Route::get('/manage-exams/{id}/qr', 'ExamManagementController@downloadQr')->name('manage-exams.qr')->middleware('role:admin');
+    Route::get('/manage-exams/{id}/answer-keys', 'ExamManagementController@editAnswerKeys')
+        ->name('manage-exams.edit-answer-keys')
+        ->middleware('permission:exams.answer_keys');
 
-    // Rute untuk mengelola kunci jawaban
-    Route::get('/manage-exams/{id}/answer-keys', 'ExamManagementController@editAnswerKeys')->name('manage-exams.edit-answer-keys')->middleware('role:admin');
-    Route::put('/manage-exams/{id}/answer-keys', 'ExamManagementController@updateAnswerKeys')->name('manage-exams.update-answer-keys')->middleware('role:admin');
+    Route::put('/manage-exams/{id}/answer-keys', 'ExamManagementController@updateAnswerKeys')
+        ->name('manage-exams.update-answer-keys')
+        ->middleware('permission:exams.answer_keys');
 
-    Route::get('/manage-exam/instruction/{exam}', 'ExamManagementController@editInstruction')->name('manage-exams.edit-instructions')->middleware('role:admin');
-   
+    Route::get('/manage-exam/instruction/{exam}', 'ExamManagementController@editInstruction')
+        ->name('manage-exams.edit-instructions')
+        ->middleware('permission:exams.instructions');
+
     Route::post('/manage-exams/{id}/update-instructions', 'ExamManagementController@updateInstructions')
-        ->name('manage-exams.update-instructions');
+        ->name('manage-exams.update-instructions')
+        ->middleware('permission:exams.instructions');
 
-    
+    // Hasil Ujian
+    Route::get('/exam-results', 'ExamManagementController@resultsIndex')
+        ->name('manage-exams.results')
+        ->middleware('permission:exam_results.view');
 
-    Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
-    Route::delete('/activity-log/destroy', [ActivityLogController::class, 'destroy'])->name('activity-log.destroy');
+    Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')
+        ->name('manage-exams.results.show')
+        ->middleware('permission:exam_results.detail');
 
-    Route::get('/users/{user}/interview', [UserController::class, 'filterInterview'])->name('users.interview');
-    Route::post('/users/{user}/interview', [UserController::class, 'undangInterview'])->name('users.interview.send');
+    Route::delete('/exam-results/{id}', 'ExamManagementController@destroyResultsIndex')
+        ->name('manage-exams.results.destroy')
+        ->middleware('permission:exam_results.delete');
+
+    Route::get('/exam-results/{session_id}/export', 'ExamManagementController@exportExcel')
+        ->name('manage-exams.results.export')
+        ->middleware('permission:exam_results.export');
+
+    // Manajemen User
+    Route::resource('users', 'UserController');
+    Route::post('/users/import', [App\Http\Controllers\UserController::class, 'import'])
+        ->name('users.import')
+        ->middleware('permission:users.import');
+
+    Route::get('/users/{user}/interview', [UserController::class, 'filterInterview'])
+        ->name('users.interview')
+        ->middleware('permission:users.interview');
+
+    Route::post('/users/{user}/interview', [UserController::class, 'undangInterview'])
+        ->name('users.interview.send')
+        ->middleware('permission:users.interview');
+
+    // Manajemen Role & Permission
+    Route::resource('roles', 'RoleController');
+
+    // Activity Log
+    Route::get('/activity-log', [ActivityLogController::class, 'index'])
+        ->name('activity-log.index')
+        ->middleware('permission:activity_log.view');
+
+    Route::delete('/activity-log/destroy', [ActivityLogController::class, 'destroy'])
+        ->name('activity-log.destroy')
+        ->middleware('permission:activity_log.delete');
 });

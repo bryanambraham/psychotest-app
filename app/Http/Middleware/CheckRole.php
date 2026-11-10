@@ -13,10 +13,10 @@ class CheckRole
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next, $role)
+    public function handle($request, Closure $next, ...$roles)
     {
         // Jika user belum login atau role-nya tidak sesuai, tendang ke 403 (Forbidden)
-        if (!auth()->check() || auth()->user()->role !== $role) {
+        if (!auth()->check() || !auth()->user()->hasRole($roles)) {
             abort(403, 'Anda tidak memiliki hak akses ke halaman ini.');
         }
 

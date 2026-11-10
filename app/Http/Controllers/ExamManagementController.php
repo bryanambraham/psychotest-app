@@ -15,6 +15,23 @@ use Illuminate\Support\Facades\Log;
 
 class ExamManagementController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:exams.view')->only(['index']);
+        $this->middleware('permission:exams.create')->only(['create', 'store']);
+        $this->middleware('permission:exams.edit')->only(['edit', 'update']);
+        $this->middleware('permission:exams.delete')->only(['destroy']);
+        $this->middleware('permission:exams.qr')->only(['downloadQr']);
+        $this->middleware('permission:exams.answer_keys')->only(['editAnswerKeys', 'updateAnswerKeys']);
+        $this->middleware('permission:exams.instructions')->only(['editInstruction', 'updateInstructions']);
+        $this->middleware('permission:exam_results.view')->only(['resultsIndex']);
+        $this->middleware('permission:exam_results.detail')->only(['resultsShow']);
+        $this->middleware('permission:exam_results.delete')->only(['destroyResultsIndex']);
+        $this->middleware('permission:exam_results.export')->only(['exportExcel']);
+        $this->middleware('permission:system.toggle_closed')->only(['toggleSiteClosed']);
+    }
+
     // Menampilkan daftar semua ujian
     public function index()
     {
