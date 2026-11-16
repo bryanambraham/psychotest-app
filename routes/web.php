@@ -11,16 +11,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Halaman Landing Page
-Route::get('/', function () {
-    return redirect('/login');
-});
+Route::redirect('/', '/login');
 
 // Rute Autentikasi Bawaan Laravel UI (Login, Register, Forgot Password)
 Auth::routes();
 
-Route::get('/register', function () {
-    return redirect('/login');
-});
+Route::redirect('/register', '/login');
 
 
 // Rute Dashboard Utama setelah Login
@@ -97,16 +93,16 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:exams.edit');
 
     Route::get('/manage-exams/edit/{id}', 'ExamManagementController@edit')
-        ->name('manage-exams.edit')
+        ->name('manage-exams.edit-alt')
         ->middleware('permission:exams.edit');
 
     Route::put('/manage-exams/{id}', 'ExamManagementController@update')
         ->name('manage-exams.update')
         ->middleware('permission:exams.edit');
 
-    Route::get('/manage-exams/{id}', function ($id) {
-        return redirect()->route('manage-exams.edit', $id);
-    })->where('id', '[0-9]+')->middleware('permission:exams.edit');
+    Route::get('/manage-exams/{id}', 'ExamManagementController@edit')
+        ->where('id', '[0-9]+')
+        ->middleware('permission:exams.edit');
 
     Route::delete('/manage-exams/destroy/{id}', 'ExamManagementController@destroy')
         ->name('manage-exams.destroy')
