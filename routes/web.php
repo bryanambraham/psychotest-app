@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Halaman Landing Page
-Route::redirect('/', '/login');
+Route::get('/', 'UserController@rootRedirect');
 
 // Rute Autentikasi Bawaan Laravel UI (Login, Register, Forgot Password)
 Auth::routes();

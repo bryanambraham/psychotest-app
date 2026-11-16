@@ -29,6 +29,12 @@ class UserController extends Controller
         return view('emails.user_created', $user);
     }
 
+    public function rootRedirect()
+    {
+        return redirect()->route('login');
+    }
+
+
     // Tampilkan daftar semua user
     public function index()
     {
