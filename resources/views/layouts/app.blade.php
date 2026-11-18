@@ -77,11 +77,11 @@
                                         <i class="fas fa-cogs mr-1"></i> Administrasi
                                     </a>
                                     <div class="dropdown-menu shadow-sm" aria-labelledby="adminDropdown">
-                                        @can('exams.view')
+                                        @canany(['exams.view','exams.create','exams.edit'])
                                             <a class="dropdown-item" href="{{ route('manage-exams.index') }}">
                                                 <i class="fas fa-edit mr-2 text-muted"></i> Kelola Ujian
                                             </a>
-                                        @endcan
+                                        @endcanany
                                         @canany(['users.view', 'users.view_own'])
                                             <a class="dropdown-item" href="{{ route('users.index') }}">
                                                 <i class="fas fa-users mr-2 text-muted"></i> Kelola User

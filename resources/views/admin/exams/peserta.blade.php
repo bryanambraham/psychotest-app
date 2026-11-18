@@ -25,9 +25,12 @@
                 <div class="card-header bg-white font-weight-bold d-flex justify-content-between align-items-center">
                     <span>Kelola Peserta Ujian: {{ $exam->name }}</span>
                     <div>
-                        <a href="{{ route('manage-exams.edit-instructions', $exam) }}" class="btn btn-sm btn-info text-white mr-2">
-                            <i class="mr-1"></i> Kelola Instruksi
-                        </a>
+                        @can('exams.instructions')
+                            <a href="{{ route('manage-exams.edit-instructions', $exam) }}" class="btn btn-sm btn-info text-white mr-2">
+                                <i class="mr-1"></i> Kelola Instruksi
+                            </a>
+                        @endcan
+
                         <a href="{{ route('manage-exams.index') }}" class="btn btn-sm btn-outline-secondary">Kembali</a>
                     </div>
                 </div>

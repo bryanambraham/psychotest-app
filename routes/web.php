@@ -78,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
     // Manajemen Ujian
     Route::get('/manage-exams', 'ExamManagementController@index')
         ->name('manage-exams.index')
-        ->middleware('permission:exams.view');
+        ->middleware('permission:exams.view,exams.create,exams.edit,exams.delete');
 
     Route::get('/manage-exams/create', 'ExamManagementController@create')
         ->name('manage-exams.create')
@@ -131,7 +131,7 @@ Route::middleware(['auth'])->group(function () {
     // Hasil Ujian
     Route::get('/exam-results', 'ExamManagementController@resultsIndex')
         ->name('manage-exams.results')
-        ->middleware('permission:exam_results.view');
+        ->middleware('permission:exam_results.view,exam_results.view_own');
 
     Route::get('/exam-results/{session_id}', 'ExamManagementController@resultsShow')
         ->name('manage-exams.results.show')

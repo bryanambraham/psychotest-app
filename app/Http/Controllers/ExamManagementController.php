@@ -18,7 +18,7 @@ class ExamManagementController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:exams.view')->only(['index']);
+        // $this->middleware('permission:exams.view')->only(['index']);
         $this->middleware('permission:exams.create')->only(['create', 'store']);
         $this->middleware('permission:exams.edit')->only(['edit', 'update']);
         $this->middleware('permission:exams.delete')->only(['destroy']);
