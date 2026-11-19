@@ -166,7 +166,11 @@ class ExamManagementController extends Controller
         $numbers = ['20', '40', '60', '80', '100'];
         $number_paginate = in_array($request->number, $numbers) ? $request->number : 20;
 
-        $query = User::query();
+        if(auth()->user()->can('users.view')){
+            $query = User::query();
+        }else{
+            $query = User::where('created_by', auth()->id());
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
